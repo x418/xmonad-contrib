@@ -1,0 +1,1537 @@
+XMonad.Actions.TreeSelect | Pixel | type Pixel :: *
+XMonad.Actions.TreeSelect | Pixel | type Pixel = Word64
+XMonad.Config.Prime | AllowEvents | type AllowEvents :: *
+XMonad.Config.Prime | AllowEvents | type AllowEvents = CInt
+XMonad.Config.Prime | AllowExposuresMode | type AllowExposuresMode :: *
+XMonad.Config.Prime | AllowExposuresMode | type AllowExposuresMode = CInt
+XMonad.Config.Prime | Angle | type Angle :: *
+XMonad.Config.Prime | Angle | type Angle = CInt
+XMonad.Config.Prime | Arc | data Arc = Arc {arc_x :: Position, arc_y :: Position, arc_width :: Dimension, arc_height :: Dimension, arc_angle1 :: Angle, arc_angle2 :: Angle}
+XMonad.Config.Prime | Arc | type Arc :: *
+XMonad.Config.Prime | ArcMode | type ArcMode :: *
+XMonad.Config.Prime | ArcMode | type ArcMode = CInt
+XMonad.Config.Prime | Atom | type Atom :: *
+XMonad.Config.Prime | Atom | type Atom = Word64
+XMonad.Config.Prime | AttributeMask | type AttributeMask :: *
+XMonad.Config.Prime | AttributeMask | type AttributeMask = Mask
+XMonad.Config.Prime | BackingStore | type BackingStore :: *
+XMonad.Config.Prime | BackingStore | type BackingStore = CInt
+XMonad.Config.Prime | BitGravity | type BitGravity :: *
+XMonad.Config.Prime | BitGravity | type BitGravity = CInt
+XMonad.Config.Prime | Buffer | type Buffer :: *
+XMonad.Config.Prime | Buffer | type Buffer = CInt
+XMonad.Config.Prime | Button | type Button :: *
+XMonad.Config.Prime | Button | type Button = Word32
+XMonad.Config.Prime | ButtonMask | type ButtonMask :: *
+XMonad.Config.Prime | ButtonMask | type ButtonMask = Modifier
+XMonad.Config.Prime | ByteOrder | type ByteOrder :: *
+XMonad.Config.Prime | ByteOrder | type ByteOrder = CInt
+XMonad.Config.Prime | CXErrorHandler | type CXErrorHandler :: *
+XMonad.Config.Prime | CXErrorHandler | type CXErrorHandler = Display -> XErrorEventPtr -> IO CInt
+XMonad.Config.Prime | CapStyle | type CapStyle :: *
+XMonad.Config.Prime | CapStyle | type CapStyle = CInt
+XMonad.Config.Prime | ChangeSaveSetMode | type ChangeSaveSetMode :: *
+XMonad.Config.Prime | ChangeSaveSetMode | type ChangeSaveSetMode = CInt
+XMonad.Config.Prime | CharStruct | type CharStruct :: *
+XMonad.Config.Prime | CharStruct | type CharStruct = (CInt, CInt, CInt, CInt, CInt)
+XMonad.Config.Prime | CirculationDirection | type CirculationDirection :: *
+XMonad.Config.Prime | CirculationDirection | type CirculationDirection = CInt
+XMonad.Config.Prime | ClassHint | data ClassHint = ClassHint {resName :: String, resClass :: String}
+XMonad.Config.Prime | ClassHint | type ClassHint :: *
+XMonad.Config.Prime | CloseDownMode | type CloseDownMode :: *
+XMonad.Config.Prime | CloseDownMode | type CloseDownMode = CInt
+XMonad.Config.Prime | Color | data Color = Color {color_pixel :: Pixel, color_red :: Word16, color_green :: Word16, color_blue :: Word16, color_flags :: Word8}
+XMonad.Config.Prime | Color | type Color :: *
+XMonad.Config.Prime | Colormap | type Colormap :: *
+XMonad.Config.Prime | Colormap | type Colormap = XID
+XMonad.Config.Prime | ColormapAlloc | type ColormapAlloc :: *
+XMonad.Config.Prime | ColormapAlloc | type ColormapAlloc = CInt
+XMonad.Config.Prime | ColormapNotification | type ColormapNotification :: *
+XMonad.Config.Prime | ColormapNotification | type ColormapNotification = CInt
+XMonad.Config.Prime | Connection | type Connection :: *
+XMonad.Config.Prime | Connection | type Connection = Word16
+XMonad.Config.Prime | CoordinateMode | type CoordinateMode :: *
+XMonad.Config.Prime | CoordinateMode | type CoordinateMode = CInt
+XMonad.Config.Prime | Cursor | type Cursor :: *
+XMonad.Config.Prime | Cursor | type Cursor = XID
+XMonad.Config.Prime | Dimension | type Dimension :: *
+XMonad.Config.Prime | Dimension | type Dimension = Word32
+XMonad.Config.Prime | Display | newtype Display = Display (Ptr Display)
+XMonad.Config.Prime | Display | type Display :: *
+XMonad.Config.Prime | Drawable | type Drawable :: *
+XMonad.Config.Prime | Drawable | type Drawable = XID
+XMonad.Config.Prime | ErrorCode | type ErrorCode :: *
+XMonad.Config.Prime | ErrorCode | type ErrorCode = CInt
+XMonad.Config.Prime | ErrorEvent | data ErrorEvent = ErrorEvent {ev_type :: CInt, ev_display :: Display, ev_serialnum :: CULong, ev_error_code :: CUChar, ev_request_code :: CUChar, ev_minor_code :: CUChar, ev_resourceid :: XID}
+XMonad.Config.Prime | ErrorEvent | type ErrorEvent :: *
+XMonad.Config.Prime | Event | data Event = AnyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window} | ConfigureRequestEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_parent :: Window, ev_window :: Window, ev_x :: CInt, ev_y :: CInt, ev_width :: CInt, ev_height :: CInt, ev_border_width :: CInt, ev_above :: Window, ev_detail :: NotifyDetail, ev_value_mask :: CULong} | ConfigureEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_event :: Window, ev_window :: Window, ev_x :: CInt, ev_y :: CInt, ev_width :: CInt, ev_height :: CInt, ev_border_width :: CInt, ev_above :: Window, ev_override_redirect :: Bool} | MapRequestEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_parent :: Window, ev_window :: Window} | KeyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_root :: Window, ev_subwindow :: Window, ev_time :: Time, ev_x :: CInt, ev_y :: CInt, ev_x_root :: CInt, ev_y_root :: CInt, ev_state :: KeyMask, ev_keycode :: KeyCode, ev_same_screen :: Bool} | ButtonEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_root :: Window, ev_subwindow :: Window, ev_time :: Time, ev_x :: CInt, ev_y :: CInt, ev_x_root :: CInt, ev_y_root :: CInt, ev_state :: KeyMask, ev_button :: Button, ev_same_screen :: Bool} | MotionEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_x :: CInt, ev_y :: CInt, ev_window :: Window} | DestroyWindowEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_event :: Window, ev_window :: Window} | UnmapEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_event :: Window, ev_window :: Window, ev_from_configure :: Bool} | MapNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_event :: Window, ev_window :: Window, ev_override_redirect :: Bool} | MappingNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_request :: MappingRequest, ev_first_keycode :: KeyCode, ev_count :: CInt} | CrossingEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_root :: Window, ev_subwindow :: Window, ev_time :: Time, ev_x :: CInt, ev_y :: CInt, ev_x_root :: CInt, ev_y_root :: CInt, ev_mode :: NotifyMode, ev_detail :: NotifyDetail, ev_same_screen :: Bool, ev_focus :: Bool, ev_state :: Modifier} | SelectionRequest {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_owner :: Window, ev_requestor :: Window, ev_selection :: Atom, ev_target :: Atom, ev_property :: Atom, ev_time :: Time} | SelectionClear {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_selection :: Atom, ev_time :: Time} | PropertyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_atom :: Atom, ev_time :: Time, ev_propstate :: CInt} | ExposeEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_x :: CInt, ev_y :: CInt, ev_width :: CInt, ev_height :: CInt, ev_count :: CInt} | FocusChangeEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_mode :: NotifyMode, ev_detail :: NotifyDetail} | ClientMessageEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_message_type :: Atom, ev_data :: [CInt]} | RRScreenChangeNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_root :: Window, ev_timestamp :: Time, ev_config_timestamp :: Time, ev_size_index :: SizeID, ev_subpixel_order :: SubpixelOrder, ev_rotation :: Rotation, ev_width :: CInt, ev_height :: CInt, ev_mwidth :: CInt, ev_mheight :: CInt} | RRNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_subtype :: CInt} | RRCrtcChangeNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_subtype :: CInt, ev_crtc :: RRCrtc, ev_rr_mode :: RRMode, ev_rotation :: Rotation, ev_x :: CInt, ev_y :: CInt, ev_rr_width :: CUInt, ev_rr_height :: CUInt} | RROutputChangeNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_subtype :: CInt, ev_output :: RROutput, ev_crtc :: RRCrtc, ev_rr_mode :: RRMode, ev_rotation :: Rotation, ev_connection :: Connection, ev_subpixel_order :: SubpixelOrder} | RROutputPropertyNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_subtype :: CInt, ev_output :: RROutput, ev_property :: Atom, ev_timestamp :: Time, ev_rr_state :: CInt} | ScreenSaverNotifyEvent {ev_event_type :: EventType, ev_serial :: CULong, ev_send_event :: Bool, ev_event_display :: Display, ev_window :: Window, ev_root :: Window, ev_ss_state :: XScreenSaverState, ev_ss_kind :: XScreenSaverKind, ev_forced :: Bool, ev_time :: Time}
+XMonad.Config.Prime | Event | type Event :: *
+XMonad.Config.Prime | EventMask | type EventMask :: *
+XMonad.Config.Prime | EventMask | type EventMask = Mask
+XMonad.Config.Prime | EventType | type EventType :: *
+XMonad.Config.Prime | EventType | type EventType = Word32
+XMonad.Config.Prime | FillRule | type FillRule :: *
+XMonad.Config.Prime | FillRule | type FillRule = CInt
+XMonad.Config.Prime | FillStyle | type FillStyle :: *
+XMonad.Config.Prime | FillStyle | type FillStyle = CInt
+XMonad.Config.Prime | FocusMode | type FocusMode :: *
+XMonad.Config.Prime | FocusMode | type FocusMode = CInt
+XMonad.Config.Prime | Font | type Font :: *
+XMonad.Config.Prime | Font | type Font = XID
+XMonad.Config.Prime | FontDirection | type FontDirection :: *
+XMonad.Config.Prime | FontDirection | type FontDirection = CInt
+XMonad.Config.Prime | FontSet | newtype FontSet = FontSet (Ptr FontSet)
+XMonad.Config.Prime | FontSet | type FontSet :: *
+XMonad.Config.Prime | FontStruct | newtype FontStruct = FontStruct (Ptr FontStruct)
+XMonad.Config.Prime | FontStruct | type FontStruct :: *
+XMonad.Config.Prime | GC | newtype GC = GC (Ptr GC)
+XMonad.Config.Prime | GC | type GC :: *
+XMonad.Config.Prime | GCMask | type GCMask :: *
+XMonad.Config.Prime | GCMask | type GCMask = CInt
+XMonad.Config.Prime | GContext | type GContext :: *
+XMonad.Config.Prime | GContext | type GContext = XID
+XMonad.Config.Prime | GXFunction | type GXFunction :: *
+XMonad.Config.Prime | GXFunction | type GXFunction = CInt
+XMonad.Config.Prime | Glyph | type Glyph :: *
+XMonad.Config.Prime | Glyph | type Glyph = Word16
+XMonad.Config.Prime | GrabMode | type GrabMode :: *
+XMonad.Config.Prime | GrabMode | type GrabMode = CInt
+XMonad.Config.Prime | GrabStatus | type GrabStatus :: *
+XMonad.Config.Prime | GrabStatus | type GrabStatus = CInt
+XMonad.Config.Prime | Image | newtype Image = Image (Ptr Image)
+XMonad.Config.Prime | Image | type Image :: *
+XMonad.Config.Prime | ImageFormat | type ImageFormat :: *
+XMonad.Config.Prime | ImageFormat | type ImageFormat = CInt
+XMonad.Config.Prime | JoinStyle | type JoinStyle :: *
+XMonad.Config.Prime | JoinStyle | type JoinStyle = CInt
+XMonad.Config.Prime | KeyCode | type KeyCode :: *
+XMonad.Config.Prime | KeyCode | type KeyCode = Word8
+XMonad.Config.Prime | KeyMask | type KeyMask :: *
+XMonad.Config.Prime | KeyMask | type KeyMask = Modifier
+XMonad.Config.Prime | KeySym | type KeySym :: *
+XMonad.Config.Prime | KeySym | type KeySym = XID
+XMonad.Config.Prime | LineStyle | type LineStyle :: *
+XMonad.Config.Prime | LineStyle | type LineStyle = CInt
+XMonad.Config.Prime | MappingRequest | type MappingRequest :: *
+XMonad.Config.Prime | MappingRequest | type MappingRequest = CInt
+XMonad.Config.Prime | Mask | type Mask :: *
+XMonad.Config.Prime | Mask | type Mask = Word64
+XMonad.Config.Prime | Modifier | type Modifier :: *
+XMonad.Config.Prime | Modifier | type Modifier = CUInt
+XMonad.Config.Prime | NotifyDetail | type NotifyDetail :: *
+XMonad.Config.Prime | NotifyDetail | type NotifyDetail = CInt
+XMonad.Config.Prime | NotifyMode | type NotifyMode :: *
+XMonad.Config.Prime | NotifyMode | type NotifyMode = CInt
+XMonad.Config.Prime | Pixel | type Pixel :: *
+XMonad.Config.Prime | Pixel | type Pixel = Word64
+XMonad.Config.Prime | Pixmap | type Pixmap :: *
+XMonad.Config.Prime | Pixmap | type Pixmap = XID
+XMonad.Config.Prime | Place | type Place :: *
+XMonad.Config.Prime | Place | type Place = CInt
+XMonad.Config.Prime | Point | data Point = Point {pt_x :: Position, pt_y :: Position}
+XMonad.Config.Prime | Point | type Point :: *
+XMonad.Config.Prime | PolygonShape | type PolygonShape :: *
+XMonad.Config.Prime | PolygonShape | type PolygonShape = CInt
+XMonad.Config.Prime | Position | type Position :: *
+XMonad.Config.Prime | Position | type Position = Int32
+XMonad.Config.Prime | PreferBlankingMode | type PreferBlankingMode :: *
+XMonad.Config.Prime | PreferBlankingMode | type PreferBlankingMode = CInt
+XMonad.Config.Prime | PropertyNotification | type PropertyNotification :: *
+XMonad.Config.Prime | PropertyNotification | type PropertyNotification = CInt
+XMonad.Config.Prime | Protocol | type Protocol :: *
+XMonad.Config.Prime | Protocol | type Protocol = CInt
+XMonad.Config.Prime | QueryBestSizeClass | type QueryBestSizeClass :: *
+XMonad.Config.Prime | QueryBestSizeClass | type QueryBestSizeClass = CInt
+XMonad.Config.Prime | QueuedMode | type QueuedMode :: *
+XMonad.Config.Prime | QueuedMode | type QueuedMode = CInt
+XMonad.Config.Prime | RRCrtc | type RRCrtc :: *
+XMonad.Config.Prime | RRCrtc | type RRCrtc = Word64
+XMonad.Config.Prime | RRMode | type RRMode :: *
+XMonad.Config.Prime | RRMode | type RRMode = Word64
+XMonad.Config.Prime | RROutput | type RROutput :: *
+XMonad.Config.Prime | RROutput | type RROutput = Word64
+XMonad.Config.Prime | RectInRegionResult | type RectInRegionResult :: *
+XMonad.Config.Prime | RectInRegionResult | type RectInRegionResult = CInt
+XMonad.Config.Prime | Rectangle | data Rectangle = Rectangle {rect_x :: Position, rect_y :: Position, rect_width :: Dimension, rect_height :: Dimension}
+XMonad.Config.Prime | Rectangle | type Rectangle :: *
+XMonad.Config.Prime | Reflection | type Reflection :: *
+XMonad.Config.Prime | Reflection | type Reflection = Word16
+XMonad.Config.Prime | Region | newtype Region = Region (ForeignPtr Region)
+XMonad.Config.Prime | Region | type Region :: *
+XMonad.Config.Prime | Rotation | type Rotation :: *
+XMonad.Config.Prime | Rotation | type Rotation = Word16
+XMonad.Config.Prime | Screen | newtype Screen = Screen (Ptr Screen)
+XMonad.Config.Prime | Screen | type Screen :: *
+XMonad.Config.Prime | ScreenNumber | type ScreenNumber :: *
+XMonad.Config.Prime | ScreenNumber | type ScreenNumber = Word32
+XMonad.Config.Prime | ScreenSaverMode | type ScreenSaverMode :: *
+XMonad.Config.Prime | ScreenSaverMode | type ScreenSaverMode = CInt
+XMonad.Config.Prime | Segment | data Segment = Segment {seg_x1 :: Position, seg_y1 :: Position, seg_x2 :: Position, seg_y2 :: Position}
+XMonad.Config.Prime | Segment | type Segment :: *
+XMonad.Config.Prime | SetWindowAttributes | newtype SetWindowAttributes = SetWindowAttributes (Ptr SetWindowAttributes)
+XMonad.Config.Prime | SetWindowAttributes | type SetWindowAttributes :: *
+XMonad.Config.Prime | SizeHints | data SizeHints = SizeHints {sh_min_size :: Maybe (Dimension, Dimension), sh_max_size :: Maybe (Dimension, Dimension), sh_resize_inc :: Maybe (Dimension, Dimension), sh_aspect :: Maybe ((Dimension, Dimension), (Dimension, Dimension)), sh_base_size :: Maybe (Dimension, Dimension), sh_win_gravity :: Maybe BitGravity}
+XMonad.Config.Prime | SizeHints | type SizeHints :: *
+XMonad.Config.Prime | SizeID | type SizeID :: *
+XMonad.Config.Prime | SizeID | type SizeID = Word16
+XMonad.Config.Prime | Status | type Status :: *
+XMonad.Config.Prime | Status | type Status = CInt
+XMonad.Config.Prime | SubWindowMode | type SubWindowMode :: *
+XMonad.Config.Prime | SubWindowMode | type SubWindowMode = CInt
+XMonad.Config.Prime | SubpixelOrder | type SubpixelOrder :: *
+XMonad.Config.Prime | SubpixelOrder | type SubpixelOrder = Word16
+XMonad.Config.Prime | TextProperty | data TextProperty = TextProperty {tp_value :: CString, tp_encoding :: Atom, tp_format :: CInt, tp_nitems :: Word64}
+XMonad.Config.Prime | TextProperty | type TextProperty :: *
+XMonad.Config.Prime | Time | type Time :: *
+XMonad.Config.Prime | Time | type Time = Word64
+XMonad.Config.Prime | Visibility | type Visibility :: *
+XMonad.Config.Prime | Visibility | type Visibility = CInt
+XMonad.Config.Prime | Visual | newtype Visual = Visual (Ptr Visual)
+XMonad.Config.Prime | Visual | type Visual :: *
+XMonad.Config.Prime | VisualID | type VisualID :: *
+XMonad.Config.Prime | VisualID | type VisualID = Word64
+XMonad.Config.Prime | VisualInfo | data VisualInfo = VisualInfo {visualInfo_visual :: Visual, visualInfo_visualID :: VisualID, visualInfo_screen :: ScreenNumber, visualInfo_depth :: CInt, visualInfo_class :: CInt, visualInfo_redMask :: CULong, visualInfo_greenMask :: CULong, visualInfo_blueMask :: CULong, visualInfo_colormapSize :: CInt, visualInfo_bitsPerRGB :: CInt}
+XMonad.Config.Prime | VisualInfo | type VisualInfo :: *
+XMonad.Config.Prime | VisualInfoMask | type VisualInfoMask :: *
+XMonad.Config.Prime | VisualInfoMask | type VisualInfoMask = CLong
+XMonad.Config.Prime | WMHints | data WMHints = WMHints {wmh_flags :: CLong, wmh_input :: Bool, wmh_initial_state :: CInt, wmh_icon_pixmap :: Pixmap, wmh_icon_window :: Window, wmh_icon_x :: CInt, wmh_icon_y :: CInt, wmh_icon_mask :: Pixmap, wmh_window_group :: XID}
+XMonad.Config.Prime | WMHints | type WMHints :: *
+XMonad.Config.Prime | Window | type Window :: *
+XMonad.Config.Prime | Window | type Window = XID
+XMonad.Config.Prime | WindowAttributes | data WindowAttributes = WindowAttributes {wa_x :: CInt, wa_y :: CInt, wa_width :: CInt, wa_height :: CInt, wa_border_width :: CInt, wa_colormap :: Colormap, wa_map_installed :: Bool, wa_map_state :: CInt, wa_all_event_masks :: EventMask, wa_your_event_mask :: EventMask, wa_do_not_propagate_mask :: EventMask, wa_override_redirect :: Bool}
+XMonad.Config.Prime | WindowAttributes | type WindowAttributes :: *
+XMonad.Config.Prime | WindowChanges | data WindowChanges = WindowChanges {wc_x :: CInt, wc_y :: CInt, wc_width :: CInt, wc_height :: CInt, wc_border_width :: CInt, wc_sibling :: Window, wc_stack_mode :: CInt}
+XMonad.Config.Prime | WindowChanges | type WindowChanges :: *
+XMonad.Config.Prime | WindowClass | type WindowClass :: *
+XMonad.Config.Prime | WindowClass | type WindowClass = CInt
+XMonad.Config.Prime | WindowGravity | type WindowGravity :: *
+XMonad.Config.Prime | WindowGravity | type WindowGravity = CInt
+XMonad.Config.Prime | XButtonEvent | type XButtonEvent :: *
+XMonad.Config.Prime | XButtonEvent | type XButtonEvent = (Window, Window, Time, CInt, CInt, CInt, CInt, Modifier, Button, Bool)
+XMonad.Config.Prime | XConfigureEvent | type XConfigureEvent :: *
+XMonad.Config.Prime | XConfigureEvent | type XConfigureEvent = (Position, Position, Dimension, Dimension)
+XMonad.Config.Prime | XErrorEventPtr | type XErrorEventPtr :: *
+XMonad.Config.Prime | XErrorEventPtr | type XErrorEventPtr = Ptr ()
+XMonad.Config.Prime | XErrorHandler | type XErrorHandler :: *
+XMonad.Config.Prime | XErrorHandler | type XErrorHandler = Display -> XErrorEventPtr -> IO ()
+XMonad.Config.Prime | XEvent | newtype XEvent = XEvent XEventPtr
+XMonad.Config.Prime | XEvent | type XEvent :: *
+XMonad.Config.Prime | XEventPtr | type XEventPtr :: *
+XMonad.Config.Prime | XEventPtr | type XEventPtr = Ptr XEvent
+XMonad.Config.Prime | XExposeEvent | type XExposeEvent :: *
+XMonad.Config.Prime | XExposeEvent | type XExposeEvent = (Position, Position, Dimension, Dimension, CInt)
+XMonad.Config.Prime | XID | type XID :: *
+XMonad.Config.Prime | XID | type XID = Word64
+XMonad.Config.Prime | XKeyEvent | type XKeyEvent :: *
+XMonad.Config.Prime | XKeyEvent | type XKeyEvent = (Window, Window, Time, CInt, CInt, CInt, CInt, Modifier, KeyCode, Bool)
+XMonad.Config.Prime | XKeyEventPtr | type XKeyEventPtr :: *
+XMonad.Config.Prime | XKeyEventPtr | type XKeyEventPtr = Ptr XKeyEvent
+XMonad.Config.Prime | XMappingEvent | type XMappingEvent :: *
+XMonad.Config.Prime | XMappingEvent | type XMappingEvent = (MappingRequest, KeyCode, CInt)
+XMonad.Config.Prime | XMotionEvent | type XMotionEvent :: *
+XMonad.Config.Prime | XMotionEvent | type XMotionEvent = (Window, Window, Time, CInt, CInt, CInt, CInt, Modifier, NotifyMode, Bool)
+XMonad.Config.Prime | XRRModeFlags | type XRRModeFlags :: *
+XMonad.Config.Prime | XRRModeFlags | type XRRModeFlags = Word64
+XMonad.Config.Prime | _xSetErrorHandler | _xSetErrorHandler :: FunPtr CXErrorHandler -> IO (FunPtr CXErrorHandler)
+XMonad.Config.Prime | aRC | aRC :: Atom
+XMonad.Config.Prime | aTOM | aTOM :: Atom
+XMonad.Config.Prime | activateScreenSaver | activateScreenSaver :: Display -> IO ()
+XMonad.Config.Prime | addToSaveSet | addToSaveSet :: Display -> Window -> IO ()
+XMonad.Config.Prime | allHintsBitmask | allHintsBitmask :: CLong
+XMonad.Config.Prime | allPlanes_aux | allPlanes_aux :: Pixel
+XMonad.Config.Prime | allocAll | allocAll :: ColormapAlloc
+XMonad.Config.Prime | allocColor | allocColor :: Display -> Colormap -> Color -> IO Color
+XMonad.Config.Prime | allocNamedColor | allocNamedColor :: Display -> Colormap -> String -> IO (Color, Color)
+XMonad.Config.Prime | allocNone | allocNone :: ColormapAlloc
+XMonad.Config.Prime | allocaSetWindowAttributes | allocaSetWindowAttributes :: (Ptr SetWindowAttributes -> IO a) -> IO a
+XMonad.Config.Prime | allocaXEvent | allocaXEvent :: (XEventPtr -> IO a) -> IO a
+XMonad.Config.Prime | allowEvents | allowEvents :: Display -> AllowEvents -> Time -> IO ()
+XMonad.Config.Prime | allowExposures | allowExposures :: AllowExposuresMode
+XMonad.Config.Prime | alreadyGrabbed | alreadyGrabbed :: GrabStatus
+XMonad.Config.Prime | always | always :: BackingStore
+XMonad.Config.Prime | anyButton | anyButton :: Button
+XMonad.Config.Prime | anyKey | anyKey :: KeyCode
+XMonad.Config.Prime | anyModifier | anyModifier :: Modifier
+XMonad.Config.Prime | anyPropertyType | anyPropertyType :: Atom
+XMonad.Config.Prime | arcChord | arcChord :: ArcMode
+XMonad.Config.Prime | arcPieSlice | arcPieSlice :: ArcMode
+XMonad.Config.Prime | asKeyEvent | asKeyEvent :: XEventPtr -> XKeyEventPtr
+XMonad.Config.Prime | ascentFromFontStruct | ascentFromFontStruct :: FontStruct -> Int32
+XMonad.Config.Prime | asyncBoth | asyncBoth :: AllowEvents
+XMonad.Config.Prime | asyncKeyboard | asyncKeyboard :: AllowEvents
+XMonad.Config.Prime | asyncPointer | asyncPointer :: AllowEvents
+XMonad.Config.Prime | autoRepeatOff | autoRepeatOff :: Display -> IO ()
+XMonad.Config.Prime | autoRepeatOn | autoRepeatOn :: Display -> IO ()
+XMonad.Config.Prime | bITMAP | bITMAP :: Atom
+XMonad.Config.Prime | badAccess | badAccess :: ErrorCode
+XMonad.Config.Prime | badAlloc | badAlloc :: ErrorCode
+XMonad.Config.Prime | badAtom | badAtom :: ErrorCode
+XMonad.Config.Prime | badColor | badColor :: ErrorCode
+XMonad.Config.Prime | badCursor | badCursor :: ErrorCode
+XMonad.Config.Prime | badDrawable | badDrawable :: ErrorCode
+XMonad.Config.Prime | badFont | badFont :: ErrorCode
+XMonad.Config.Prime | badGC | badGC :: ErrorCode
+XMonad.Config.Prime | badIDChoice | badIDChoice :: ErrorCode
+XMonad.Config.Prime | badImplementation | badImplementation :: ErrorCode
+XMonad.Config.Prime | badLength | badLength :: ErrorCode
+XMonad.Config.Prime | badMatch | badMatch :: ErrorCode
+XMonad.Config.Prime | badName | badName :: ErrorCode
+XMonad.Config.Prime | badPixmap | badPixmap :: ErrorCode
+XMonad.Config.Prime | badRequest | badRequest :: ErrorCode
+XMonad.Config.Prime | badValue | badValue :: ErrorCode
+XMonad.Config.Prime | badWindow | badWindow :: ErrorCode
+XMonad.Config.Prime | bell | bell :: Display -> CInt -> IO ()
+XMonad.Config.Prime | bitmapBitOrder | bitmapBitOrder :: Display -> ByteOrder
+XMonad.Config.Prime | bitmapPad | bitmapPad :: Display -> CInt
+XMonad.Config.Prime | bitmapUnit | bitmapUnit :: Display -> CInt
+XMonad.Config.Prime | blackPixel | blackPixel :: Display -> ScreenNumber -> Pixel
+XMonad.Config.Prime | blackPixelOfScreen | blackPixelOfScreen :: Screen -> Pixel
+XMonad.Config.Prime | button1 | button1 :: Button
+XMonad.Config.Prime | button1Mask | button1Mask :: ButtonMask
+XMonad.Config.Prime | button1MotionMask | button1MotionMask :: EventMask
+XMonad.Config.Prime | button2 | button2 :: Button
+XMonad.Config.Prime | button2Mask | button2Mask :: ButtonMask
+XMonad.Config.Prime | button2MotionMask | button2MotionMask :: EventMask
+XMonad.Config.Prime | button3 | button3 :: Button
+XMonad.Config.Prime | button3Mask | button3Mask :: ButtonMask
+XMonad.Config.Prime | button3MotionMask | button3MotionMask :: EventMask
+XMonad.Config.Prime | button4 | button4 :: Button
+XMonad.Config.Prime | button4Mask | button4Mask :: ButtonMask
+XMonad.Config.Prime | button4MotionMask | button4MotionMask :: EventMask
+XMonad.Config.Prime | button5 | button5 :: Button
+XMonad.Config.Prime | button5Mask | button5Mask :: ButtonMask
+XMonad.Config.Prime | button5MotionMask | button5MotionMask :: EventMask
+XMonad.Config.Prime | buttonMotionMask | buttonMotionMask :: EventMask
+XMonad.Config.Prime | buttonPress | buttonPress :: EventType
+XMonad.Config.Prime | buttonPressMask | buttonPressMask :: EventMask
+XMonad.Config.Prime | buttonRelease | buttonRelease :: EventType
+XMonad.Config.Prime | buttonReleaseMask | buttonReleaseMask :: EventMask
+XMonad.Config.Prime | cAP_HEIGHT | cAP_HEIGHT :: Atom
+XMonad.Config.Prime | cARDINAL | cARDINAL :: Atom
+XMonad.Config.Prime | cOLORMAP | cOLORMAP :: Atom
+XMonad.Config.Prime | cOPYRIGHT | cOPYRIGHT :: Atom
+XMonad.Config.Prime | cURSOR | cURSOR :: Atom
+XMonad.Config.Prime | cUT_BUFFER0 | cUT_BUFFER0 :: Atom
+XMonad.Config.Prime | cUT_BUFFER1 | cUT_BUFFER1 :: Atom
+XMonad.Config.Prime | cUT_BUFFER2 | cUT_BUFFER2 :: Atom
+XMonad.Config.Prime | cUT_BUFFER3 | cUT_BUFFER3 :: Atom
+XMonad.Config.Prime | cUT_BUFFER4 | cUT_BUFFER4 :: Atom
+XMonad.Config.Prime | cUT_BUFFER5 | cUT_BUFFER5 :: Atom
+XMonad.Config.Prime | cUT_BUFFER6 | cUT_BUFFER6 :: Atom
+XMonad.Config.Prime | cUT_BUFFER7 | cUT_BUFFER7 :: Atom
+XMonad.Config.Prime | cWBackPixel | cWBackPixel :: AttributeMask
+XMonad.Config.Prime | cWBackPixmap | cWBackPixmap :: AttributeMask
+XMonad.Config.Prime | cWBackingPixel | cWBackingPixel :: AttributeMask
+XMonad.Config.Prime | cWBackingPlanes | cWBackingPlanes :: AttributeMask
+XMonad.Config.Prime | cWBackingStore | cWBackingStore :: AttributeMask
+XMonad.Config.Prime | cWBitGravity | cWBitGravity :: AttributeMask
+XMonad.Config.Prime | cWBorderPixel | cWBorderPixel :: AttributeMask
+XMonad.Config.Prime | cWBorderPixmap | cWBorderPixmap :: AttributeMask
+XMonad.Config.Prime | cWColormap | cWColormap :: AttributeMask
+XMonad.Config.Prime | cWCursor | cWCursor :: AttributeMask
+XMonad.Config.Prime | cWDontPropagate | cWDontPropagate :: AttributeMask
+XMonad.Config.Prime | cWEventMask | cWEventMask :: AttributeMask
+XMonad.Config.Prime | cWHeight | cWHeight :: AttributeMask
+XMonad.Config.Prime | cWOverrideRedirect | cWOverrideRedirect :: AttributeMask
+XMonad.Config.Prime | cWSaveUnder | cWSaveUnder :: AttributeMask
+XMonad.Config.Prime | cWWidth | cWWidth :: AttributeMask
+XMonad.Config.Prime | cWWinGravity | cWWinGravity :: AttributeMask
+XMonad.Config.Prime | cWX | cWX :: AttributeMask
+XMonad.Config.Prime | cWY | cWY :: AttributeMask
+XMonad.Config.Prime | capButt | capButt :: CapStyle
+XMonad.Config.Prime | capNotLast | capNotLast :: CapStyle
+XMonad.Config.Prime | capProjecting | capProjecting :: CapStyle
+XMonad.Config.Prime | capRound | capRound :: CapStyle
+XMonad.Config.Prime | cellsOfScreen | cellsOfScreen :: Screen -> CInt
+XMonad.Config.Prime | centerGravity | centerGravity :: BitGravity
+XMonad.Config.Prime | changeProperty16 | changeProperty16 :: Display -> Window -> Atom -> Atom -> CInt -> [CShort] -> IO ()
+XMonad.Config.Prime | changeProperty32 | changeProperty32 :: Display -> Window -> Atom -> Atom -> CInt -> [CLong] -> IO ()
+XMonad.Config.Prime | changeProperty8 | changeProperty8 :: Display -> Window -> Atom -> Atom -> CInt -> [CChar] -> IO ()
+XMonad.Config.Prime | changeSaveSet | changeSaveSet :: Display -> Window -> ChangeSaveSetMode -> IO ()
+XMonad.Config.Prime | changeWindowAttributes | changeWindowAttributes :: Display -> Window -> AttributeMask -> Ptr SetWindowAttributes -> IO ()
+XMonad.Config.Prime | checkMaskEvent | checkMaskEvent :: Display -> EventMask -> XEventPtr -> IO Bool
+XMonad.Config.Prime | checkTypedEvent | checkTypedEvent :: Display -> EventType -> XEventPtr -> IO Bool
+XMonad.Config.Prime | checkTypedWindowEvent | checkTypedWindowEvent :: Display -> Window -> EventType -> XEventPtr -> IO Bool
+XMonad.Config.Prime | checkWindowEvent | checkWindowEvent :: Display -> Window -> EventMask -> XEventPtr -> IO Bool
+XMonad.Config.Prime | circulateNotify | circulateNotify :: EventType
+XMonad.Config.Prime | circulateRequest | circulateRequest :: EventType
+XMonad.Config.Prime | circulateSubwindows | circulateSubwindows :: Display -> Window -> CirculationDirection -> IO ()
+XMonad.Config.Prime | circulateSubwindowsDown | circulateSubwindowsDown :: Display -> Window -> IO ()
+XMonad.Config.Prime | circulateSubwindowsUp | circulateSubwindowsUp :: Display -> Window -> IO ()
+XMonad.Config.Prime | clearArea | clearArea :: Display -> Window -> Position -> Position -> Dimension -> Dimension -> Bool -> IO ()
+XMonad.Config.Prime | clearWindow | clearWindow :: Display -> Window -> IO ()
+XMonad.Config.Prime | clientMessage | clientMessage :: EventType
+XMonad.Config.Prime | clipBox | clipBox :: Region -> IO (Rectangle, CInt)
+XMonad.Config.Prime | clipByChildren | clipByChildren :: SubWindowMode
+XMonad.Config.Prime | closeDisplay | closeDisplay :: Display -> IO ()
+XMonad.Config.Prime | colormapChangeMask | colormapChangeMask :: EventMask
+XMonad.Config.Prime | colormapInstalled | colormapInstalled :: ColormapNotification
+XMonad.Config.Prime | colormapNotify | colormapNotify :: EventType
+XMonad.Config.Prime | colormapUninstalled | colormapUninstalled :: ColormapNotification
+XMonad.Config.Prime | complex | complex :: PolygonShape
+XMonad.Config.Prime | configureNotify | configureNotify :: EventType
+XMonad.Config.Prime | configureRequest | configureRequest :: EventType
+XMonad.Config.Prime | configureWindow | configureWindow :: Display -> Window -> CULong -> WindowChanges -> IO ()
+XMonad.Config.Prime | connectionNumber | connectionNumber :: Display -> CInt
+XMonad.Config.Prime | controlMapIndex | controlMapIndex :: Modifier
+XMonad.Config.Prime | controlMask | controlMask :: KeyMask
+XMonad.Config.Prime | convex | convex :: PolygonShape
+XMonad.Config.Prime | coordModeOrigin | coordModeOrigin :: CoordinateMode
+XMonad.Config.Prime | coordModePrevious | coordModePrevious :: CoordinateMode
+XMonad.Config.Prime | copyArea | copyArea :: Display -> Drawable -> Drawable -> GC -> Position -> Position -> Dimension -> Dimension -> Position -> Position -> IO ()
+XMonad.Config.Prime | copyColormapAndFree | copyColormapAndFree :: Display -> Colormap -> IO Colormap
+XMonad.Config.Prime | copyFromParent | copyFromParent :: WindowClass
+XMonad.Config.Prime | copyGC | copyGC :: Display -> GC -> Mask -> GC -> IO ()
+XMonad.Config.Prime | copyPlane | copyPlane :: Display -> Drawable -> Drawable -> GC -> Position -> Position -> Dimension -> Dimension -> Position -> Position -> Pixel -> IO ()
+XMonad.Config.Prime | createColormap | createColormap :: Display -> Window -> Visual -> ColormapAlloc -> IO Colormap
+XMonad.Config.Prime | createFontCursor | createFontCursor :: Display -> Glyph -> IO Cursor
+XMonad.Config.Prime | createFontSet | createFontSet :: Display -> String -> IO ([String], String, FontSet)
+XMonad.Config.Prime | createGC | createGC :: Display -> Drawable -> IO GC
+XMonad.Config.Prime | createGlyphCursor | createGlyphCursor :: Display -> Font -> Font -> Glyph -> Glyph -> Color -> Color -> IO Cursor
+XMonad.Config.Prime | createImage | createImage :: Display -> Visual -> CInt -> ImageFormat -> CInt -> Ptr CChar -> Dimension -> Dimension -> CInt -> CInt -> IO Image
+XMonad.Config.Prime | createNotify | createNotify :: EventType
+XMonad.Config.Prime | createPixmap | createPixmap :: Display -> Drawable -> Dimension -> Dimension -> CInt -> IO Pixmap
+XMonad.Config.Prime | createPixmapCursor | createPixmapCursor :: Display -> Pixmap -> Pixmap -> Color -> Color -> Dimension -> Dimension -> IO Cursor
+XMonad.Config.Prime | createRegion | createRegion :: IO Region
+XMonad.Config.Prime | createSimpleWindow | createSimpleWindow :: Display -> Window -> Position -> Position -> Dimension -> Dimension -> CInt -> Pixel -> Pixel -> IO Window
+XMonad.Config.Prime | createWindow | createWindow :: Display -> Window -> Position -> Position -> Dimension -> Dimension -> CInt -> CInt -> WindowClass -> Visual -> AttributeMask -> Ptr SetWindowAttributes -> IO Window
+XMonad.Config.Prime | currentTime | currentTime :: Time
+XMonad.Config.Prime | cursorShape | cursorShape :: QueryBestSizeClass
+XMonad.Config.Prime | dRAWABLE | dRAWABLE :: Atom
+XMonad.Config.Prime | defaultBlanking | defaultBlanking :: PreferBlankingMode
+XMonad.Config.Prime | defaultColormap | defaultColormap :: Display -> ScreenNumber -> Colormap
+XMonad.Config.Prime | defaultColormapOfScreen | defaultColormapOfScreen :: Screen -> Colormap
+XMonad.Config.Prime | defaultDepth | defaultDepth :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | defaultDepthOfScreen | defaultDepthOfScreen :: Screen -> CInt
+XMonad.Config.Prime | defaultExposures | defaultExposures :: AllowExposuresMode
+XMonad.Config.Prime | defaultGC | defaultGC :: Display -> ScreenNumber -> GC
+XMonad.Config.Prime | defaultGCOfScreen | defaultGCOfScreen :: Screen -> GC
+XMonad.Config.Prime | defaultRootWindow | defaultRootWindow :: Display -> Window
+XMonad.Config.Prime | defaultScreen | defaultScreen :: Display -> ScreenNumber
+XMonad.Config.Prime | defaultScreenOfDisplay | defaultScreenOfDisplay :: Display -> Screen
+XMonad.Config.Prime | defaultVisual | defaultVisual :: Display -> ScreenNumber -> Visual
+XMonad.Config.Prime | defaultVisualOfScreen | defaultVisualOfScreen :: Screen -> Visual
+XMonad.Config.Prime | defineCursor | defineCursor :: Display -> Window -> Cursor -> IO ()
+XMonad.Config.Prime | deleteProperty | deleteProperty :: Display -> Window -> Atom -> IO ()
+XMonad.Config.Prime | descentFromFontStruct | descentFromFontStruct :: FontStruct -> Int32
+XMonad.Config.Prime | destroyAll | destroyAll :: CloseDownMode
+XMonad.Config.Prime | destroyImage | destroyImage :: Image -> IO ()
+XMonad.Config.Prime | destroyNotify | destroyNotify :: EventType
+XMonad.Config.Prime | destroySubwindows | destroySubwindows :: Display -> Window -> IO ()
+XMonad.Config.Prime | destroyWindow | destroyWindow :: Display -> Window -> IO ()
+XMonad.Config.Prime | displayCells | displayCells :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | displayHeight | displayHeight :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | displayHeightMM | displayHeightMM :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | displayKeycodes | displayKeycodes :: Display -> (CInt, CInt)
+XMonad.Config.Prime | displayMotionBufferSize | displayMotionBufferSize :: Display -> CInt
+XMonad.Config.Prime | displayName | displayName :: String -> String
+XMonad.Config.Prime | displayOfScreen | displayOfScreen :: Screen -> Display
+XMonad.Config.Prime | displayPlanes | displayPlanes :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | displayString | displayString :: Display -> String
+XMonad.Config.Prime | displayWidth | displayWidth :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | displayWidthMM | displayWidthMM :: Display -> ScreenNumber -> CInt
+XMonad.Config.Prime | doBlue | doBlue :: Word8
+XMonad.Config.Prime | doGreen | doGreen :: Word8
+XMonad.Config.Prime | doRed | doRed :: Word8
+XMonad.Config.Prime | doesBackingStore | doesBackingStore :: Screen -> Bool
+XMonad.Config.Prime | doesSaveUnders | doesSaveUnders :: Screen -> Bool
+XMonad.Config.Prime | dontAllowExposures | dontAllowExposures :: AllowExposuresMode
+XMonad.Config.Prime | dontPreferBlanking | dontPreferBlanking :: PreferBlankingMode
+XMonad.Config.Prime | drawArc | drawArc :: Display -> Drawable -> GC -> Position -> Position -> Dimension -> Dimension -> Angle -> Angle -> IO ()
+XMonad.Config.Prime | drawArcs | drawArcs :: Display -> Drawable -> GC -> [Arc] -> IO ()
+XMonad.Config.Prime | drawImageString | drawImageString :: Display -> Drawable -> GC -> Position -> Position -> String -> IO ()
+XMonad.Config.Prime | drawLine | drawLine :: Display -> Drawable -> GC -> Position -> Position -> Position -> Position -> IO ()
+XMonad.Config.Prime | drawLines | drawLines :: Display -> Drawable -> GC -> [Point] -> CoordinateMode -> IO ()
+XMonad.Config.Prime | drawPoint | drawPoint :: Display -> Drawable -> GC -> Position -> Position -> IO ()
+XMonad.Config.Prime | drawPoints | drawPoints :: Display -> Drawable -> GC -> [Point] -> CoordinateMode -> IO ()
+XMonad.Config.Prime | drawRectangle | drawRectangle :: Display -> Drawable -> GC -> Position -> Position -> Dimension -> Dimension -> IO ()
+XMonad.Config.Prime | drawRectangles | drawRectangles :: Display -> Drawable -> GC -> [Rectangle] -> IO ()
+XMonad.Config.Prime | drawSegments | drawSegments :: Display -> Drawable -> GC -> [Segment] -> IO ()
+XMonad.Config.Prime | drawString | drawString :: Display -> Drawable -> GC -> Position -> Position -> String -> IO ()
+XMonad.Config.Prime | eND_SPACE | eND_SPACE :: Atom
+XMonad.Config.Prime | eastGravity | eastGravity :: BitGravity
+XMonad.Config.Prime | emptyRegion | emptyRegion :: Region -> IO Bool
+XMonad.Config.Prime | enterNotify | enterNotify :: EventType
+XMonad.Config.Prime | enterWindowMask | enterWindowMask :: EventMask
+XMonad.Config.Prime | equalRegion | equalRegion :: Region -> Region -> IO Bool
+XMonad.Config.Prime | evenOddRule | evenOddRule :: FillRule
+XMonad.Config.Prime | eventMaskOfScreen | eventMaskOfScreen :: Screen -> EventMask
+XMonad.Config.Prime | eventName | eventName :: Event -> String
+XMonad.Config.Prime | eventTable | eventTable :: [(EventType, String)]
+XMonad.Config.Prime | eventsQueued | eventsQueued :: Display -> QueuedMode -> IO CInt
+XMonad.Config.Prime | expose | expose :: EventType
+XMonad.Config.Prime | exposureMask | exposureMask :: EventMask
+XMonad.Config.Prime | fAMILY_NAME | fAMILY_NAME :: Atom
+XMonad.Config.Prime | fONT | fONT :: Atom
+XMonad.Config.Prime | fONT_NAME | fONT_NAME :: Atom
+XMonad.Config.Prime | fULL_NAME | fULL_NAME :: Atom
+XMonad.Config.Prime | familyChaos | familyChaos :: Protocol
+XMonad.Config.Prime | familyDECnet | familyDECnet :: Protocol
+XMonad.Config.Prime | familyInternet | familyInternet :: Protocol
+XMonad.Config.Prime | fetchBuffer | fetchBuffer :: Display -> CInt -> IO String
+XMonad.Config.Prime | fetchBytes | fetchBytes :: Display -> IO String
+XMonad.Config.Prime | fetchName | fetchName :: Display -> Window -> IO (Maybe String)
+XMonad.Config.Prime | fillArc | fillArc :: Display -> Drawable -> GC -> Position -> Position -> Dimension -> Dimension -> Angle -> Angle -> IO ()
+XMonad.Config.Prime | fillArcs | fillArcs :: Display -> Drawable -> GC -> [Arc] -> IO ()
+XMonad.Config.Prime | fillOpaqueStippled | fillOpaqueStippled :: FillStyle
+XMonad.Config.Prime | fillPolygon | fillPolygon :: Display -> Drawable -> GC -> [Point] -> PolygonShape -> CoordinateMode -> IO ()
+XMonad.Config.Prime | fillRectangle | fillRectangle :: Display -> Drawable -> GC -> Position -> Position -> Dimension -> Dimension -> IO ()
+XMonad.Config.Prime | fillRectangles | fillRectangles :: Display -> Drawable -> GC -> [Rectangle] -> IO ()
+XMonad.Config.Prime | fillSolid | fillSolid :: FillStyle
+XMonad.Config.Prime | fillStippled | fillStippled :: FillStyle
+XMonad.Config.Prime | fillTiled | fillTiled :: FillStyle
+XMonad.Config.Prime | firstExtensionError | firstExtensionError :: ErrorCode
+XMonad.Config.Prime | flush | flush :: Display -> IO ()
+XMonad.Config.Prime | flushGC | flushGC :: Display -> GC -> IO ()
+XMonad.Config.Prime | focusChangeMask | focusChangeMask :: EventMask
+XMonad.Config.Prime | focusIn | focusIn :: EventType
+XMonad.Config.Prime | focusOut | focusOut :: EventType
+XMonad.Config.Prime | fontFromFontStruct | fontFromFontStruct :: FontStruct -> Font
+XMonad.Config.Prime | fontFromGC | fontFromGC :: Display -> GC -> IO Font
+XMonad.Config.Prime | fontLeftToRight | fontLeftToRight :: FontDirection
+XMonad.Config.Prime | fontRightToLeft | fontRightToLeft :: FontDirection
+XMonad.Config.Prime | forceScreenSaver | forceScreenSaver :: Display -> ScreenSaverMode -> IO ()
+XMonad.Config.Prime | forgetGravity | forgetGravity :: BitGravity
+XMonad.Config.Prime | freeColormap | freeColormap :: Display -> Colormap -> IO ()
+XMonad.Config.Prime | freeColors | freeColors :: Display -> Colormap -> [Pixel] -> Pixel -> IO ()
+XMonad.Config.Prime | freeCursor | freeCursor :: Display -> Font -> IO ()
+XMonad.Config.Prime | freeFont | freeFont :: Display -> FontStruct -> IO ()
+XMonad.Config.Prime | freeFontSet | freeFontSet :: Display -> FontSet -> IO ()
+XMonad.Config.Prime | freeGC | freeGC :: Display -> GC -> IO ()
+XMonad.Config.Prime | freePixmap | freePixmap :: Display -> Pixmap -> IO ()
+XMonad.Config.Prime | freeStringList | freeStringList :: Ptr CString -> IO ()
+XMonad.Config.Prime | gCArcMode | gCArcMode :: GCMask
+XMonad.Config.Prime | gCBackground | gCBackground :: GCMask
+XMonad.Config.Prime | gCCapStyle | gCCapStyle :: GCMask
+XMonad.Config.Prime | gCClipMask | gCClipMask :: GCMask
+XMonad.Config.Prime | gCClipXOrigin | gCClipXOrigin :: GCMask
+XMonad.Config.Prime | gCClipYOrigin | gCClipYOrigin :: GCMask
+XMonad.Config.Prime | gCDashList | gCDashList :: GCMask
+XMonad.Config.Prime | gCDashOffset | gCDashOffset :: GCMask
+XMonad.Config.Prime | gCFillRule | gCFillRule :: GCMask
+XMonad.Config.Prime | gCFillStyle | gCFillStyle :: GCMask
+XMonad.Config.Prime | gCFont | gCFont :: GCMask
+XMonad.Config.Prime | gCForeground | gCForeground :: GCMask
+XMonad.Config.Prime | gCFunction | gCFunction :: GCMask
+XMonad.Config.Prime | gCGraphicsExposures | gCGraphicsExposures :: GCMask
+XMonad.Config.Prime | gCJoinStyle | gCJoinStyle :: GCMask
+XMonad.Config.Prime | gCLastBit | gCLastBit :: GCMask
+XMonad.Config.Prime | gCLineStyle | gCLineStyle :: GCMask
+XMonad.Config.Prime | gCLineWidth | gCLineWidth :: GCMask
+XMonad.Config.Prime | gCPlaneMask | gCPlaneMask :: GCMask
+XMonad.Config.Prime | gCStipple | gCStipple :: GCMask
+XMonad.Config.Prime | gCSubwindowMode | gCSubwindowMode :: GCMask
+XMonad.Config.Prime | gCTile | gCTile :: GCMask
+XMonad.Config.Prime | gCTileStipXOrigin | gCTileStipXOrigin :: GCMask
+XMonad.Config.Prime | gCTileStipYOrigin | gCTileStipYOrigin :: GCMask
+XMonad.Config.Prime | gContextFromGC | gContextFromGC :: GC -> GContext
+XMonad.Config.Prime | gXand | gXand :: GXFunction
+XMonad.Config.Prime | gXandInverted | gXandInverted :: GXFunction
+XMonad.Config.Prime | gXandReverse | gXandReverse :: GXFunction
+XMonad.Config.Prime | gXclear | gXclear :: GXFunction
+XMonad.Config.Prime | gXcopy | gXcopy :: GXFunction
+XMonad.Config.Prime | gXcopyInverted | gXcopyInverted :: GXFunction
+XMonad.Config.Prime | gXequiv | gXequiv :: GXFunction
+XMonad.Config.Prime | gXinvert | gXinvert :: GXFunction
+XMonad.Config.Prime | gXnand | gXnand :: GXFunction
+XMonad.Config.Prime | gXnoop | gXnoop :: GXFunction
+XMonad.Config.Prime | gXnor | gXnor :: GXFunction
+XMonad.Config.Prime | gXor | gXor :: GXFunction
+XMonad.Config.Prime | gXorInverted | gXorInverted :: GXFunction
+XMonad.Config.Prime | gXorReverse | gXorReverse :: GXFunction
+XMonad.Config.Prime | gXset | gXset :: GXFunction
+XMonad.Config.Prime | gXxor | gXxor :: GXFunction
+XMonad.Config.Prime | geometry | geometry :: Display -> CInt -> String -> String -> Dimension -> Dimension -> Dimension -> CInt -> CInt -> IO (CInt, Position, Position, Dimension, Dimension)
+XMonad.Config.Prime | getAtomName | getAtomName :: Display -> Atom -> IO (Maybe String)
+XMonad.Config.Prime | getAtomNames | getAtomNames :: Display -> [Atom] -> IO [String]
+XMonad.Config.Prime | getClassHint | getClassHint :: Display -> Window -> IO ClassHint
+XMonad.Config.Prime | getCommand | getCommand :: Display -> Window -> IO [String]
+XMonad.Config.Prime | getErrorEvent | getErrorEvent :: XErrorEventPtr -> IO ErrorEvent
+XMonad.Config.Prime | getEvent | getEvent :: XEventPtr -> IO Event
+XMonad.Config.Prime | getGeometry | getGeometry :: Display -> Drawable -> IO (Window, Position, Position, Dimension, Dimension, Dimension, CInt)
+XMonad.Config.Prime | getIconName | getIconName :: Display -> Window -> IO String
+XMonad.Config.Prime | getImage | getImage :: Display -> Drawable -> CInt -> CInt -> CUInt -> CUInt -> CULong -> ImageFormat -> IO Image
+XMonad.Config.Prime | getInputFocus | getInputFocus :: Display -> IO (Window, FocusMode)
+XMonad.Config.Prime | getModifierMapping | getModifierMapping :: Display -> IO [(Modifier, [KeyCode])]
+XMonad.Config.Prime | getPixel | getPixel :: Image -> CInt -> CInt -> CULong
+XMonad.Config.Prime | getPointerControl | getPointerControl :: Display -> IO (CInt, CInt, CInt)
+XMonad.Config.Prime | getScreenSaver | getScreenSaver :: Display -> IO (CInt, CInt, PreferBlankingMode, AllowExposuresMode)
+XMonad.Config.Prime | getTextProperty | getTextProperty :: Display -> Window -> Atom -> IO TextProperty
+XMonad.Config.Prime | getTransientForHint | getTransientForHint :: Display -> Window -> IO (Maybe Window)
+XMonad.Config.Prime | getVisualInfo | getVisualInfo :: Display -> VisualInfoMask -> VisualInfo -> IO [VisualInfo]
+XMonad.Config.Prime | getWMHints | getWMHints :: Display -> Window -> IO WMHints
+XMonad.Config.Prime | getWMNormalHints | getWMNormalHints :: Display -> Window -> IO SizeHints
+XMonad.Config.Prime | getWMProtocols | getWMProtocols :: Display -> Window -> IO [Atom]
+XMonad.Config.Prime | getWindowAttributes | getWindowAttributes :: Display -> Window -> IO WindowAttributes
+XMonad.Config.Prime | getWindowProperty16 | getWindowProperty16 :: Display -> Atom -> Window -> IO (Maybe [CShort])
+XMonad.Config.Prime | getWindowProperty32 | getWindowProperty32 :: Display -> Atom -> Window -> IO (Maybe [CLong])
+XMonad.Config.Prime | getWindowProperty8 | getWindowProperty8 :: Display -> Atom -> Window -> IO (Maybe [CChar])
+XMonad.Config.Prime | getXErrorHandler | getXErrorHandler :: FunPtr CXErrorHandler -> CXErrorHandler
+XMonad.Config.Prime | get_ButtonEvent | get_ButtonEvent :: XEventPtr -> IO XButtonEvent
+XMonad.Config.Prime | get_ConfigureEvent | get_ConfigureEvent :: XEventPtr -> IO XConfigureEvent
+XMonad.Config.Prime | get_EventType | get_EventType :: XEventPtr -> IO EventType
+XMonad.Config.Prime | get_ExposeEvent | get_ExposeEvent :: XEventPtr -> IO XExposeEvent
+XMonad.Config.Prime | get_KeyEvent | get_KeyEvent :: XEventPtr -> IO XKeyEvent
+XMonad.Config.Prime | get_MotionEvent | get_MotionEvent :: XEventPtr -> IO XMotionEvent
+XMonad.Config.Prime | get_Window | get_Window :: XEventPtr -> IO Window
+XMonad.Config.Prime | gettimeofday_in_milliseconds | gettimeofday_in_milliseconds :: IO Integer
+XMonad.Config.Prime | grabButton | grabButton :: Display -> Button -> ButtonMask -> Window -> Bool -> EventMask -> GrabMode -> GrabMode -> Window -> Cursor -> IO ()
+XMonad.Config.Prime | grabFrozen | grabFrozen :: GrabStatus
+XMonad.Config.Prime | grabInvalidTime | grabInvalidTime :: GrabStatus
+XMonad.Config.Prime | grabKey | grabKey :: Display -> KeyCode -> KeyMask -> Window -> Bool -> GrabMode -> GrabMode -> IO ()
+XMonad.Config.Prime | grabKeyboard | grabKeyboard :: Display -> Window -> Bool -> GrabMode -> GrabMode -> Time -> IO GrabStatus
+XMonad.Config.Prime | grabModeAsync | grabModeAsync :: GrabMode
+XMonad.Config.Prime | grabModeSync | grabModeSync :: GrabMode
+XMonad.Config.Prime | grabNotViewable | grabNotViewable :: GrabStatus
+XMonad.Config.Prime | grabPointer | grabPointer :: Display -> Window -> Bool -> EventMask -> GrabMode -> GrabMode -> Window -> Cursor -> Time -> IO GrabStatus
+XMonad.Config.Prime | grabServer | grabServer :: Display -> IO ()
+XMonad.Config.Prime | grabSuccess | grabSuccess :: GrabStatus
+XMonad.Config.Prime | graphicsExpose | graphicsExpose :: EventType
+XMonad.Config.Prime | gravityNotify | gravityNotify :: EventType
+XMonad.Config.Prime | heightMMOfScreen | heightMMOfScreen :: Screen -> Dimension
+XMonad.Config.Prime | heightOfScreen | heightOfScreen :: Screen -> Dimension
+XMonad.Config.Prime | iNTEGER | iNTEGER :: Atom
+XMonad.Config.Prime | iTALIC_ANGLE | iTALIC_ANGLE :: Atom
+XMonad.Config.Prime | iconMaskHintBit | iconMaskHintBit :: Int
+XMonad.Config.Prime | iconPixmapHintBit | iconPixmapHintBit :: Int
+XMonad.Config.Prime | iconPositionHintBit | iconPositionHintBit :: Int
+XMonad.Config.Prime | iconWindowHintBit | iconWindowHintBit :: Int
+XMonad.Config.Prime | iconicState | iconicState :: Int
+XMonad.Config.Prime | iconifyWindow | iconifyWindow :: Display -> Window -> ScreenNumber -> IO ()
+XMonad.Config.Prime | imageByteOrder | imageByteOrder :: Display -> CInt
+XMonad.Config.Prime | includeInferiors | includeInferiors :: SubWindowMode
+XMonad.Config.Prime | initThreads | initThreads :: IO Status
+XMonad.Config.Prime | inputHintBit | inputHintBit :: Int
+XMonad.Config.Prime | inputOnly | inputOnly :: WindowClass
+XMonad.Config.Prime | inputOutput | inputOutput :: WindowClass
+XMonad.Config.Prime | installColormap | installColormap :: Display -> Colormap -> IO ()
+XMonad.Config.Prime | internAtom | internAtom :: Display -> String -> Bool -> IO Atom
+XMonad.Config.Prime | intersectRegion | intersectRegion :: Region -> Region -> Region -> IO CInt
+XMonad.Config.Prime | isCursorKey | isCursorKey :: KeySym -> Bool
+XMonad.Config.Prime | isFunctionKey | isFunctionKey :: KeySym -> Bool
+XMonad.Config.Prime | isKeypadKey | isKeypadKey :: KeySym -> Bool
+XMonad.Config.Prime | isMiscFunctionKey | isMiscFunctionKey :: KeySym -> Bool
+XMonad.Config.Prime | isModifierKey | isModifierKey :: KeySym -> Bool
+XMonad.Config.Prime | isPFKey | isPFKey :: KeySym -> Bool
+XMonad.Config.Prime | isPrivateKeypadKey | isPrivateKeypadKey :: KeySym -> Bool
+XMonad.Config.Prime | joinBevel | joinBevel :: JoinStyle
+XMonad.Config.Prime | joinMiter | joinMiter :: JoinStyle
+XMonad.Config.Prime | joinRound | joinRound :: JoinStyle
+XMonad.Config.Prime | keyPress | keyPress :: EventType
+XMonad.Config.Prime | keyPressMask | keyPressMask :: EventMask
+XMonad.Config.Prime | keyRelease | keyRelease :: EventType
+XMonad.Config.Prime | keyReleaseMask | keyReleaseMask :: EventMask
+XMonad.Config.Prime | keycodeToKeysym | keycodeToKeysym :: Display -> KeyCode -> CInt -> IO KeySym
+XMonad.Config.Prime | keymapNotify | keymapNotify :: EventType
+XMonad.Config.Prime | keymapStateMask | keymapStateMask :: EventMask
+XMonad.Config.Prime | keysymToKeycode | keysymToKeycode :: Display -> KeySym -> IO KeyCode
+XMonad.Config.Prime | keysymToString | keysymToString :: KeySym -> String
+XMonad.Config.Prime | killClient | killClient :: Display -> Window -> IO CInt
+XMonad.Config.Prime | lASTEvent | lASTEvent :: EventType
+XMonad.Config.Prime | lAST_PREDEFINED | lAST_PREDEFINED :: Atom
+XMonad.Config.Prime | lSBFirst | lSBFirst :: ByteOrder
+XMonad.Config.Prime | lastExtensionError | lastExtensionError :: ErrorCode
+XMonad.Config.Prime | lastKnownRequestProcessed | lastKnownRequestProcessed :: Display -> IO CInt
+XMonad.Config.Prime | leaveNotify | leaveNotify :: EventType
+XMonad.Config.Prime | leaveWindowMask | leaveWindowMask :: EventMask
+XMonad.Config.Prime | lineDoubleDash | lineDoubleDash :: LineStyle
+XMonad.Config.Prime | lineOnOffDash | lineOnOffDash :: LineStyle
+XMonad.Config.Prime | lineSolid | lineSolid :: LineStyle
+XMonad.Config.Prime | loadQueryFont | loadQueryFont :: Display -> String -> IO FontStruct
+XMonad.Config.Prime | lockDisplay | lockDisplay :: Display -> IO ()
+XMonad.Config.Prime | lockMapIndex | lockMapIndex :: Modifier
+XMonad.Config.Prime | lockMask | lockMask :: KeyMask
+XMonad.Config.Prime | lookupColor | lookupColor :: Display -> Colormap -> String -> IO (Color, Color)
+XMonad.Config.Prime | lookupKeysym | lookupKeysym :: XKeyEventPtr -> CInt -> IO KeySym
+XMonad.Config.Prime | lookupString | lookupString :: XKeyEventPtr -> IO (Maybe KeySym, String)
+XMonad.Config.Prime | lowerHighest | lowerHighest :: CirculationDirection
+XMonad.Config.Prime | lowerWindow | lowerWindow :: Display -> Window -> IO ()
+XMonad.Config.Prime | mAX_SPACE | mAX_SPACE :: Atom
+XMonad.Config.Prime | mIN_SPACE | mIN_SPACE :: Atom
+XMonad.Config.Prime | mSBFirst | mSBFirst :: ByteOrder
+XMonad.Config.Prime | mapNotify | mapNotify :: EventType
+XMonad.Config.Prime | mapRaised | mapRaised :: Display -> Window -> IO CInt
+XMonad.Config.Prime | mapRequest | mapRequest :: EventType
+XMonad.Config.Prime | mapSubwindows | mapSubwindows :: Display -> Window -> IO ()
+XMonad.Config.Prime | mapWindow | mapWindow :: Display -> Window -> IO ()
+XMonad.Config.Prime | mappingKeyboard | mappingKeyboard :: MappingRequest
+XMonad.Config.Prime | mappingModifier | mappingModifier :: MappingRequest
+XMonad.Config.Prime | mappingNotify | mappingNotify :: EventType
+XMonad.Config.Prime | mappingPointer | mappingPointer :: MappingRequest
+XMonad.Config.Prime | maskEvent | maskEvent :: Display -> EventMask -> XEventPtr -> IO ()
+XMonad.Config.Prime | matchVisualInfo | matchVisualInfo :: Display -> ScreenNumber -> CInt -> CInt -> IO (Maybe VisualInfo)
+XMonad.Config.Prime | maxCmapsOfScreen | maxCmapsOfScreen :: Screen -> CInt
+XMonad.Config.Prime | maxRequestSize | maxRequestSize :: Display -> CInt
+XMonad.Config.Prime | minCmapsOfScreen | minCmapsOfScreen :: Screen -> CInt
+XMonad.Config.Prime | mkXErrorHandler | mkXErrorHandler :: CXErrorHandler -> IO (FunPtr CXErrorHandler)
+XMonad.Config.Prime | mod1MapIndex | mod1MapIndex :: Modifier
+XMonad.Config.Prime | mod1Mask | mod1Mask :: KeyMask
+XMonad.Config.Prime | mod2MapIndex | mod2MapIndex :: Modifier
+XMonad.Config.Prime | mod2Mask | mod2Mask :: KeyMask
+XMonad.Config.Prime | mod3MapIndex | mod3MapIndex :: Modifier
+XMonad.Config.Prime | mod3Mask | mod3Mask :: KeyMask
+XMonad.Config.Prime | mod4MapIndex | mod4MapIndex :: Modifier
+XMonad.Config.Prime | mod4Mask | mod4Mask :: KeyMask
+XMonad.Config.Prime | mod5MapIndex | mod5MapIndex :: Modifier
+XMonad.Config.Prime | mod5Mask | mod5Mask :: KeyMask
+XMonad.Config.Prime | motionNotify | motionNotify :: EventType
+XMonad.Config.Prime | moveResizeWindow | moveResizeWindow :: Display -> Window -> Position -> Position -> Dimension -> Dimension -> IO ()
+XMonad.Config.Prime | moveWindow | moveWindow :: Display -> Window -> Position -> Position -> IO ()
+XMonad.Config.Prime | nORM_SPACE | nORM_SPACE :: Atom
+XMonad.Config.Prime | nOTICE | nOTICE :: Atom
+XMonad.Config.Prime | nextEvent | nextEvent :: Display -> XEventPtr -> IO ()
+XMonad.Config.Prime | noEventMask | noEventMask :: EventMask
+XMonad.Config.Prime | noExpose | noExpose :: EventType
+XMonad.Config.Prime | noModMask | noModMask :: KeyMask
+XMonad.Config.Prime | noOp | noOp :: Display -> IO ()
+XMonad.Config.Prime | noSymbol | noSymbol :: KeySym
+XMonad.Config.Prime | nonconvex | nonconvex :: PolygonShape
+XMonad.Config.Prime | none | none :: XID
+XMonad.Config.Prime | normalState | normalState :: Int
+XMonad.Config.Prime | northEastGravity | northEastGravity :: BitGravity
+XMonad.Config.Prime | northGravity | northGravity :: BitGravity
+XMonad.Config.Prime | northWestGravity | northWestGravity :: BitGravity
+XMonad.Config.Prime | notUseful | notUseful :: BackingStore
+XMonad.Config.Prime | notifyAncestor | notifyAncestor :: NotifyDetail
+XMonad.Config.Prime | notifyDetailNone | notifyDetailNone :: NotifyDetail
+XMonad.Config.Prime | notifyGrab | notifyGrab :: NotifyMode
+XMonad.Config.Prime | notifyHint | notifyHint :: NotifyMode
+XMonad.Config.Prime | notifyInferior | notifyInferior :: NotifyDetail
+XMonad.Config.Prime | notifyNonlinear | notifyNonlinear :: NotifyDetail
+XMonad.Config.Prime | notifyNonlinearVirtual | notifyNonlinearVirtual :: NotifyDetail
+XMonad.Config.Prime | notifyNormal | notifyNormal :: NotifyMode
+XMonad.Config.Prime | notifyPointer | notifyPointer :: NotifyDetail
+XMonad.Config.Prime | notifyPointerRoot | notifyPointerRoot :: NotifyDetail
+XMonad.Config.Prime | notifyUngrab | notifyUngrab :: NotifyMode
+XMonad.Config.Prime | notifyVirtual | notifyVirtual :: NotifyDetail
+XMonad.Config.Prime | notifyWhileGrabbed | notifyWhileGrabbed :: NotifyMode
+XMonad.Config.Prime | offsetRegion | offsetRegion :: Region -> Point -> IO CInt
+XMonad.Config.Prime | openDisplay | openDisplay :: String -> IO Display
+XMonad.Config.Prime | ownerGrabButtonMask | ownerGrabButtonMask :: EventMask
+XMonad.Config.Prime | pAspectBit | pAspectBit :: Int
+XMonad.Config.Prime | pBaseSizeBit | pBaseSizeBit :: Int
+XMonad.Config.Prime | pIXMAP | pIXMAP :: Atom
+XMonad.Config.Prime | pMaxSizeBit | pMaxSizeBit :: Int
+XMonad.Config.Prime | pMinSizeBit | pMinSizeBit :: Int
+XMonad.Config.Prime | pOINT | pOINT :: Atom
+XMonad.Config.Prime | pOINT_SIZE | pOINT_SIZE :: Atom
+XMonad.Config.Prime | pRIMARY | pRIMARY :: Atom
+XMonad.Config.Prime | pResizeIncBit | pResizeIncBit :: Int
+XMonad.Config.Prime | pWinGravityBit | pWinGravityBit :: Int
+XMonad.Config.Prime | parseColor | parseColor :: Display -> Colormap -> String -> IO Color
+XMonad.Config.Prime | peekEvent | peekEvent :: Display -> XEventPtr -> IO ()
+XMonad.Config.Prime | pending | pending :: Display -> IO CInt
+XMonad.Config.Prime | placeOnBottom | placeOnBottom :: Place
+XMonad.Config.Prime | placeOnTop | placeOnTop :: Place
+XMonad.Config.Prime | planesOfScreen | planesOfScreen :: Screen -> CInt
+XMonad.Config.Prime | pointInRegion | pointInRegion :: Region -> Point -> IO Bool
+XMonad.Config.Prime | pointerMotionHintMask | pointerMotionHintMask :: EventMask
+XMonad.Config.Prime | pointerMotionMask | pointerMotionMask :: EventMask
+XMonad.Config.Prime | polygonRegion | polygonRegion :: [Point] -> FillRule -> IO Region
+XMonad.Config.Prime | preferBlanking | preferBlanking :: PreferBlankingMode
+XMonad.Config.Prime | propModeAppend | propModeAppend :: CInt
+XMonad.Config.Prime | propModePrepend | propModePrepend :: CInt
+XMonad.Config.Prime | propModeReplace | propModeReplace :: CInt
+XMonad.Config.Prime | propertyChangeMask | propertyChangeMask :: EventMask
+XMonad.Config.Prime | propertyDelete | propertyDelete :: PropertyNotification
+XMonad.Config.Prime | propertyNewValue | propertyNewValue :: PropertyNotification
+XMonad.Config.Prime | propertyNotify | propertyNotify :: EventType
+XMonad.Config.Prime | protocolRevision | protocolRevision :: Display -> CInt
+XMonad.Config.Prime | protocolVersion | protocolVersion :: Display -> CInt
+XMonad.Config.Prime | putBackEvent | putBackEvent :: Display -> XEventPtr -> IO ()
+XMonad.Config.Prime | putImage | putImage :: Display -> Drawable -> GC -> Image -> Position -> Position -> Position -> Position -> Dimension -> Dimension -> IO ()
+XMonad.Config.Prime | qLength | qLength :: Display -> IO CInt
+XMonad.Config.Prime | qUAD_WIDTH | qUAD_WIDTH :: Atom
+XMonad.Config.Prime | queryBestCursor | queryBestCursor :: Display -> Drawable -> Dimension -> Dimension -> IO (Dimension, Dimension)
+XMonad.Config.Prime | queryBestSize | queryBestSize :: Display -> QueryBestSizeClass -> Drawable -> Dimension -> Dimension -> IO (Dimension, Dimension)
+XMonad.Config.Prime | queryBestStipple | queryBestStipple :: Display -> Drawable -> Dimension -> Dimension -> IO (Dimension, Dimension)
+XMonad.Config.Prime | queryBestTile | queryBestTile :: Display -> Drawable -> Dimension -> Dimension -> IO (Dimension, Dimension)
+XMonad.Config.Prime | queryColor | queryColor :: Display -> Colormap -> Color -> IO Color
+XMonad.Config.Prime | queryColors | queryColors :: Display -> Colormap -> [Color] -> IO [Color]
+XMonad.Config.Prime | queryFont | queryFont :: Display -> Font -> IO FontStruct
+XMonad.Config.Prime | queryPointer | queryPointer :: Display -> Window -> IO (Bool, Window, Window, CInt, CInt, CInt, CInt, Modifier)
+XMonad.Config.Prime | queryTree | queryTree :: Display -> Window -> IO (Window, Window, [Window])
+XMonad.Config.Prime | queuedAfterFlush | queuedAfterFlush :: QueuedMode
+XMonad.Config.Prime | queuedAfterReading | queuedAfterReading :: QueuedMode
+XMonad.Config.Prime | queuedAlready | queuedAlready :: QueuedMode
+XMonad.Config.Prime | rECTANGLE | rECTANGLE :: Atom
+XMonad.Config.Prime | rESOLUTION | rESOLUTION :: Atom
+XMonad.Config.Prime | rESOURCE_MANAGER | rESOURCE_MANAGER :: Atom
+XMonad.Config.Prime | rGB_BEST_MAP | rGB_BEST_MAP :: Atom
+XMonad.Config.Prime | rGB_BLUE_MAP | rGB_BLUE_MAP :: Atom
+XMonad.Config.Prime | rGB_COLOR_MAP | rGB_COLOR_MAP :: Atom
+XMonad.Config.Prime | rGB_DEFAULT_MAP | rGB_DEFAULT_MAP :: Atom
+XMonad.Config.Prime | rGB_GRAY_MAP | rGB_GRAY_MAP :: Atom
+XMonad.Config.Prime | rGB_GREEN_MAP | rGB_GREEN_MAP :: Atom
+XMonad.Config.Prime | rGB_RED_MAP | rGB_RED_MAP :: Atom
+XMonad.Config.Prime | raiseLowest | raiseLowest :: CirculationDirection
+XMonad.Config.Prime | raiseWindow | raiseWindow :: Display -> Window -> IO ()
+XMonad.Config.Prime | rawGetWindowProperty | rawGetWindowProperty :: Storable a => Int -> Display -> Atom -> Window -> IO (Maybe [a])
+XMonad.Config.Prime | readBitmapFile | readBitmapFile :: Display -> Drawable -> String -> IO (Either String (Dimension, Dimension, Pixmap, Maybe CInt, Maybe CInt))
+XMonad.Config.Prime | recolorCursor | recolorCursor :: Display -> Cursor -> Color -> Color -> IO ()
+XMonad.Config.Prime | rectInRegion | rectInRegion :: Region -> Rectangle -> IO RectInRegionResult
+XMonad.Config.Prime | rectangleIn | rectangleIn :: RectInRegionResult
+XMonad.Config.Prime | rectangleOut | rectangleOut :: RectInRegionResult
+XMonad.Config.Prime | rectanglePart | rectanglePart :: RectInRegionResult
+XMonad.Config.Prime | refreshKeyboardMapping | refreshKeyboardMapping :: Event -> IO ()
+XMonad.Config.Prime | removeFromSaveSet | removeFromSaveSet :: Display -> Window -> IO ()
+XMonad.Config.Prime | reparentNotify | reparentNotify :: EventType
+XMonad.Config.Prime | reparentWindow | reparentWindow :: Display -> Window -> Window -> Position -> Position -> IO ()
+XMonad.Config.Prime | replayKeyboard | replayKeyboard :: AllowEvents
+XMonad.Config.Prime | replayPointer | replayPointer :: AllowEvents
+XMonad.Config.Prime | resetScreenSaver | resetScreenSaver :: Display -> IO ()
+XMonad.Config.Prime | resizeRedirectMask | resizeRedirectMask :: EventMask
+XMonad.Config.Prime | resizeRequest | resizeRequest :: EventType
+XMonad.Config.Prime | resizeWindow | resizeWindow :: Display -> Window -> Dimension -> Dimension -> IO ()
+XMonad.Config.Prime | resourceManagerString | resourceManagerString :: Display -> String
+XMonad.Config.Prime | restackWindows | restackWindows :: Display -> [Window] -> IO ()
+XMonad.Config.Prime | retainPermanent | retainPermanent :: CloseDownMode
+XMonad.Config.Prime | retainTemporary | retainTemporary :: CloseDownMode
+XMonad.Config.Prime | revertToNone | revertToNone :: FocusMode
+XMonad.Config.Prime | revertToParent | revertToParent :: FocusMode
+XMonad.Config.Prime | revertToPointerRoot | revertToPointerRoot :: FocusMode
+XMonad.Config.Prime | rmInitialize | rmInitialize :: IO ()
+XMonad.Config.Prime | rootWindow | rootWindow :: Display -> ScreenNumber -> IO Window
+XMonad.Config.Prime | rootWindowOfScreen | rootWindowOfScreen :: Screen -> Window
+XMonad.Config.Prime | rotateBuffers | rotateBuffers :: Display -> CInt -> IO ()
+XMonad.Config.Prime | rrCrtcChangeNotifyMask | rrCrtcChangeNotifyMask :: EventMask
+XMonad.Config.Prime | rrNotify | rrNotify :: EventType
+XMonad.Config.Prime | rrNotifyCrtcChange | rrNotifyCrtcChange :: EventType
+XMonad.Config.Prime | rrNotifyOutputChange | rrNotifyOutputChange :: EventType
+XMonad.Config.Prime | rrNotifyOutputProperty | rrNotifyOutputProperty :: EventType
+XMonad.Config.Prime | rrOutputChangeNotifyMask | rrOutputChangeNotifyMask :: EventMask
+XMonad.Config.Prime | rrOutputPropertyNotifyMask | rrOutputPropertyNotifyMask :: EventMask
+XMonad.Config.Prime | rrScreenChangeNotify | rrScreenChangeNotify :: EventType
+XMonad.Config.Prime | rrScreenChangeNotifyMask | rrScreenChangeNotifyMask :: EventMask
+XMonad.Config.Prime | sECONDARY | sECONDARY :: Atom
+XMonad.Config.Prime | sTRIKEOUT_ASCENT | sTRIKEOUT_ASCENT :: Atom
+XMonad.Config.Prime | sTRIKEOUT_DESCENT | sTRIKEOUT_DESCENT :: Atom
+XMonad.Config.Prime | sTRING | sTRING :: Atom
+XMonad.Config.Prime | sUBSCRIPT_X | sUBSCRIPT_X :: Atom
+XMonad.Config.Prime | sUBSCRIPT_Y | sUBSCRIPT_Y :: Atom
+XMonad.Config.Prime | sUPERSCRIPT_X | sUPERSCRIPT_X :: Atom
+XMonad.Config.Prime | sUPERSCRIPT_Y | sUPERSCRIPT_Y :: Atom
+XMonad.Config.Prime | screenCount | screenCount :: Display -> CInt
+XMonad.Config.Prime | screenNumberOfScreen | screenNumberOfScreen :: Screen -> ScreenNumber
+XMonad.Config.Prime | screenOfDisplay | screenOfDisplay :: Display -> ScreenNumber -> Screen
+XMonad.Config.Prime | screenResourceString | screenResourceString :: Screen -> String
+XMonad.Config.Prime | screenSaverActive | screenSaverActive :: ScreenSaverMode
+XMonad.Config.Prime | screenSaverCycleMask | screenSaverCycleMask :: EventMask
+XMonad.Config.Prime | screenSaverNotify | screenSaverNotify :: EventType
+XMonad.Config.Prime | screenSaverNotifyMask | screenSaverNotifyMask :: EventMask
+XMonad.Config.Prime | screenSaverReset | screenSaverReset :: ScreenSaverMode
+XMonad.Config.Prime | selectInput | selectInput :: Display -> Window -> EventMask -> IO ()
+XMonad.Config.Prime | selectionClear | selectionClear :: EventType
+XMonad.Config.Prime | selectionNotify | selectionNotify :: EventType
+XMonad.Config.Prime | selectionRequest | selectionRequest :: EventType
+XMonad.Config.Prime | sendEvent | sendEvent :: Display -> Window -> Bool -> EventMask -> XEventPtr -> IO ()
+XMonad.Config.Prime | serverVendor | serverVendor :: Display -> String
+XMonad.Config.Prime | setArcMode | setArcMode :: Display -> GC -> ArcMode -> IO ()
+XMonad.Config.Prime | setBackground | setBackground :: Display -> GC -> Pixel -> IO ()
+XMonad.Config.Prime | setClassHint | setClassHint :: Display -> Window -> ClassHint -> IO ()
+XMonad.Config.Prime | setClientMessageEvent | setClientMessageEvent :: XEventPtr -> Window -> Atom -> CInt -> Atom -> Time -> IO ()
+XMonad.Config.Prime | setClientMessageEvent' | setClientMessageEvent' :: XEventPtr -> Window -> Atom -> CInt -> [CInt] -> IO ()
+XMonad.Config.Prime | setClipMask | setClipMask :: Display -> GC -> Pixmap -> IO ()
+XMonad.Config.Prime | setClipOrigin | setClipOrigin :: Display -> GC -> Position -> Position -> IO ()
+XMonad.Config.Prime | setCloseDownMode | setCloseDownMode :: Display -> CloseDownMode -> IO ()
+XMonad.Config.Prime | setConfigureEvent | setConfigureEvent :: XEventPtr -> Window -> Window -> CInt -> CInt -> CInt -> CInt -> CInt -> Window -> Bool -> IO ()
+XMonad.Config.Prime | setDashes | setDashes :: Display -> GC -> CInt -> String -> CInt -> IO ()
+XMonad.Config.Prime | setDefaultErrorHandler | setDefaultErrorHandler :: IO ()
+XMonad.Config.Prime | setErrorHandler | setErrorHandler :: XErrorHandler -> IO ()
+XMonad.Config.Prime | setEventType | setEventType :: XEventPtr -> EventType -> IO ()
+XMonad.Config.Prime | setFillRule | setFillRule :: Display -> GC -> FillRule -> IO ()
+XMonad.Config.Prime | setFillStyle | setFillStyle :: Display -> GC -> FillStyle -> IO ()
+XMonad.Config.Prime | setFont | setFont :: Display -> GC -> Font -> IO ()
+XMonad.Config.Prime | setForeground | setForeground :: Display -> GC -> Pixel -> IO ()
+XMonad.Config.Prime | setFunction | setFunction :: Display -> GC -> GXFunction -> IO ()
+XMonad.Config.Prime | setGraphicsExposures | setGraphicsExposures :: Display -> GC -> Bool -> IO ()
+XMonad.Config.Prime | setIconName | setIconName :: Display -> Window -> String -> IO ()
+XMonad.Config.Prime | setInputFocus | setInputFocus :: Display -> Window -> FocusMode -> Time -> IO ()
+XMonad.Config.Prime | setKeyEvent | setKeyEvent :: XEventPtr -> Window -> Window -> Window -> KeyMask -> KeyCode -> Bool -> IO ()
+XMonad.Config.Prime | setLineAttributes | setLineAttributes :: Display -> GC -> CInt -> LineStyle -> CapStyle -> JoinStyle -> IO ()
+XMonad.Config.Prime | setLocaleModifiers | setLocaleModifiers :: String -> IO String
+XMonad.Config.Prime | setModeDelete | setModeDelete :: ChangeSaveSetMode
+XMonad.Config.Prime | setModeInsert | setModeInsert :: ChangeSaveSetMode
+XMonad.Config.Prime | setPlaneMask | setPlaneMask :: Display -> GC -> Pixel -> IO ()
+XMonad.Config.Prime | setRegion | setRegion :: Display -> GC -> Region -> IO CInt
+XMonad.Config.Prime | setScreenSaver | setScreenSaver :: Display -> CInt -> CInt -> PreferBlankingMode -> AllowExposuresMode -> IO ()
+XMonad.Config.Prime | setSelectionNotify | setSelectionNotify :: XEventPtr -> Window -> Atom -> Atom -> Atom -> Time -> IO ()
+XMonad.Config.Prime | setState | setState :: Display -> GC -> Pixel -> Pixel -> GXFunction -> Pixel -> IO ()
+XMonad.Config.Prime | setStipple | setStipple :: Display -> GC -> Pixmap -> IO ()
+XMonad.Config.Prime | setSubwindowMode | setSubwindowMode :: Display -> GC -> SubWindowMode -> IO ()
+XMonad.Config.Prime | setTSOrigin | setTSOrigin :: Display -> GC -> Position -> Position -> IO ()
+XMonad.Config.Prime | setTextProperty | setTextProperty :: Display -> Window -> String -> Atom -> IO ()
+XMonad.Config.Prime | setTile | setTile :: Display -> GC -> Pixmap -> IO ()
+XMonad.Config.Prime | setWMHints | setWMHints :: Display -> Window -> WMHints -> IO Status
+XMonad.Config.Prime | setWMNormalHints | setWMNormalHints :: Display -> Window -> SizeHints -> IO ()
+XMonad.Config.Prime | setWMProtocols | setWMProtocols :: Display -> Window -> [Atom] -> IO ()
+XMonad.Config.Prime | setWindowBackground | setWindowBackground :: Display -> Window -> Pixel -> IO ()
+XMonad.Config.Prime | setWindowBackgroundPixmap | setWindowBackgroundPixmap :: Display -> Window -> Pixmap -> IO ()
+XMonad.Config.Prime | setWindowBorder | setWindowBorder :: Display -> Window -> Pixel -> IO ()
+XMonad.Config.Prime | setWindowBorderPixmap | setWindowBorderPixmap :: Display -> Window -> Pixmap -> IO ()
+XMonad.Config.Prime | setWindowBorderWidth | setWindowBorderWidth :: Display -> Window -> Dimension -> IO ()
+XMonad.Config.Prime | setWindowColormap | setWindowColormap :: Display -> Window -> Colormap -> IO ()
+XMonad.Config.Prime | set_background_pixel | set_background_pixel :: Ptr SetWindowAttributes -> Pixel -> IO ()
+XMonad.Config.Prime | set_background_pixmap | set_background_pixmap :: Ptr SetWindowAttributes -> Pixmap -> IO ()
+XMonad.Config.Prime | set_backing_pixel | set_backing_pixel :: Ptr SetWindowAttributes -> Pixel -> IO ()
+XMonad.Config.Prime | set_backing_planes | set_backing_planes :: Ptr SetWindowAttributes -> Pixel -> IO ()
+XMonad.Config.Prime | set_backing_store | set_backing_store :: Ptr SetWindowAttributes -> BackingStore -> IO ()
+XMonad.Config.Prime | set_bit_gravity | set_bit_gravity :: Ptr SetWindowAttributes -> BitGravity -> IO ()
+XMonad.Config.Prime | set_border_pixel | set_border_pixel :: Ptr SetWindowAttributes -> Pixel -> IO ()
+XMonad.Config.Prime | set_border_pixmap | set_border_pixmap :: Ptr SetWindowAttributes -> Pixmap -> IO ()
+XMonad.Config.Prime | set_colormap | set_colormap :: Ptr SetWindowAttributes -> Colormap -> IO ()
+XMonad.Config.Prime | set_cursor | set_cursor :: Ptr SetWindowAttributes -> Cursor -> IO ()
+XMonad.Config.Prime | set_do_not_propagate_mask | set_do_not_propagate_mask :: Ptr SetWindowAttributes -> EventMask -> IO ()
+XMonad.Config.Prime | set_event_mask | set_event_mask :: Ptr SetWindowAttributes -> EventMask -> IO ()
+XMonad.Config.Prime | set_override_redirect | set_override_redirect :: Ptr SetWindowAttributes -> Bool -> IO ()
+XMonad.Config.Prime | set_save_under | set_save_under :: Ptr SetWindowAttributes -> Bool -> IO ()
+XMonad.Config.Prime | set_win_gravity | set_win_gravity :: Ptr SetWindowAttributes -> WindowGravity -> IO ()
+XMonad.Config.Prime | shiftMapIndex | shiftMapIndex :: Modifier
+XMonad.Config.Prime | shiftMask | shiftMask :: KeyMask
+XMonad.Config.Prime | shrinkRegion | shrinkRegion :: Region -> Point -> IO CInt
+XMonad.Config.Prime | southEastGravity | southEastGravity :: BitGravity
+XMonad.Config.Prime | southGravity | southGravity :: BitGravity
+XMonad.Config.Prime | southWestGravity | southWestGravity :: BitGravity
+XMonad.Config.Prime | stateHintBit | stateHintBit :: Int
+XMonad.Config.Prime | staticGravity | staticGravity :: BitGravity
+XMonad.Config.Prime | stippleShape | stippleShape :: QueryBestSizeClass
+XMonad.Config.Prime | storeBuffer | storeBuffer :: Display -> String -> CInt -> IO ()
+XMonad.Config.Prime | storeBytes | storeBytes :: Display -> String -> IO ()
+XMonad.Config.Prime | storeColor | storeColor :: Display -> Colormap -> Color -> IO ()
+XMonad.Config.Prime | storeName | storeName :: Display -> Window -> String -> IO ()
+XMonad.Config.Prime | stringToKeysym | stringToKeysym :: String -> KeySym
+XMonad.Config.Prime | structureNotifyMask | structureNotifyMask :: EventMask
+XMonad.Config.Prime | substructureNotifyMask | substructureNotifyMask :: EventMask
+XMonad.Config.Prime | substructureRedirectMask | substructureRedirectMask :: EventMask
+XMonad.Config.Prime | subtractRegion | subtractRegion :: Region -> Region -> Region -> IO CInt
+XMonad.Config.Prime | success | success :: ErrorCode
+XMonad.Config.Prime | supportsLocale | supportsLocale :: IO Bool
+XMonad.Config.Prime | sync | sync :: Display -> Bool -> IO ()
+XMonad.Config.Prime | syncBoth | syncBoth :: AllowEvents
+XMonad.Config.Prime | syncKeyboard | syncKeyboard :: AllowEvents
+XMonad.Config.Prime | syncPointer | syncPointer :: AllowEvents
+XMonad.Config.Prime | textExtents | textExtents :: FontStruct -> String -> (FontDirection, Int32, Int32, CharStruct)
+XMonad.Config.Prime | textWidth | textWidth :: FontStruct -> String -> Int32
+XMonad.Config.Prime | throwIfZero | throwIfZero :: String -> IO Status -> IO ()
+XMonad.Config.Prime | tileShape | tileShape :: QueryBestSizeClass
+XMonad.Config.Prime | translateCoordinates | translateCoordinates :: Display -> Window -> Window -> Position -> Position -> IO (Bool, Position, Position, Window)
+XMonad.Config.Prime | uNDERLINE_POSITION | uNDERLINE_POSITION :: Atom
+XMonad.Config.Prime | uNDERLINE_THICKNESS | uNDERLINE_THICKNESS :: Atom
+XMonad.Config.Prime | undefineCursor | undefineCursor :: Display -> Window -> IO ()
+XMonad.Config.Prime | ungrabButton | ungrabButton :: Display -> Button -> ButtonMask -> Window -> IO ()
+XMonad.Config.Prime | ungrabKey | ungrabKey :: Display -> KeyCode -> KeyMask -> Window -> IO ()
+XMonad.Config.Prime | ungrabKeyboard | ungrabKeyboard :: Display -> Time -> IO ()
+XMonad.Config.Prime | ungrabPointer | ungrabPointer :: Display -> Time -> IO ()
+XMonad.Config.Prime | ungrabServer | ungrabServer :: Display -> IO ()
+XMonad.Config.Prime | uninstallColormap | uninstallColormap :: Display -> Colormap -> IO ()
+XMonad.Config.Prime | unionRectWithRegion | unionRectWithRegion :: Rectangle -> Region -> Region -> IO CInt
+XMonad.Config.Prime | unionRegion | unionRegion :: Region -> Region -> Region -> IO CInt
+XMonad.Config.Prime | unlockDisplay | unlockDisplay :: Display -> IO ()
+XMonad.Config.Prime | unmapGravity | unmapGravity :: WindowGravity
+XMonad.Config.Prime | unmapNotify | unmapNotify :: EventType
+XMonad.Config.Prime | unmapSubwindows | unmapSubwindows :: Display -> Window -> IO ()
+XMonad.Config.Prime | unmapWindow | unmapWindow :: Display -> Window -> IO ()
+XMonad.Config.Prime | urgencyHintBit | urgencyHintBit :: Int
+XMonad.Config.Prime | vISUALID | vISUALID :: Atom
+XMonad.Config.Prime | visibilityChangeMask | visibilityChangeMask :: EventMask
+XMonad.Config.Prime | visibilityFullyObscured | visibilityFullyObscured :: Visibility
+XMonad.Config.Prime | visibilityNotify | visibilityNotify :: EventType
+XMonad.Config.Prime | visibilityPartiallyObscured | visibilityPartiallyObscured :: Visibility
+XMonad.Config.Prime | visibilityUnobscured | visibilityUnobscured :: Visibility
+XMonad.Config.Prime | visualAllMask | visualAllMask :: VisualInfoMask
+XMonad.Config.Prime | visualBitsPerRGBMask | visualBitsPerRGBMask :: VisualInfoMask
+XMonad.Config.Prime | visualBlueMaskMask | visualBlueMaskMask :: VisualInfoMask
+XMonad.Config.Prime | visualClassMask | visualClassMask :: VisualInfoMask
+XMonad.Config.Prime | visualColormapSizeMask | visualColormapSizeMask :: VisualInfoMask
+XMonad.Config.Prime | visualDepthMask | visualDepthMask :: VisualInfoMask
+XMonad.Config.Prime | visualGreenMaskMask | visualGreenMaskMask :: VisualInfoMask
+XMonad.Config.Prime | visualIDFromVisual | visualIDFromVisual :: Visual -> IO VisualID
+XMonad.Config.Prime | visualIDMask | visualIDMask :: VisualInfoMask
+XMonad.Config.Prime | visualNoMask | visualNoMask :: VisualInfoMask
+XMonad.Config.Prime | visualRedMaskMask | visualRedMaskMask :: VisualInfoMask
+XMonad.Config.Prime | visualScreenMask | visualScreenMask :: VisualInfoMask
+XMonad.Config.Prime | wEIGHT | wEIGHT :: Atom
+XMonad.Config.Prime | wINDOW | wINDOW :: Atom
+XMonad.Config.Prime | wM_CLASS | wM_CLASS :: Atom
+XMonad.Config.Prime | wM_CLIENT_MACHINE | wM_CLIENT_MACHINE :: Atom
+XMonad.Config.Prime | wM_COMMAND | wM_COMMAND :: Atom
+XMonad.Config.Prime | wM_HINTS | wM_HINTS :: Atom
+XMonad.Config.Prime | wM_ICON_NAME | wM_ICON_NAME :: Atom
+XMonad.Config.Prime | wM_ICON_SIZE | wM_ICON_SIZE :: Atom
+XMonad.Config.Prime | wM_NAME | wM_NAME :: Atom
+XMonad.Config.Prime | wM_NORMAL_HINTS | wM_NORMAL_HINTS :: Atom
+XMonad.Config.Prime | wM_SIZE_HINTS | wM_SIZE_HINTS :: Atom
+XMonad.Config.Prime | wM_TRANSIENT_FOR | wM_TRANSIENT_FOR :: Atom
+XMonad.Config.Prime | wM_ZOOM_HINTS | wM_ZOOM_HINTS :: Atom
+XMonad.Config.Prime | waIsUnmapped | waIsUnmapped :: CInt
+XMonad.Config.Prime | waIsUnviewable | waIsUnviewable :: CInt
+XMonad.Config.Prime | waIsViewable | waIsViewable :: CInt
+XMonad.Config.Prime | waitForEvent | waitForEvent :: Display -> Word32 -> IO Bool
+XMonad.Config.Prime | warpPointer | warpPointer :: Display -> Window -> Window -> Position -> Position -> Dimension -> Dimension -> Position -> Position -> IO ()
+XMonad.Config.Prime | wcDrawImageString | wcDrawImageString :: Display -> Drawable -> FontSet -> GC -> Position -> Position -> String -> IO ()
+XMonad.Config.Prime | wcDrawString | wcDrawString :: Display -> Drawable -> FontSet -> GC -> Position -> Position -> String -> IO ()
+XMonad.Config.Prime | wcFreeStringList | wcFreeStringList :: Ptr CWString -> IO ()
+XMonad.Config.Prime | wcTextEscapement | wcTextEscapement :: FontSet -> String -> Int32
+XMonad.Config.Prime | wcTextExtents | wcTextExtents :: FontSet -> String -> (Rectangle, Rectangle)
+XMonad.Config.Prime | wcTextPropertyToTextList | wcTextPropertyToTextList :: Display -> TextProperty -> IO [String]
+XMonad.Config.Prime | westGravity | westGravity :: BitGravity
+XMonad.Config.Prime | whenMapped | whenMapped :: BackingStore
+XMonad.Config.Prime | whitePixel | whitePixel :: Display -> ScreenNumber -> Pixel
+XMonad.Config.Prime | whitePixelOfScreen | whitePixelOfScreen :: Screen -> Pixel
+XMonad.Config.Prime | widthMMOfScreen | widthMMOfScreen :: Screen -> Dimension
+XMonad.Config.Prime | widthOfScreen | widthOfScreen :: Screen -> Dimension
+XMonad.Config.Prime | windingRule | windingRule :: FillRule
+XMonad.Config.Prime | windowEvent | windowEvent :: Display -> Window -> EventMask -> XEventPtr -> IO ()
+XMonad.Config.Prime | windowGroupHintBit | windowGroupHintBit :: Int
+XMonad.Config.Prime | withServer | withServer :: Display -> IO () -> IO ()
+XMonad.Config.Prime | withdrawWindow | withdrawWindow :: Display -> Window -> ScreenNumber -> IO ()
+XMonad.Config.Prime | withdrawnState | withdrawnState :: Int
+XMonad.Config.Prime | xAllocSizeHints | xAllocSizeHints :: IO (Ptr SizeHints)
+XMonad.Config.Prime | xAllocWMHints | xAllocWMHints :: IO (Ptr WMHints)
+XMonad.Config.Prime | xC_X_cursor | xC_X_cursor :: Glyph
+XMonad.Config.Prime | xC_arrow | xC_arrow :: Glyph
+XMonad.Config.Prime | xC_based_arrow_down | xC_based_arrow_down :: Glyph
+XMonad.Config.Prime | xC_based_arrow_up | xC_based_arrow_up :: Glyph
+XMonad.Config.Prime | xC_boat | xC_boat :: Glyph
+XMonad.Config.Prime | xC_bogosity | xC_bogosity :: Glyph
+XMonad.Config.Prime | xC_bottom_left_corner | xC_bottom_left_corner :: Glyph
+XMonad.Config.Prime | xC_bottom_right_corner | xC_bottom_right_corner :: Glyph
+XMonad.Config.Prime | xC_bottom_side | xC_bottom_side :: Glyph
+XMonad.Config.Prime | xC_bottom_tee | xC_bottom_tee :: Glyph
+XMonad.Config.Prime | xC_box_spiral | xC_box_spiral :: Glyph
+XMonad.Config.Prime | xC_center_ptr | xC_center_ptr :: Glyph
+XMonad.Config.Prime | xC_circle | xC_circle :: Glyph
+XMonad.Config.Prime | xC_clock | xC_clock :: Glyph
+XMonad.Config.Prime | xC_coffee_mug | xC_coffee_mug :: Glyph
+XMonad.Config.Prime | xC_cross | xC_cross :: Glyph
+XMonad.Config.Prime | xC_cross_reverse | xC_cross_reverse :: Glyph
+XMonad.Config.Prime | xC_crosshair | xC_crosshair :: Glyph
+XMonad.Config.Prime | xC_diamond_cross | xC_diamond_cross :: Glyph
+XMonad.Config.Prime | xC_dot | xC_dot :: Glyph
+XMonad.Config.Prime | xC_dotbox | xC_dotbox :: Glyph
+XMonad.Config.Prime | xC_double_arrow | xC_double_arrow :: Glyph
+XMonad.Config.Prime | xC_draft_large | xC_draft_large :: Glyph
+XMonad.Config.Prime | xC_draft_small | xC_draft_small :: Glyph
+XMonad.Config.Prime | xC_draped_box | xC_draped_box :: Glyph
+XMonad.Config.Prime | xC_exchange | xC_exchange :: Glyph
+XMonad.Config.Prime | xC_fleur | xC_fleur :: Glyph
+XMonad.Config.Prime | xC_gobbler | xC_gobbler :: Glyph
+XMonad.Config.Prime | xC_gumby | xC_gumby :: Glyph
+XMonad.Config.Prime | xC_hand1 | xC_hand1 :: Glyph
+XMonad.Config.Prime | xC_hand2 | xC_hand2 :: Glyph
+XMonad.Config.Prime | xC_heart | xC_heart :: Glyph
+XMonad.Config.Prime | xC_icon | xC_icon :: Glyph
+XMonad.Config.Prime | xC_iron_cross | xC_iron_cross :: Glyph
+XMonad.Config.Prime | xC_left_ptr | xC_left_ptr :: Glyph
+XMonad.Config.Prime | xC_left_side | xC_left_side :: Glyph
+XMonad.Config.Prime | xC_left_tee | xC_left_tee :: Glyph
+XMonad.Config.Prime | xC_leftbutton | xC_leftbutton :: Glyph
+XMonad.Config.Prime | xC_ll_angle | xC_ll_angle :: Glyph
+XMonad.Config.Prime | xC_lr_angle | xC_lr_angle :: Glyph
+XMonad.Config.Prime | xC_man | xC_man :: Glyph
+XMonad.Config.Prime | xC_mouse | xC_mouse :: Glyph
+XMonad.Config.Prime | xC_pencil | xC_pencil :: Glyph
+XMonad.Config.Prime | xC_pirate | xC_pirate :: Glyph
+XMonad.Config.Prime | xC_plus | xC_plus :: Glyph
+XMonad.Config.Prime | xC_question_arrow | xC_question_arrow :: Glyph
+XMonad.Config.Prime | xC_right_ptr | xC_right_ptr :: Glyph
+XMonad.Config.Prime | xC_right_side | xC_right_side :: Glyph
+XMonad.Config.Prime | xC_right_tee | xC_right_tee :: Glyph
+XMonad.Config.Prime | xC_rightbutton | xC_rightbutton :: Glyph
+XMonad.Config.Prime | xC_rtl_logo | xC_rtl_logo :: Glyph
+XMonad.Config.Prime | xC_sailboat | xC_sailboat :: Glyph
+XMonad.Config.Prime | xC_sb_down_arrow | xC_sb_down_arrow :: Glyph
+XMonad.Config.Prime | xC_sb_h_double_arrow | xC_sb_h_double_arrow :: Glyph
+XMonad.Config.Prime | xC_sb_left_arrow | xC_sb_left_arrow :: Glyph
+XMonad.Config.Prime | xC_sb_right_arrow | xC_sb_right_arrow :: Glyph
+XMonad.Config.Prime | xC_sb_up_arrow | xC_sb_up_arrow :: Glyph
+XMonad.Config.Prime | xC_sb_v_double_arrow | xC_sb_v_double_arrow :: Glyph
+XMonad.Config.Prime | xC_shuttle | xC_shuttle :: Glyph
+XMonad.Config.Prime | xC_sizing | xC_sizing :: Glyph
+XMonad.Config.Prime | xC_spider | xC_spider :: Glyph
+XMonad.Config.Prime | xC_spraycan | xC_spraycan :: Glyph
+XMonad.Config.Prime | xC_star | xC_star :: Glyph
+XMonad.Config.Prime | xC_target | xC_target :: Glyph
+XMonad.Config.Prime | xC_tcross | xC_tcross :: Glyph
+XMonad.Config.Prime | xC_top_left_arrow | xC_top_left_arrow :: Glyph
+XMonad.Config.Prime | xC_top_left_corner | xC_top_left_corner :: Glyph
+XMonad.Config.Prime | xC_top_right_corner | xC_top_right_corner :: Glyph
+XMonad.Config.Prime | xC_top_side | xC_top_side :: Glyph
+XMonad.Config.Prime | xC_top_tee | xC_top_tee :: Glyph
+XMonad.Config.Prime | xC_trek | xC_trek :: Glyph
+XMonad.Config.Prime | xC_ul_angle | xC_ul_angle :: Glyph
+XMonad.Config.Prime | xC_umbrella | xC_umbrella :: Glyph
+XMonad.Config.Prime | xC_ur_angle | xC_ur_angle :: Glyph
+XMonad.Config.Prime | xC_watch | xC_watch :: Glyph
+XMonad.Config.Prime | xC_xterm | xC_xterm :: Glyph
+XMonad.Config.Prime | xChangeProperty | xChangeProperty :: Display -> Window -> Atom -> Atom -> CInt -> CInt -> Ptr CUChar -> CInt -> IO Status
+XMonad.Config.Prime | xConfigureWindow | xConfigureWindow :: Display -> Window -> CULong -> Ptr WindowChanges -> IO CInt
+XMonad.Config.Prime | xConvertSelection | xConvertSelection :: Display -> Atom -> Atom -> Atom -> Window -> Time -> IO ()
+XMonad.Config.Prime | xCreateFontSet | xCreateFontSet :: Display -> CString -> Ptr (Ptr CString) -> Ptr CInt -> Ptr CString -> IO (Ptr FontSet)
+XMonad.Config.Prime | xDeleteProperty | xDeleteProperty :: Display -> Window -> Atom -> IO Status
+XMonad.Config.Prime | xFetchName | xFetchName :: Display -> Window -> Ptr CString -> IO Status
+XMonad.Config.Prime | xFree | xFree :: Ptr a -> IO CInt
+XMonad.Config.Prime | xFreeModifiermap | xFreeModifiermap :: Ptr () -> IO (Ptr CInt)
+XMonad.Config.Prime | xGetClassHint | xGetClassHint :: Display -> Window -> Ptr ClassHint -> IO Status
+XMonad.Config.Prime | xGetCommand | xGetCommand :: Display -> Window -> Ptr (Ptr CWString) -> Ptr CInt -> IO Status
+XMonad.Config.Prime | xGetModifierMapping | xGetModifierMapping :: Display -> IO (Ptr ())
+XMonad.Config.Prime | xGetPixel | xGetPixel :: Image -> CInt -> CInt -> IO CULong
+XMonad.Config.Prime | xGetSelectionOwner | xGetSelectionOwner :: Display -> Atom -> IO Window
+XMonad.Config.Prime | xGetTextProperty | xGetTextProperty :: Display -> Window -> Ptr TextProperty -> Atom -> IO Status
+XMonad.Config.Prime | xGetTransientForHint | xGetTransientForHint :: Display -> Window -> Ptr Window -> IO Status
+XMonad.Config.Prime | xGetWMHints | xGetWMHints :: Display -> Window -> IO (Ptr WMHints)
+XMonad.Config.Prime | xGetWMNormalHints | xGetWMNormalHints :: Display -> Window -> Ptr SizeHints -> Ptr CLong -> IO Status
+XMonad.Config.Prime | xGetWMProtocols | xGetWMProtocols :: Display -> Window -> Ptr (Ptr Atom) -> Ptr CInt -> IO Status
+XMonad.Config.Prime | xGetWindowAttributes | xGetWindowAttributes :: Display -> Window -> Ptr WindowAttributes -> IO Status
+XMonad.Config.Prime | xGetWindowProperty | xGetWindowProperty :: Display -> Window -> Atom -> CLong -> CLong -> Bool -> Atom -> Ptr Atom -> Ptr CInt -> Ptr CULong -> Ptr CULong -> Ptr (Ptr CUChar) -> IO Status
+XMonad.Config.Prime | xK_0 | xK_0 :: KeySym
+XMonad.Config.Prime | xK_1 | xK_1 :: KeySym
+XMonad.Config.Prime | xK_2 | xK_2 :: KeySym
+XMonad.Config.Prime | xK_3 | xK_3 :: KeySym
+XMonad.Config.Prime | xK_4 | xK_4 :: KeySym
+XMonad.Config.Prime | xK_5 | xK_5 :: KeySym
+XMonad.Config.Prime | xK_6 | xK_6 :: KeySym
+XMonad.Config.Prime | xK_7 | xK_7 :: KeySym
+XMonad.Config.Prime | xK_8 | xK_8 :: KeySym
+XMonad.Config.Prime | xK_9 | xK_9 :: KeySym
+XMonad.Config.Prime | xK_A | xK_A :: KeySym
+XMonad.Config.Prime | xK_AE | xK_AE :: KeySym
+XMonad.Config.Prime | xK_Aacute | xK_Aacute :: KeySym
+XMonad.Config.Prime | xK_Acircumflex | xK_Acircumflex :: KeySym
+XMonad.Config.Prime | xK_Adiaeresis | xK_Adiaeresis :: KeySym
+XMonad.Config.Prime | xK_Agrave | xK_Agrave :: KeySym
+XMonad.Config.Prime | xK_Alt_L | xK_Alt_L :: KeySym
+XMonad.Config.Prime | xK_Alt_R | xK_Alt_R :: KeySym
+XMonad.Config.Prime | xK_Aring | xK_Aring :: KeySym
+XMonad.Config.Prime | xK_Atilde | xK_Atilde :: KeySym
+XMonad.Config.Prime | xK_B | xK_B :: KeySym
+XMonad.Config.Prime | xK_BackSpace | xK_BackSpace :: KeySym
+XMonad.Config.Prime | xK_Begin | xK_Begin :: KeySym
+XMonad.Config.Prime | xK_Break | xK_Break :: KeySym
+XMonad.Config.Prime | xK_C | xK_C :: KeySym
+XMonad.Config.Prime | xK_Cancel | xK_Cancel :: KeySym
+XMonad.Config.Prime | xK_Caps_Lock | xK_Caps_Lock :: KeySym
+XMonad.Config.Prime | xK_Ccedilla | xK_Ccedilla :: KeySym
+XMonad.Config.Prime | xK_Clear | xK_Clear :: KeySym
+XMonad.Config.Prime | xK_Codeinput | xK_Codeinput :: KeySym
+XMonad.Config.Prime | xK_Control_L | xK_Control_L :: KeySym
+XMonad.Config.Prime | xK_Control_R | xK_Control_R :: KeySym
+XMonad.Config.Prime | xK_D | xK_D :: KeySym
+XMonad.Config.Prime | xK_Delete | xK_Delete :: KeySym
+XMonad.Config.Prime | xK_Down | xK_Down :: KeySym
+XMonad.Config.Prime | xK_E | xK_E :: KeySym
+XMonad.Config.Prime | xK_ETH | xK_ETH :: KeySym
+XMonad.Config.Prime | xK_Eacute | xK_Eacute :: KeySym
+XMonad.Config.Prime | xK_Ecircumflex | xK_Ecircumflex :: KeySym
+XMonad.Config.Prime | xK_Ediaeresis | xK_Ediaeresis :: KeySym
+XMonad.Config.Prime | xK_Egrave | xK_Egrave :: KeySym
+XMonad.Config.Prime | xK_End | xK_End :: KeySym
+XMonad.Config.Prime | xK_Escape | xK_Escape :: KeySym
+XMonad.Config.Prime | xK_Eth | xK_Eth :: KeySym
+XMonad.Config.Prime | xK_Execute | xK_Execute :: KeySym
+XMonad.Config.Prime | xK_F | xK_F :: KeySym
+XMonad.Config.Prime | xK_F1 | xK_F1 :: KeySym
+XMonad.Config.Prime | xK_F10 | xK_F10 :: KeySym
+XMonad.Config.Prime | xK_F11 | xK_F11 :: KeySym
+XMonad.Config.Prime | xK_F12 | xK_F12 :: KeySym
+XMonad.Config.Prime | xK_F13 | xK_F13 :: KeySym
+XMonad.Config.Prime | xK_F14 | xK_F14 :: KeySym
+XMonad.Config.Prime | xK_F15 | xK_F15 :: KeySym
+XMonad.Config.Prime | xK_F16 | xK_F16 :: KeySym
+XMonad.Config.Prime | xK_F17 | xK_F17 :: KeySym
+XMonad.Config.Prime | xK_F18 | xK_F18 :: KeySym
+XMonad.Config.Prime | xK_F19 | xK_F19 :: KeySym
+XMonad.Config.Prime | xK_F2 | xK_F2 :: KeySym
+XMonad.Config.Prime | xK_F20 | xK_F20 :: KeySym
+XMonad.Config.Prime | xK_F21 | xK_F21 :: KeySym
+XMonad.Config.Prime | xK_F22 | xK_F22 :: KeySym
+XMonad.Config.Prime | xK_F23 | xK_F23 :: KeySym
+XMonad.Config.Prime | xK_F24 | xK_F24 :: KeySym
+XMonad.Config.Prime | xK_F25 | xK_F25 :: KeySym
+XMonad.Config.Prime | xK_F26 | xK_F26 :: KeySym
+XMonad.Config.Prime | xK_F27 | xK_F27 :: KeySym
+XMonad.Config.Prime | xK_F28 | xK_F28 :: KeySym
+XMonad.Config.Prime | xK_F29 | xK_F29 :: KeySym
+XMonad.Config.Prime | xK_F3 | xK_F3 :: KeySym
+XMonad.Config.Prime | xK_F30 | xK_F30 :: KeySym
+XMonad.Config.Prime | xK_F31 | xK_F31 :: KeySym
+XMonad.Config.Prime | xK_F32 | xK_F32 :: KeySym
+XMonad.Config.Prime | xK_F33 | xK_F33 :: KeySym
+XMonad.Config.Prime | xK_F34 | xK_F34 :: KeySym
+XMonad.Config.Prime | xK_F35 | xK_F35 :: KeySym
+XMonad.Config.Prime | xK_F4 | xK_F4 :: KeySym
+XMonad.Config.Prime | xK_F5 | xK_F5 :: KeySym
+XMonad.Config.Prime | xK_F6 | xK_F6 :: KeySym
+XMonad.Config.Prime | xK_F7 | xK_F7 :: KeySym
+XMonad.Config.Prime | xK_F8 | xK_F8 :: KeySym
+XMonad.Config.Prime | xK_F9 | xK_F9 :: KeySym
+XMonad.Config.Prime | xK_Find | xK_Find :: KeySym
+XMonad.Config.Prime | xK_G | xK_G :: KeySym
+XMonad.Config.Prime | xK_H | xK_H :: KeySym
+XMonad.Config.Prime | xK_Help | xK_Help :: KeySym
+XMonad.Config.Prime | xK_Home | xK_Home :: KeySym
+XMonad.Config.Prime | xK_Hyper_L | xK_Hyper_L :: KeySym
+XMonad.Config.Prime | xK_Hyper_R | xK_Hyper_R :: KeySym
+XMonad.Config.Prime | xK_I | xK_I :: KeySym
+XMonad.Config.Prime | xK_Iacute | xK_Iacute :: KeySym
+XMonad.Config.Prime | xK_Icircumflex | xK_Icircumflex :: KeySym
+XMonad.Config.Prime | xK_Idiaeresis | xK_Idiaeresis :: KeySym
+XMonad.Config.Prime | xK_Igrave | xK_Igrave :: KeySym
+XMonad.Config.Prime | xK_Insert | xK_Insert :: KeySym
+XMonad.Config.Prime | xK_J | xK_J :: KeySym
+XMonad.Config.Prime | xK_K | xK_K :: KeySym
+XMonad.Config.Prime | xK_KP_0 | xK_KP_0 :: KeySym
+XMonad.Config.Prime | xK_KP_1 | xK_KP_1 :: KeySym
+XMonad.Config.Prime | xK_KP_2 | xK_KP_2 :: KeySym
+XMonad.Config.Prime | xK_KP_3 | xK_KP_3 :: KeySym
+XMonad.Config.Prime | xK_KP_4 | xK_KP_4 :: KeySym
+XMonad.Config.Prime | xK_KP_5 | xK_KP_5 :: KeySym
+XMonad.Config.Prime | xK_KP_6 | xK_KP_6 :: KeySym
+XMonad.Config.Prime | xK_KP_7 | xK_KP_7 :: KeySym
+XMonad.Config.Prime | xK_KP_8 | xK_KP_8 :: KeySym
+XMonad.Config.Prime | xK_KP_9 | xK_KP_9 :: KeySym
+XMonad.Config.Prime | xK_KP_Add | xK_KP_Add :: KeySym
+XMonad.Config.Prime | xK_KP_Begin | xK_KP_Begin :: KeySym
+XMonad.Config.Prime | xK_KP_Decimal | xK_KP_Decimal :: KeySym
+XMonad.Config.Prime | xK_KP_Delete | xK_KP_Delete :: KeySym
+XMonad.Config.Prime | xK_KP_Divide | xK_KP_Divide :: KeySym
+XMonad.Config.Prime | xK_KP_Down | xK_KP_Down :: KeySym
+XMonad.Config.Prime | xK_KP_End | xK_KP_End :: KeySym
+XMonad.Config.Prime | xK_KP_Enter | xK_KP_Enter :: KeySym
+XMonad.Config.Prime | xK_KP_Equal | xK_KP_Equal :: KeySym
+XMonad.Config.Prime | xK_KP_F1 | xK_KP_F1 :: KeySym
+XMonad.Config.Prime | xK_KP_F2 | xK_KP_F2 :: KeySym
+XMonad.Config.Prime | xK_KP_F3 | xK_KP_F3 :: KeySym
+XMonad.Config.Prime | xK_KP_F4 | xK_KP_F4 :: KeySym
+XMonad.Config.Prime | xK_KP_Home | xK_KP_Home :: KeySym
+XMonad.Config.Prime | xK_KP_Insert | xK_KP_Insert :: KeySym
+XMonad.Config.Prime | xK_KP_Left | xK_KP_Left :: KeySym
+XMonad.Config.Prime | xK_KP_Multiply | xK_KP_Multiply :: KeySym
+XMonad.Config.Prime | xK_KP_Next | xK_KP_Next :: KeySym
+XMonad.Config.Prime | xK_KP_Page_Down | xK_KP_Page_Down :: KeySym
+XMonad.Config.Prime | xK_KP_Page_Up | xK_KP_Page_Up :: KeySym
+XMonad.Config.Prime | xK_KP_Prior | xK_KP_Prior :: KeySym
+XMonad.Config.Prime | xK_KP_Right | xK_KP_Right :: KeySym
+XMonad.Config.Prime | xK_KP_Separator | xK_KP_Separator :: KeySym
+XMonad.Config.Prime | xK_KP_Space | xK_KP_Space :: KeySym
+XMonad.Config.Prime | xK_KP_Subtract | xK_KP_Subtract :: KeySym
+XMonad.Config.Prime | xK_KP_Tab | xK_KP_Tab :: KeySym
+XMonad.Config.Prime | xK_KP_Up | xK_KP_Up :: KeySym
+XMonad.Config.Prime | xK_L | xK_L :: KeySym
+XMonad.Config.Prime | xK_L1 | xK_L1 :: KeySym
+XMonad.Config.Prime | xK_L10 | xK_L10 :: KeySym
+XMonad.Config.Prime | xK_L2 | xK_L2 :: KeySym
+XMonad.Config.Prime | xK_L3 | xK_L3 :: KeySym
+XMonad.Config.Prime | xK_L4 | xK_L4 :: KeySym
+XMonad.Config.Prime | xK_L5 | xK_L5 :: KeySym
+XMonad.Config.Prime | xK_L6 | xK_L6 :: KeySym
+XMonad.Config.Prime | xK_L7 | xK_L7 :: KeySym
+XMonad.Config.Prime | xK_L8 | xK_L8 :: KeySym
+XMonad.Config.Prime | xK_L9 | xK_L9 :: KeySym
+XMonad.Config.Prime | xK_Left | xK_Left :: KeySym
+XMonad.Config.Prime | xK_Linefeed | xK_Linefeed :: KeySym
+XMonad.Config.Prime | xK_M | xK_M :: KeySym
+XMonad.Config.Prime | xK_Menu | xK_Menu :: KeySym
+XMonad.Config.Prime | xK_Meta_L | xK_Meta_L :: KeySym
+XMonad.Config.Prime | xK_Meta_R | xK_Meta_R :: KeySym
+XMonad.Config.Prime | xK_Mode_switch | xK_Mode_switch :: KeySym
+XMonad.Config.Prime | xK_Multi_key | xK_Multi_key :: KeySym
+XMonad.Config.Prime | xK_MultipleCandidate | xK_MultipleCandidate :: KeySym
+XMonad.Config.Prime | xK_N | xK_N :: KeySym
+XMonad.Config.Prime | xK_Next | xK_Next :: KeySym
+XMonad.Config.Prime | xK_Ntilde | xK_Ntilde :: KeySym
+XMonad.Config.Prime | xK_Num_Lock | xK_Num_Lock :: KeySym
+XMonad.Config.Prime | xK_O | xK_O :: KeySym
+XMonad.Config.Prime | xK_Oacute | xK_Oacute :: KeySym
+XMonad.Config.Prime | xK_Ocircumflex | xK_Ocircumflex :: KeySym
+XMonad.Config.Prime | xK_Odiaeresis | xK_Odiaeresis :: KeySym
+XMonad.Config.Prime | xK_Ograve | xK_Ograve :: KeySym
+XMonad.Config.Prime | xK_Ooblique | xK_Ooblique :: KeySym
+XMonad.Config.Prime | xK_Otilde | xK_Otilde :: KeySym
+XMonad.Config.Prime | xK_P | xK_P :: KeySym
+XMonad.Config.Prime | xK_Page_Down | xK_Page_Down :: KeySym
+XMonad.Config.Prime | xK_Page_Up | xK_Page_Up :: KeySym
+XMonad.Config.Prime | xK_Pause | xK_Pause :: KeySym
+XMonad.Config.Prime | xK_PreviousCandidate | xK_PreviousCandidate :: KeySym
+XMonad.Config.Prime | xK_Print | xK_Print :: KeySym
+XMonad.Config.Prime | xK_Prior | xK_Prior :: KeySym
+XMonad.Config.Prime | xK_Q | xK_Q :: KeySym
+XMonad.Config.Prime | xK_R | xK_R :: KeySym
+XMonad.Config.Prime | xK_R1 | xK_R1 :: KeySym
+XMonad.Config.Prime | xK_R10 | xK_R10 :: KeySym
+XMonad.Config.Prime | xK_R11 | xK_R11 :: KeySym
+XMonad.Config.Prime | xK_R12 | xK_R12 :: KeySym
+XMonad.Config.Prime | xK_R13 | xK_R13 :: KeySym
+XMonad.Config.Prime | xK_R14 | xK_R14 :: KeySym
+XMonad.Config.Prime | xK_R15 | xK_R15 :: KeySym
+XMonad.Config.Prime | xK_R2 | xK_R2 :: KeySym
+XMonad.Config.Prime | xK_R3 | xK_R3 :: KeySym
+XMonad.Config.Prime | xK_R4 | xK_R4 :: KeySym
+XMonad.Config.Prime | xK_R5 | xK_R5 :: KeySym
+XMonad.Config.Prime | xK_R6 | xK_R6 :: KeySym
+XMonad.Config.Prime | xK_R7 | xK_R7 :: KeySym
+XMonad.Config.Prime | xK_R8 | xK_R8 :: KeySym
+XMonad.Config.Prime | xK_R9 | xK_R9 :: KeySym
+XMonad.Config.Prime | xK_Redo | xK_Redo :: KeySym
+XMonad.Config.Prime | xK_Return | xK_Return :: KeySym
+XMonad.Config.Prime | xK_Right | xK_Right :: KeySym
+XMonad.Config.Prime | xK_S | xK_S :: KeySym
+XMonad.Config.Prime | xK_Scroll_Lock | xK_Scroll_Lock :: KeySym
+XMonad.Config.Prime | xK_Select | xK_Select :: KeySym
+XMonad.Config.Prime | xK_Shift_L | xK_Shift_L :: KeySym
+XMonad.Config.Prime | xK_Shift_Lock | xK_Shift_Lock :: KeySym
+XMonad.Config.Prime | xK_Shift_R | xK_Shift_R :: KeySym
+XMonad.Config.Prime | xK_SingleCandidate | xK_SingleCandidate :: KeySym
+XMonad.Config.Prime | xK_Super_L | xK_Super_L :: KeySym
+XMonad.Config.Prime | xK_Super_R | xK_Super_R :: KeySym
+XMonad.Config.Prime | xK_Sys_Req | xK_Sys_Req :: KeySym
+XMonad.Config.Prime | xK_T | xK_T :: KeySym
+XMonad.Config.Prime | xK_THORN | xK_THORN :: KeySym
+XMonad.Config.Prime | xK_Tab | xK_Tab :: KeySym
+XMonad.Config.Prime | xK_Thorn | xK_Thorn :: KeySym
+XMonad.Config.Prime | xK_U | xK_U :: KeySym
+XMonad.Config.Prime | xK_Uacute | xK_Uacute :: KeySym
+XMonad.Config.Prime | xK_Ucircumflex | xK_Ucircumflex :: KeySym
+XMonad.Config.Prime | xK_Udiaeresis | xK_Udiaeresis :: KeySym
+XMonad.Config.Prime | xK_Ugrave | xK_Ugrave :: KeySym
+XMonad.Config.Prime | xK_Undo | xK_Undo :: KeySym
+XMonad.Config.Prime | xK_Up | xK_Up :: KeySym
+XMonad.Config.Prime | xK_V | xK_V :: KeySym
+XMonad.Config.Prime | xK_VoidSymbol | xK_VoidSymbol :: KeySym
+XMonad.Config.Prime | xK_W | xK_W :: KeySym
+XMonad.Config.Prime | xK_X | xK_X :: KeySym
+XMonad.Config.Prime | xK_Y | xK_Y :: KeySym
+XMonad.Config.Prime | xK_Yacute | xK_Yacute :: KeySym
+XMonad.Config.Prime | xK_Z | xK_Z :: KeySym
+XMonad.Config.Prime | xK_a | xK_a :: KeySym
+XMonad.Config.Prime | xK_aacute | xK_aacute :: KeySym
+XMonad.Config.Prime | xK_acircumflex | xK_acircumflex :: KeySym
+XMonad.Config.Prime | xK_acute | xK_acute :: KeySym
+XMonad.Config.Prime | xK_adiaeresis | xK_adiaeresis :: KeySym
+XMonad.Config.Prime | xK_ae | xK_ae :: KeySym
+XMonad.Config.Prime | xK_agrave | xK_agrave :: KeySym
+XMonad.Config.Prime | xK_ampersand | xK_ampersand :: KeySym
+XMonad.Config.Prime | xK_apostrophe | xK_apostrophe :: KeySym
+XMonad.Config.Prime | xK_aring | xK_aring :: KeySym
+XMonad.Config.Prime | xK_asciicircum | xK_asciicircum :: KeySym
+XMonad.Config.Prime | xK_asciitilde | xK_asciitilde :: KeySym
+XMonad.Config.Prime | xK_asterisk | xK_asterisk :: KeySym
+XMonad.Config.Prime | xK_at | xK_at :: KeySym
+XMonad.Config.Prime | xK_atilde | xK_atilde :: KeySym
+XMonad.Config.Prime | xK_b | xK_b :: KeySym
+XMonad.Config.Prime | xK_backslash | xK_backslash :: KeySym
+XMonad.Config.Prime | xK_bar | xK_bar :: KeySym
+XMonad.Config.Prime | xK_braceleft | xK_braceleft :: KeySym
+XMonad.Config.Prime | xK_braceright | xK_braceright :: KeySym
+XMonad.Config.Prime | xK_bracketleft | xK_bracketleft :: KeySym
+XMonad.Config.Prime | xK_bracketright | xK_bracketright :: KeySym
+XMonad.Config.Prime | xK_brokenbar | xK_brokenbar :: KeySym
+XMonad.Config.Prime | xK_c | xK_c :: KeySym
+XMonad.Config.Prime | xK_ccedilla | xK_ccedilla :: KeySym
+XMonad.Config.Prime | xK_cedilla | xK_cedilla :: KeySym
+XMonad.Config.Prime | xK_cent | xK_cent :: KeySym
+XMonad.Config.Prime | xK_colon | xK_colon :: KeySym
+XMonad.Config.Prime | xK_comma | xK_comma :: KeySym
+XMonad.Config.Prime | xK_copyright | xK_copyright :: KeySym
+XMonad.Config.Prime | xK_currency | xK_currency :: KeySym
+XMonad.Config.Prime | xK_d | xK_d :: KeySym
+XMonad.Config.Prime | xK_degree | xK_degree :: KeySym
+XMonad.Config.Prime | xK_diaeresis | xK_diaeresis :: KeySym
+XMonad.Config.Prime | xK_division | xK_division :: KeySym
+XMonad.Config.Prime | xK_dollar | xK_dollar :: KeySym
+XMonad.Config.Prime | xK_e | xK_e :: KeySym
+XMonad.Config.Prime | xK_eacute | xK_eacute :: KeySym
+XMonad.Config.Prime | xK_ecircumflex | xK_ecircumflex :: KeySym
+XMonad.Config.Prime | xK_ediaeresis | xK_ediaeresis :: KeySym
+XMonad.Config.Prime | xK_egrave | xK_egrave :: KeySym
+XMonad.Config.Prime | xK_equal | xK_equal :: KeySym
+XMonad.Config.Prime | xK_eth | xK_eth :: KeySym
+XMonad.Config.Prime | xK_exclam | xK_exclam :: KeySym
+XMonad.Config.Prime | xK_exclamdown | xK_exclamdown :: KeySym
+XMonad.Config.Prime | xK_f | xK_f :: KeySym
+XMonad.Config.Prime | xK_g | xK_g :: KeySym
+XMonad.Config.Prime | xK_grave | xK_grave :: KeySym
+XMonad.Config.Prime | xK_greater | xK_greater :: KeySym
+XMonad.Config.Prime | xK_guillemotleft | xK_guillemotleft :: KeySym
+XMonad.Config.Prime | xK_guillemotright | xK_guillemotright :: KeySym
+XMonad.Config.Prime | xK_h | xK_h :: KeySym
+XMonad.Config.Prime | xK_hyphen | xK_hyphen :: KeySym
+XMonad.Config.Prime | xK_i | xK_i :: KeySym
+XMonad.Config.Prime | xK_iacute | xK_iacute :: KeySym
+XMonad.Config.Prime | xK_icircumflex | xK_icircumflex :: KeySym
+XMonad.Config.Prime | xK_idiaeresis | xK_idiaeresis :: KeySym
+XMonad.Config.Prime | xK_igrave | xK_igrave :: KeySym
+XMonad.Config.Prime | xK_j | xK_j :: KeySym
+XMonad.Config.Prime | xK_k | xK_k :: KeySym
+XMonad.Config.Prime | xK_l | xK_l :: KeySym
+XMonad.Config.Prime | xK_less | xK_less :: KeySym
+XMonad.Config.Prime | xK_m | xK_m :: KeySym
+XMonad.Config.Prime | xK_macron | xK_macron :: KeySym
+XMonad.Config.Prime | xK_masculine | xK_masculine :: KeySym
+XMonad.Config.Prime | xK_minus | xK_minus :: KeySym
+XMonad.Config.Prime | xK_mu | xK_mu :: KeySym
+XMonad.Config.Prime | xK_multiply | xK_multiply :: KeySym
+XMonad.Config.Prime | xK_n | xK_n :: KeySym
+XMonad.Config.Prime | xK_nobreakspace | xK_nobreakspace :: KeySym
+XMonad.Config.Prime | xK_notsign | xK_notsign :: KeySym
+XMonad.Config.Prime | xK_ntilde | xK_ntilde :: KeySym
+XMonad.Config.Prime | xK_numbersign | xK_numbersign :: KeySym
+XMonad.Config.Prime | xK_o | xK_o :: KeySym
+XMonad.Config.Prime | xK_oacute | xK_oacute :: KeySym
+XMonad.Config.Prime | xK_ocircumflex | xK_ocircumflex :: KeySym
+XMonad.Config.Prime | xK_odiaeresis | xK_odiaeresis :: KeySym
+XMonad.Config.Prime | xK_ograve | xK_ograve :: KeySym
+XMonad.Config.Prime | xK_onehalf | xK_onehalf :: KeySym
+XMonad.Config.Prime | xK_onequarter | xK_onequarter :: KeySym
+XMonad.Config.Prime | xK_onesuperior | xK_onesuperior :: KeySym
+XMonad.Config.Prime | xK_ordfeminine | xK_ordfeminine :: KeySym
+XMonad.Config.Prime | xK_oslash | xK_oslash :: KeySym
+XMonad.Config.Prime | xK_otilde | xK_otilde :: KeySym
+XMonad.Config.Prime | xK_p | xK_p :: KeySym
+XMonad.Config.Prime | xK_paragraph | xK_paragraph :: KeySym
+XMonad.Config.Prime | xK_parenleft | xK_parenleft :: KeySym
+XMonad.Config.Prime | xK_parenright | xK_parenright :: KeySym
+XMonad.Config.Prime | xK_percent | xK_percent :: KeySym
+XMonad.Config.Prime | xK_period | xK_period :: KeySym
+XMonad.Config.Prime | xK_periodcentered | xK_periodcentered :: KeySym
+XMonad.Config.Prime | xK_plus | xK_plus :: KeySym
+XMonad.Config.Prime | xK_plusminus | xK_plusminus :: KeySym
+XMonad.Config.Prime | xK_q | xK_q :: KeySym
+XMonad.Config.Prime | xK_question | xK_question :: KeySym
+XMonad.Config.Prime | xK_questiondown | xK_questiondown :: KeySym
+XMonad.Config.Prime | xK_quotedbl | xK_quotedbl :: KeySym
+XMonad.Config.Prime | xK_quoteleft | xK_quoteleft :: KeySym
+XMonad.Config.Prime | xK_quoteright | xK_quoteright :: KeySym
+XMonad.Config.Prime | xK_r | xK_r :: KeySym
+XMonad.Config.Prime | xK_registered | xK_registered :: KeySym
+XMonad.Config.Prime | xK_s | xK_s :: KeySym
+XMonad.Config.Prime | xK_script_switch | xK_script_switch :: KeySym
+XMonad.Config.Prime | xK_section | xK_section :: KeySym
+XMonad.Config.Prime | xK_semicolon | xK_semicolon :: KeySym
+XMonad.Config.Prime | xK_slash | xK_slash :: KeySym
+XMonad.Config.Prime | xK_space | xK_space :: KeySym
+XMonad.Config.Prime | xK_ssharp | xK_ssharp :: KeySym
+XMonad.Config.Prime | xK_sterling | xK_sterling :: KeySym
+XMonad.Config.Prime | xK_t | xK_t :: KeySym
+XMonad.Config.Prime | xK_thorn | xK_thorn :: KeySym
+XMonad.Config.Prime | xK_threequarters | xK_threequarters :: KeySym
+XMonad.Config.Prime | xK_threesuperior | xK_threesuperior :: KeySym
+XMonad.Config.Prime | xK_twosuperior | xK_twosuperior :: KeySym
+XMonad.Config.Prime | xK_u | xK_u :: KeySym
+XMonad.Config.Prime | xK_uacute | xK_uacute :: KeySym
+XMonad.Config.Prime | xK_ucircumflex | xK_ucircumflex :: KeySym
+XMonad.Config.Prime | xK_udiaeresis | xK_udiaeresis :: KeySym
+XMonad.Config.Prime | xK_ugrave | xK_ugrave :: KeySym
+XMonad.Config.Prime | xK_underscore | xK_underscore :: KeySym
+XMonad.Config.Prime | xK_v | xK_v :: KeySym
+XMonad.Config.Prime | xK_w | xK_w :: KeySym
+XMonad.Config.Prime | xK_x | xK_x :: KeySym
+XMonad.Config.Prime | xK_y | xK_y :: KeySym
+XMonad.Config.Prime | xK_yacute | xK_yacute :: KeySym
+XMonad.Config.Prime | xK_ydiaeresis | xK_ydiaeresis :: KeySym
+XMonad.Config.Prime | xK_yen | xK_yen :: KeySym
+XMonad.Config.Prime | xK_z | xK_z :: KeySym
+XMonad.Config.Prime | xQueryTree | xQueryTree :: Display -> Window -> Ptr Window -> Ptr Window -> Ptr (Ptr Window) -> Ptr CInt -> IO Status
+XMonad.Config.Prime | xRR_Connected | xRR_Connected :: Connection
+XMonad.Config.Prime | xRR_Disconnected | xRR_Disconnected :: Connection
+XMonad.Config.Prime | xRR_Reflect_X | xRR_Reflect_X :: Reflection
+XMonad.Config.Prime | xRR_Reflect_Y | xRR_Reflect_Y :: Reflection
+XMonad.Config.Prime | xRR_Rotate_0 | xRR_Rotate_0 :: Rotation
+XMonad.Config.Prime | xRR_Rotate_180 | xRR_Rotate_180 :: Rotation
+XMonad.Config.Prime | xRR_Rotate_270 | xRR_Rotate_270 :: Rotation
+XMonad.Config.Prime | xRR_Rotate_90 | xRR_Rotate_90 :: Rotation
+XMonad.Config.Prime | xRR_UnknownConnection | xRR_UnknownConnection :: Connection
+XMonad.Config.Prime | xRefreshKeyboardMapping | xRefreshKeyboardMapping :: Ptr () -> IO CInt
+XMonad.Config.Prime | xSetClassHint | xSetClassHint :: Display -> Window -> Ptr ClassHint -> IO ()
+XMonad.Config.Prime | xSetErrorHandler | xSetErrorHandler :: IO ()
+XMonad.Config.Prime | xSetSelectionOwner | xSetSelectionOwner :: Display -> Atom -> Window -> Time -> IO ()
+XMonad.Config.Prime | xSetWMHints | xSetWMHints :: Display -> Window -> Ptr WMHints -> IO Status
+XMonad.Config.Prime | xSetWMNormalHints | xSetWMNormalHints :: Display -> Window -> Ptr SizeHints -> IO ()
+XMonad.Config.Prime | xUnmapWindow | xUnmapWindow :: Display -> Window -> IO CInt
+XMonad.Config.Prime | x_HEIGHT | x_HEIGHT :: Atom
+XMonad.Config.Prime | xorRegion | xorRegion :: Region -> Region -> Region -> IO CInt
+XMonad.Config.Prime | xwcDrawImageString | xwcDrawImageString :: Display -> Drawable -> FontSet -> GC -> Position -> Position -> CWString -> CInt -> IO ()
+XMonad.Config.Prime | xwcDrawString | xwcDrawString :: Display -> Drawable -> FontSet -> GC -> Position -> Position -> CWString -> CInt -> IO ()
+XMonad.Config.Prime | xwcTextEscapement | xwcTextEscapement :: FontSet -> CWString -> CInt -> IO Int32
+XMonad.Config.Prime | xwcTextExtents | xwcTextExtents :: FontSet -> CWString -> CInt -> Ptr Rectangle -> Ptr Rectangle -> IO CInt
+XMonad.Config.Prime | xwcTextPropertyToTextList | xwcTextPropertyToTextList :: Display -> Ptr TextProperty -> Ptr (Ptr CWString) -> Ptr CInt -> IO CInt
+XMonad.Config.Prime | xyBitmap | xyBitmap :: ImageFormat
+XMonad.Config.Prime | xyPixmap | xyPixmap :: ImageFormat
+XMonad.Config.Prime | zPixmap | zPixmap :: ImageFormat
+XMonad.Util.Cursor | xC_X_cursor | xC_X_cursor :: Glyph
+XMonad.Util.Cursor | xC_arrow | xC_arrow :: Glyph
+XMonad.Util.Cursor | xC_based_arrow_down | xC_based_arrow_down :: Glyph
+XMonad.Util.Cursor | xC_based_arrow_up | xC_based_arrow_up :: Glyph
+XMonad.Util.Cursor | xC_boat | xC_boat :: Glyph
+XMonad.Util.Cursor | xC_bogosity | xC_bogosity :: Glyph
+XMonad.Util.Cursor | xC_bottom_left_corner | xC_bottom_left_corner :: Glyph
+XMonad.Util.Cursor | xC_bottom_right_corner | xC_bottom_right_corner :: Glyph
+XMonad.Util.Cursor | xC_bottom_side | xC_bottom_side :: Glyph
+XMonad.Util.Cursor | xC_bottom_tee | xC_bottom_tee :: Glyph
+XMonad.Util.Cursor | xC_box_spiral | xC_box_spiral :: Glyph
+XMonad.Util.Cursor | xC_center_ptr | xC_center_ptr :: Glyph
+XMonad.Util.Cursor | xC_circle | xC_circle :: Glyph
+XMonad.Util.Cursor | xC_clock | xC_clock :: Glyph
+XMonad.Util.Cursor | xC_coffee_mug | xC_coffee_mug :: Glyph
+XMonad.Util.Cursor | xC_cross | xC_cross :: Glyph
+XMonad.Util.Cursor | xC_cross_reverse | xC_cross_reverse :: Glyph
+XMonad.Util.Cursor | xC_crosshair | xC_crosshair :: Glyph
+XMonad.Util.Cursor | xC_diamond_cross | xC_diamond_cross :: Glyph
+XMonad.Util.Cursor | xC_dot | xC_dot :: Glyph
+XMonad.Util.Cursor | xC_dotbox | xC_dotbox :: Glyph
+XMonad.Util.Cursor | xC_double_arrow | xC_double_arrow :: Glyph
+XMonad.Util.Cursor | xC_draft_large | xC_draft_large :: Glyph
+XMonad.Util.Cursor | xC_draft_small | xC_draft_small :: Glyph
+XMonad.Util.Cursor | xC_draped_box | xC_draped_box :: Glyph
+XMonad.Util.Cursor | xC_exchange | xC_exchange :: Glyph
+XMonad.Util.Cursor | xC_fleur | xC_fleur :: Glyph
+XMonad.Util.Cursor | xC_gobbler | xC_gobbler :: Glyph
+XMonad.Util.Cursor | xC_gumby | xC_gumby :: Glyph
+XMonad.Util.Cursor | xC_hand1 | xC_hand1 :: Glyph
+XMonad.Util.Cursor | xC_hand2 | xC_hand2 :: Glyph
+XMonad.Util.Cursor | xC_heart | xC_heart :: Glyph
+XMonad.Util.Cursor | xC_icon | xC_icon :: Glyph
+XMonad.Util.Cursor | xC_iron_cross | xC_iron_cross :: Glyph
+XMonad.Util.Cursor | xC_left_ptr | xC_left_ptr :: Glyph
+XMonad.Util.Cursor | xC_left_side | xC_left_side :: Glyph
+XMonad.Util.Cursor | xC_left_tee | xC_left_tee :: Glyph
+XMonad.Util.Cursor | xC_leftbutton | xC_leftbutton :: Glyph
+XMonad.Util.Cursor | xC_ll_angle | xC_ll_angle :: Glyph
+XMonad.Util.Cursor | xC_lr_angle | xC_lr_angle :: Glyph
+XMonad.Util.Cursor | xC_man | xC_man :: Glyph
+XMonad.Util.Cursor | xC_mouse | xC_mouse :: Glyph
+XMonad.Util.Cursor | xC_pencil | xC_pencil :: Glyph
+XMonad.Util.Cursor | xC_pirate | xC_pirate :: Glyph
+XMonad.Util.Cursor | xC_plus | xC_plus :: Glyph
+XMonad.Util.Cursor | xC_question_arrow | xC_question_arrow :: Glyph
+XMonad.Util.Cursor | xC_right_ptr | xC_right_ptr :: Glyph
+XMonad.Util.Cursor | xC_right_side | xC_right_side :: Glyph
+XMonad.Util.Cursor | xC_right_tee | xC_right_tee :: Glyph
+XMonad.Util.Cursor | xC_rightbutton | xC_rightbutton :: Glyph
+XMonad.Util.Cursor | xC_rtl_logo | xC_rtl_logo :: Glyph
+XMonad.Util.Cursor | xC_sailboat | xC_sailboat :: Glyph
+XMonad.Util.Cursor | xC_sb_down_arrow | xC_sb_down_arrow :: Glyph
+XMonad.Util.Cursor | xC_sb_h_double_arrow | xC_sb_h_double_arrow :: Glyph
+XMonad.Util.Cursor | xC_sb_left_arrow | xC_sb_left_arrow :: Glyph
+XMonad.Util.Cursor | xC_sb_right_arrow | xC_sb_right_arrow :: Glyph
+XMonad.Util.Cursor | xC_sb_up_arrow | xC_sb_up_arrow :: Glyph
+XMonad.Util.Cursor | xC_sb_v_double_arrow | xC_sb_v_double_arrow :: Glyph
+XMonad.Util.Cursor | xC_shuttle | xC_shuttle :: Glyph
+XMonad.Util.Cursor | xC_sizing | xC_sizing :: Glyph
+XMonad.Util.Cursor | xC_spider | xC_spider :: Glyph
+XMonad.Util.Cursor | xC_spraycan | xC_spraycan :: Glyph
+XMonad.Util.Cursor | xC_star | xC_star :: Glyph
+XMonad.Util.Cursor | xC_target | xC_target :: Glyph
+XMonad.Util.Cursor | xC_tcross | xC_tcross :: Glyph
+XMonad.Util.Cursor | xC_top_left_arrow | xC_top_left_arrow :: Glyph
+XMonad.Util.Cursor | xC_top_left_corner | xC_top_left_corner :: Glyph
+XMonad.Util.Cursor | xC_top_right_corner | xC_top_right_corner :: Glyph
+XMonad.Util.Cursor | xC_top_side | xC_top_side :: Glyph
+XMonad.Util.Cursor | xC_top_tee | xC_top_tee :: Glyph
+XMonad.Util.Cursor | xC_trek | xC_trek :: Glyph
+XMonad.Util.Cursor | xC_ul_angle | xC_ul_angle :: Glyph
+XMonad.Util.Cursor | xC_umbrella | xC_umbrella :: Glyph
+XMonad.Util.Cursor | xC_ur_angle | xC_ur_angle :: Glyph
+XMonad.Util.Cursor | xC_watch | xC_watch :: Glyph
+XMonad.Util.Cursor | xC_xterm | xC_xterm :: Glyph
+XMonad.Util.Paste | noModMask | noModMask :: KeyMask

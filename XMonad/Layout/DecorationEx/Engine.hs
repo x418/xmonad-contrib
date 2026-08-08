@@ -44,6 +44,7 @@ import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.Layout.Decoration (Shrinker (..), shrinkWhile, shrinkText)
 import XMonad.River (warnUnimplemented, windowUnderPointer)
+import XMonad.River.State (RiverState (..))
 import XMonad.Util.River.Compat (EventMask, commitDrawable, copyArea,
                                  createGC, createPixmap, fillRectangle,
                                  freeGC, freePixmap, setForeground)
@@ -470,7 +471,7 @@ paintDecorationSimple :: forall engine shrinker widget.
                        -> X ()
 paintDecorationSimple deco win windowWidth windowHeight shrinker dd isExpose = do
     dpy <- asks display
-    shm <- asks riverShm
+    shm <- asks (riverShm . riverState)
     let widgets = widgetLayout $ ddWidgets dd
         style = ddStyle dd
     -- No depth and no drawable to match it against: there is one pixel format

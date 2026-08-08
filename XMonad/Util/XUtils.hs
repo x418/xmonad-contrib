@@ -51,6 +51,7 @@ import XMonad.Util.River.Compat
     , pixelToColour, setForeground, unmapDrawable )
 import qualified XMonad.Util.River.Draw as D
 import XMonad.River (submapNextKey, warnUnimplemented)
+import XMonad.River.State (RiverState (..))
 import XMonad.River.Wire (nullObject)
 import XMonad.Util.Font
 import XMonad.Util.Image
@@ -97,8 +98,8 @@ averagePixels p1 p2 f =
 createNewWindow :: Rectangle -> Maybe EventMask -> String -> Bool -> X Window
 createNewWindow r _ col _ = do
   d  <- asks display
-  mc <- asks riverCompositor
-  mgr <- asks riverManager
+  mc <- asks (riverCompositor . riverState)
+  mgr <- asks (riverManager . riverState)
   case mc of
     Nothing -> do
       warnUnimplemented "createNewWindow"
@@ -116,7 +117,7 @@ createNewWindow r _ col _ = do
 showWindow :: Window -> X ()
 showWindow w = do
   d <- asks display
-  shm <- asks riverShm
+  shm <- asks (riverShm . riverState)
   io (mapDrawable w)
   -- Mapping alone shows nothing: a wl_surface with no buffer is not mapped,
   -- so whatever has been queued has to be presented too.
@@ -308,7 +309,7 @@ paintWindow' :: Window -> Rectangle -> Dimension -> String -> String
                 -> Maybe (String, String, [((Position, Position), [[Bool]])]) -> X ()
 paintWindow' win (Rectangle _ _ wh ht) bw color b_color strStuff iconStuff = do
   d  <- asks display
-  shm <- asks riverShm
+  shm <- asks (riverShm . riverState)
   -- Upstream composes into a pixmap and copies it over the window, so a
   -- partial repaint is never shown.  The same shape works here and costs
   -- nothing: a pixmap is a list of operations, and copying it is appending

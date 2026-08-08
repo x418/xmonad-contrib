@@ -76,6 +76,7 @@ import XMonad
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.River (RiverWindow (..))
+import XMonad.River.State (RiverState (..))
 import XMonad.Util.Minimize (Minimized (..))
 import qualified XMonad.Util.ExtensibleState as XS
 
@@ -86,7 +87,7 @@ import System.Posix (ProcessID)
 -- | What river has told us about a window, if it is one river manages.
 askRiverWindow :: Query (Maybe RiverWindow)
 askRiverWindow = ask >>= \w -> liftX $ do
-    known <- io . readIORef =<< asks riverWindows
+    known <- io . readIORef =<< asks (riverWindows . riverState)
     pure (M.lookup w known)
 
 -- $river

@@ -1,0 +1,32 @@
+# Names this fork exports that upstream xmonad-contrib does not.
+#
+# The backend's equivalent assertion requires this set to be empty: everything
+# river offers that xmonad does not lives in XMonad.River, so a config
+# importing XMonad sees upstream's names minus the unportable ones and never
+# more.  Contrib cannot hold that line quite so cleanly -- a ported module
+# sometimes needs a name upstream had no reason to have -- so the rule here is
+# the weaker one: nothing is added silently.
+#
+# One entry per line; a continuation line would be read as another name.
+#
+# tests/api/check-subset.sh fails on an unlisted addition and on an entry for
+# a name that is no longer exported.
+
+# Not additions at all: a newer base.  This fork builds on lts-24.53 (GHC
+# 9.10, base 4.20); the upstream checkout the golden was recorded from is on
+# the umbrella project's lts-22.4 (GHC 9.6, base 4.18).  XMonad.Prelude
+# re-exports Data.List, which gained these in between.  Putting both goldens
+# on one resolver would remove this category entirely.
+List              base 4.20's Data.List, not a fork addition
+unsnoc            base 4.19's Data.List, not a fork addition
+
+# Real additions.
+Navigation        GridSelect's key handling, rewritten around river bindings in place of makeXEventhandler's X event loop
+ungrab            replaces upstream's grabUngrab/ungrabKP; river has no grab, so releasing one is destroying a binding object
+showMessageWindow draws through XMonad.Util.River.Draw, which has no upstream counterpart
+
+# Cursor glyphs.  Upstream re-exports Graphics.X11.Xlib.Cursor, whose Haskell
+# binding happens not to export these two even though X11's cursorfont.h
+# defines both.  The fork writes the table out by hand and included them.
+xC_middlebutton   in X11's cursorfont.h; not in the Haskell X11 binding
+xC_num_glyphs     in X11's cursorfont.h; not in the Haskell X11 binding

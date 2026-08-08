@@ -1,0 +1,60 @@
+# Modules upstream xmonad-contrib exposes that this fork does not.
+#
+# A module is disabled by commenting it out of exposed-modules, which is what
+# tests/expose-working.py does after a survey run: the cabal file cannot name a
+# module it fails to build.  This file is the record of why each one is out,
+# and tests/api/check-subset.sh fails if the two disagree in either direction
+# -- an unlisted disabled module, or an entry for a module that builds again.
+#
+# Causes come from SURVEY.md, which tests/survey.sh generates from a real
+# build log.  "unmeasured" means GHC never attempted the module because
+# something it imports failed first: it is not known-bad, and may well compile
+# once the blocker does.
+
+XMonad.Actions.EasyMotion         does not build: Not in scope: ‘theRoot’
+XMonad.Actions.KeyRemap           unmeasured: skipped, blocked by XMonad.Util.Paste
+XMonad.Actions.MouseResize        does not build: Not in scope: data constructor ‘ButtonEvent’
+XMonad.Actions.Prefix             unmeasured: skipped, blocked by XMonad.Util.Paste
+XMonad.Actions.ToggleFullFloat    unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Actions.TreeSelect         does not build: Not in scope: type constructor or class ‘GC’
+XMonad.Actions.UpdateFocus        does not build: Not in scope: data constructor ‘MotionEvent’
+XMonad.Actions.WorkspaceNames     unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Config.Arossato            unmeasured: skipped, blocked by XMonad.Actions.MouseResize, XMonad.Hooks.ServerMode
+XMonad.Config.Bluetile            unmeasured: skipped behind a failing import
+XMonad.Config.Desktop             unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Config.Droundy             unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Config.Gnome               unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Config.Kde                 unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Config.Mate                unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops, XMonad.Util.Ungrab
+XMonad.Config.Sjanssen            unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Config.Xfce                unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Hooks.DebugEvents          unmeasured: skipped, blocked by XMonad.Hooks.DebugKeyEvents, XMonad.Util.DebugWindow
+XMonad.Hooks.DebugKeyEvents       does not build: Could not load module ‘Graphics.X11.Xlib’
+XMonad.Hooks.DebugStack           unmeasured: skipped, blocked by XMonad.Util.DebugWindow
+XMonad.Hooks.DynamicBars          does not build: Could not load module ‘Graphics.X11.Xinerama’
+XMonad.Hooks.EwmhDesktops         does not build
+XMonad.Hooks.FadeInactive         does not build: Variable not in scope: getAtom :: String -> X t2
+XMonad.Hooks.FadeWindows          unmeasured: skipped, blocked by XMonad.Hooks.FadeInactive
+XMonad.Hooks.FloatConfigureReq    does not build
+XMonad.Hooks.ManageDebug          unmeasured: skipped, blocked by XMonad.Util.DebugWindow
+XMonad.Hooks.Minimize             does not build: Not in scope: data constructor ‘ClientMessageEvent’
+XMonad.Hooks.Qubes                does not build: Variable not in scope: focusIn :: EventType
+XMonad.Hooks.ScreenCorners        does not build
+XMonad.Hooks.ServerMode           does not build: Not in scope: data constructor ‘ClientMessageEvent’
+XMonad.Hooks.TaffybarPagerHints   does not build: Not in scope: type constructor or class ‘Atom’
+XMonad.Hooks.XPropManage          does not build: Not in scope: type constructor or class ‘Atom’
+XMonad.Layout.BorderResize        does not build: Not in scope: type constructor or class ‘Glyph’
+XMonad.Layout.DecorationMadness   unmeasured: skipped, blocked by XMonad.Actions.MouseResize
+XMonad.Layout.Fullscreen          unmeasured: skipped, blocked by XMonad.Hooks.EwmhDesktops
+XMonad.Layout.Monitor             unmeasured: skipped, blocked by XMonad.Hooks.FadeInactive
+XMonad.Layout.MouseResizableTile  does not build
+XMonad.Layout.SimpleFloat         unmeasured: skipped, blocked by XMonad.Actions.MouseResize
+XMonad.Layout.Stoppable           unmeasured: skipped, blocked by XMonad.Util.RemoteWindows
+XMonad.Util.DebugWindow           does not build: Not in scope: type constructor or class ‘Atom’
+XMonad.Util.Hacks                 unmeasured: skipped, blocked by XMonad.Hooks.FloatConfigureReq
+XMonad.Util.NoTaskbar             does not build: Could not load module ‘Graphics.X11.Xlib’
+XMonad.Util.Paste                 does not build: Module ‘XMonad’ does not export ‘theRoot’
+XMonad.Util.RemoteWindows         does not build: Variable not in scope: getAtom :: String -> X t2
+XMonad.Util.Replace               does not build: Variable not in scope: openDisplay :: String -> IO t21
+XMonad.Util.StringProp            does not build: Not in scope: type constructor or class ‘Atom’
+XMonad.Util.Ungrab                does not build

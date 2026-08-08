@@ -1,0 +1,95 @@
+# Names upstream xmonad-contrib exports from a module this fork also exposes,
+# and this fork does not.
+#
+# Modules the fork drops entirely are in disabled-modules.txt; this file is
+# only about names missing from a module that is still there.
+# tests/api/check-subset.sh fails on an unlisted drop and on a listed name
+# that has come back.
+#
+# The governing rule is the backend's: if something cannot be faithfully
+# ported, it is not exported.  A name that is present but inert is worse than
+# one that is absent, because absent fails at the call site with a file and a
+# line.  See ../xmonad-river/tests/api/unportable.txt.
+#
+# A `module:` line accounts for every drop in one module at once, for when the
+# cause is a single structural fact rather than N decisions.
+
+# XMonad.Config.Prime re-exports the whole config surface, which upstream
+# means to include Graphics.X11 -- 974 of the names it exports are X11 types
+# and functions reached through that re-export.  The fork's XMonad does not
+# re-export Graphics.X11 at all, so none of them arrive.  This is one fact
+# about one import, not 974 decisions, and listing them individually would
+# bury the 45 drops below that are actual porting decisions.
+module:XMonad.Config.Prime
+
+# --- window properties.  Wayland has none: no _NET_WM_*, no WM_WINDOW_ROLE,
+# no generic key-value store on a surface.  Same reasoning as the backend's
+# stringProperty entry.
+stringProperty        no window properties under Wayland
+getStringProperty     no window properties under Wayland
+getProp32             reads a 32-bit X property; nothing to read
+getProp32s            reads a 32-bit X property; nothing to read
+isInProperty          matches on an X property
+isKDETrayWindow       matches on _NET_WM_WINDOW_TYPE
+isNotification        matches on _NET_WM_WINDOW_TYPE
+clientLeader          reads WM_CLIENT_LEADER
+desktop               reads _NET_WM_DESKTOP
+
+# --- restacking by X call.  The fork's render sequence restacks from the
+# layout every frame, so a one-shot raise or lower has nothing to persist in;
+# XConf's riverRestack is what stands in for it.
+doLower               lowers via an X restack
+doRaise               raises via an X restack
+
+# --- logging to a root-window property.  There is no root window, so a status
+# bar cannot read one; the fork's status bars are fed over a pipe instead.
+xmonadPropLog         writes a root-window property
+xmonadPropLog'        writes a root-window property
+xmonadDefProp         names the root-window property written by xmonadPropLog
+xmobarProp            xmobar reading a root-window property
+statusBarProp         status bar fed by a root-window property
+statusBarPropTo       status bar fed by a root-window property
+withEasySB            builds on statusBarProp
+
+# --- X core fonts.  Text is drawn through the fork's own layer-shell surface;
+# see XMonad.Util.River.Draw.
+initCoreFont          X core font
+releaseCoreFont       X core font
+initUtf8Font          X core font (UTF-8 variant)
+releaseUtf8Font       X core font (UTF-8 variant)
+
+# --- keyboard and pointer grabs.  River has no grab: a binding is a protocol
+# object, created and destroyed.  Same reasoning as the backend's unGrab entry.
+grabKP                grabs a key
+ungrabKP              releases a key grab
+grabUngrab            grabs and releases
+customRegrabEvHook    re-grabs on an X event
+
+# --- X event handlers.  River delivers a manage/render sequence and binding
+# presses, not an event stream to interpret.
+makeXEventhandler     takes an X11 (KeySym, String, KeyMask) handler
+submapDefaultWithKey  takes an X11 (KeyMask, KeySym) default handler
+hintsEventHook        hooks an X ConfigureRequest
+setRescreenDelay      debounces an X RRScreenChangeNotify
+
+# --- pointer warping and focus-follows tricks built on X pointer queries.
+followOnlyIf          built on an X pointer/crossing event
+promoteWarp           warps the X pointer
+promoteWarp'          warps the X pointer
+
+# --- override-redirect windows.  The fork draws through layer shell instead.
+mkUnmanagedWindow     creates an override-redirect X window
+
+# --- X selections.
+getSecondarySelection X secondary selection has no Wayland counterpart
+
+# --- struts.  The fork reads an output's layer-shell exclusive zone directly,
+# so there is no strut state for a config to set or toggle.
+SetStruts             no settable strut state
+ToggleStruts          no settable strut state
+defToggleStrutsKey    binds ToggleStruts
+
+# --- not yet reviewed.  These are absent and the check pins them, but the
+# reason has not been established; do not read a decision into them.
+mkXPromptWithReturn   (unreviewed)
+combineWithScreenName (unreviewed)
