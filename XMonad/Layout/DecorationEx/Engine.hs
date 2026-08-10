@@ -43,7 +43,7 @@ import XMonad
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.Layout.Decoration (Shrinker (..), shrinkWhile, shrinkText)
-import XMonad.River (warnUnimplemented, windowUnderPointer)
+import XMonad.River (windowUnderPointer)
 import XMonad.River.State (RiverState (..))
 import XMonad.Util.River.Compat (EventMask, commitDrawable, copyArea,
                                  createGC, createPixmap, fillRectangle,
@@ -406,23 +406,34 @@ mkDrawData _ theme decoState origWindow decoRect = do
 -- | Mouse focus and mouse drag are handled by the same function, this
 -- way we can start dragging unfocused windows too.
 --
--- Says so once and does nothing, exactly as
--- 'XMonad.Layout.Decoration.handleMouseFocusDrag' does, and for the same
--- reason: river reports button presses against a @river_window_v1@, and a
--- decoration is a surface the window manager drew, so river attributes the
--- click to no window.  Everything else about a @DecorationEx@ decoration
--- works -- it is created, laid out, drawn, retitled and destroyed -- but the
--- widgets in it cannot be clicked, and a title bar cannot be dragged.
+-- River reports a press on a decoration as 'SurfaceClicked': a decoration is a
+-- @river_shell_surface_v1@ this process created rather than a
+-- @river_window_v1@, so it gets an event of its own, carrying the same
+-- 'Window' id the decoration is known by here.  See
+-- 'XMonad.Layout.Decoration.handleMouseFocusDrag', which this mirrors.
+--
+-- __Every interaction is reported as 'button1'.__  River says that a surface
+-- was interacted with and deliberately not what caused it, since it may have
+-- been touch or a tablet tool, so there is no button number to pass on.  The
+-- consequence is visible in the theme: 'onDecorationClick' and
+-- 'isDraggingEnabled' are still consulted, but only ever with @1@, so a theme
+-- binding a command to button 2 or 3 will not see it fire.  Reporting a real
+-- button would need river to say which one, and it does not.
 handleMouseFocusDrag :: (DecorationEngine engine widget a, Shrinker shrinker) => engine widget a -> Theme engine widget -> DecorationLayoutState engine -> shrinker -> Event -> X ()
-handleMouseFocusDrag _ _ _ _ _ =
-    warnUnimplemented "DecorationEx.handleMouseFocusDrag"
-      (  "Clicking a decoration does nothing: river reports button presses "
-      ++ "against windows, and a decoration is a surface the window manager "
-      ++ "draws rather than a window river knows about.")
+handleMouseFocusDrag ds theme (DecorationLayoutState {dsDecorations}) _ (SurfaceClicked {ev_window, ev_x, ev_y})
+    | Just (WindowDecoration {..}) <- findDecoDataByDecoWindow ev_window dsDecorations = do
+        let decoRect@(Rectangle dx dy _ _) = fromJust wdDecoRect
+            x = fi $ ev_x - fi dx
+            y = fi $ ev_y - fi dy
+            button = 1
+        dealtWith <- handleDecorationClick ds theme decoRect (map wpRectangle wdWidgets) wdOrigWindow x y button
+        unless dealtWith $ when (isDraggingEnabled theme button) $
+            mouseDrag (\dragX dragY -> focus wdOrigWindow >> decorationWhileDraggingHook ds (fi ev_x) (fi ev_y) (wdOrigWindow, wdOrigWinRect) dragX dragY)
+                      (decorationAfterDraggingHook ds (wdOrigWindow, wdOrigWinRect) ev_window)
+handleMouseFocusDrag _ _ _ _ _ = return ()
 
--- Upstream also has findDecoDataByDecoWindow, which answers "which decoration
--- is this window?".  Its only caller was 'handleMouseFocusDrag', which no
--- longer has a click to look up.
+findDecoDataByDecoWindow :: Window -> [WindowDecoration] -> Maybe WindowDecoration
+findDecoDataByDecoWindow decoWin = find (\dd -> wdDecoWindow dd == Just decoWin)
 
 decorationHandler :: forall engine widget a.
                      (DecorationEngine engine widget a,

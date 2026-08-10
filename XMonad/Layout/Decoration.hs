@@ -39,7 +39,6 @@ module XMonad.Layout.Decoration
 import Foreign.C.Types(CInt)
 
 import XMonad
-import XMonad.River (warnUnimplemented)
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.Hooks.UrgencyHook
@@ -323,36 +322,40 @@ handleEvent _ _ _ _ = return ()
 -- | Mouse focus and mouse drag are handled by the same function, this
 -- way we can start dragging unfocused windows too.
 --
--- __Does nothing under river.__  Clicking a title bar neither focuses nor
--- drags, and 'decorationCatchClicksHook' -- the button widgets in
--- "XMonad.Layout.ButtonDecoration" and "XMonad.Layout.DecorationEx" -- never
--- fires.
+-- River reports a press on a decoration as 'SurfaceClicked' rather than as a
+-- @ButtonPress@ on a window, because a decoration is not a
+-- @river_window_v1@ -- it is a @river_shell_surface_v1@ this process created
+-- through 'XMonad.Util.XUtils.createNewWindow'.  The id it carries is that
+-- surface, which is the same 'Window' this module already knows the
+-- decoration by, so 'lookFor' finds it exactly as it did under X11.
 --
--- The obstacle is that river reports a button press against a
--- @river_window_v1@, and a decoration is not one.  It is a surface this window
--- manager draws itself, so river attributes a click on it to no window at all
--- and the lookup that follows has nothing to find.  X11 had no such
--- distinction: a decoration was an ordinary child window of the root, and a
--- ButtonPress on it named it like any other.
+-- Two differences from upstream, both from what river reports rather than
+-- from how this is written:
 --
--- Closing this needs the pointer reported in output coordinates on press, so
--- the click can be tested against the decoration rectangles this module
--- already knows.  @river_seat_v1.pointer_position@ carries exactly that, but
--- it is motion rather than press, and @river_pointer_binding_v1.pressed@ --
--- which is the press -- carries no position.  Correlating the two is
--- guesswork at the moment the button goes down.
+-- * there is no button number and no press\/release distinction.  River says
+--   an interaction happened and deliberately not what caused it, since it may
+--   have been touch or a tablet tool, so the @et == buttonPress@ guard has
+--   nothing to test and is gone.  Every interaction is treated as a press.
 --
--- Everything else about decorations works: they are created, laid out, drawn,
--- retitled and destroyed.
+-- * the position is river\'s global coordinate space, which is what
+--   @ev_x_root@ was, so the arithmetic below is unchanged.
 handleMouseFocusDrag :: (DecorationStyle ds a) => ds a -> DecorationState -> Event -> X ()
-handleMouseFocusDrag _ _ _ =
-    warnUnimplemented "Decoration.handleMouseFocusDrag"
-      -- Concatenated rather than written as a string gap: this module is
-      -- compiled with CPP, which treats a trailing backslash as a line
-      -- continuation and splices the lines before GHC sees them.
-      (  "Clicking a decoration does nothing: river reports button presses "
-      ++ "against windows, and a decoration is a surface the window manager "
-      ++ "draws rather than a window river knows about.")
+handleMouseFocusDrag ds (DS dwrs _) SurfaceClicked { ev_window = ew
+                                                   , ev_x      = ex
+                                                   , ev_y      = ey }
+    | Just ((mainw,r), (_, decoRectM)) <- lookFor ew dwrs = do
+        let Rectangle dx _ dwh _ = fromJust decoRectM
+            distFromLeft = ex - fi dx
+            distFromRight = fi dwh - (ex - fi dx)
+        dealtWith <- decorationCatchClicksHook ds mainw (fi distFromLeft) (fi distFromRight)
+        unless dealtWith $
+            -- fi: 'decorationWhileDraggingHook' takes the press position as
+            -- CInt, which is what X11's ev_x_root was.  Kept rather than
+            -- retyped to Position, so a DecorationStyle instance written
+            -- against upstream still compiles unchanged.
+            mouseDrag (\x y -> focus mainw >> decorationWhileDraggingHook ds (fi ex) (fi ey) (mainw, r) x y)
+                        (decorationAfterDraggingHook ds (mainw, r) ew)
+handleMouseFocusDrag _ _ _ = return ()
 
 handleDraggingInProgress :: CInt -> CInt -> (Window, Rectangle) -> Position -> Position -> X ()
 handleDraggingInProgress ex ey (_, r) x y = do
