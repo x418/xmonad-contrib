@@ -107,7 +107,7 @@ library
                         XMonad.Actions.DynamicWorkspaceGroups
                         XMonad.Actions.DynamicWorkspaceOrder
                         XMonad.Actions.DynamicWorkspaces
-                     -- XMonad.Actions.EasyMotion
+                        XMonad.Actions.EasyMotion
                         XMonad.Actions.FindEmptyWorkspace
                         XMonad.Actions.FlexibleManipulate
                         XMonad.Actions.FlexibleResize
@@ -151,9 +151,9 @@ library
                         XMonad.Actions.SwapWorkspaces
                         XMonad.Actions.TagWindows
                         XMonad.Actions.TiledWindowDragging
-                     -- XMonad.Actions.ToggleFullFloat
+                        XMonad.Actions.ToggleFullFloat
                         XMonad.Actions.TopicSpace
-                     -- XMonad.Actions.TreeSelect
+                        XMonad.Actions.TreeSelect
                      -- XMonad.Actions.UpdateFocus
                         XMonad.Actions.UpdatePointer
                         XMonad.Actions.UpKeys
@@ -165,20 +165,20 @@ library
                         XMonad.Actions.WithAll
                         XMonad.Actions.Workscreen
                         XMonad.Actions.WorkspaceCursors
-                     -- XMonad.Actions.WorkspaceNames
+                        XMonad.Actions.WorkspaceNames
                      -- XMonad.Config.Arossato
                         XMonad.Config.Azerty
                         XMonad.Config.Bepo
                      -- XMonad.Config.Bluetile
-                     -- XMonad.Config.Desktop
+                        XMonad.Config.Desktop
                         XMonad.Config.Dmwit
-                     -- XMonad.Config.Droundy
-                     -- XMonad.Config.Gnome
-                     -- XMonad.Config.Kde
-                     -- XMonad.Config.Mate
+                        XMonad.Config.Droundy
+                        XMonad.Config.Gnome
+                        XMonad.Config.Kde
+                        XMonad.Config.Mate
                         XMonad.Config.Prime
-                     -- XMonad.Config.Sjanssen
-                     -- XMonad.Config.Xfce
+                        XMonad.Config.Sjanssen
+                        XMonad.Config.Xfce
                         XMonad.Doc
                         XMonad.Doc.Configuring
                         XMonad.Doc.Developing
@@ -187,20 +187,20 @@ library
                         XMonad.Hooks.CurrentWorkspaceOnTop
                      -- XMonad.Hooks.DebugEvents
                      -- XMonad.Hooks.DebugKeyEvents
-                     -- XMonad.Hooks.DebugStack
+                        XMonad.Hooks.DebugStack
                      -- XMonad.Hooks.DynamicBars
                         XMonad.Hooks.DynamicHooks
                         XMonad.Hooks.DynamicIcons
                         XMonad.Hooks.DynamicLog
                         XMonad.Hooks.DynamicProperty
-                     -- XMonad.Hooks.EwmhDesktops
+                        XMonad.Hooks.EwmhDesktops
                      -- XMonad.Hooks.FadeInactive
                      -- XMonad.Hooks.FadeWindows
                      -- XMonad.Hooks.FloatConfigureReq
                         XMonad.Hooks.FloatNext
                         XMonad.Hooks.Focus
                         XMonad.Hooks.InsertPosition
-                     -- XMonad.Hooks.ManageDebug
+                        XMonad.Hooks.ManageDebug
                         XMonad.Hooks.ManageDocks
                         XMonad.Hooks.ManageHelpers
                      -- XMonad.Hooks.Minimize
@@ -266,7 +266,7 @@ library
                         XMonad.Layout.FixedAspectRatio
                         XMonad.Layout.FixedColumn
                         XMonad.Layout.FocusTracking
-                     -- XMonad.Layout.Fullscreen
+                        XMonad.Layout.Fullscreen
                         XMonad.Layout.Gaps
                         XMonad.Layout.Grid
                         XMonad.Layout.GridVariants
@@ -293,7 +293,7 @@ library
                         XMonad.Layout.Maximize
                         XMonad.Layout.MessageControl
                         XMonad.Layout.Minimize
-                     -- XMonad.Layout.Monitor
+                        XMonad.Layout.Monitor
                         XMonad.Layout.Mosaic
                         XMonad.Layout.MosaicAlt
                      -- XMonad.Layout.MouseResizableTile
@@ -328,7 +328,7 @@ library
                         XMonad.Layout.Square
                         XMonad.Layout.StackTile
                         XMonad.Layout.StateFull
-                     -- XMonad.Layout.Stoppable
+                        XMonad.Layout.Stoppable
                         XMonad.Layout.SubLayouts
                         XMonad.Layout.TabBarDecoration
                         XMonad.Layout.Tabbed
@@ -372,7 +372,7 @@ library
                         XMonad.Util.ClickableWorkspaces
                         XMonad.Util.Cursor
                         XMonad.Util.CustomKeys
-                     -- XMonad.Util.DebugWindow
+                        XMonad.Util.DebugWindow
                         XMonad.Util.Dmenu
                         XMonad.Util.DynamicScratchpads
                         XMonad.Util.Dzen
@@ -382,7 +382,7 @@ library
                         XMonad.Util.ExtensibleState
                         XMonad.Util.Font
                         XMonad.Util.Grab
-                     -- XMonad.Util.Hacks
+                        XMonad.Util.Hacks
                         XMonad.Util.History
                         XMonad.Util.Image
                         XMonad.Util.Invisible
@@ -430,7 +430,6 @@ test-suite tests
                   ExtensibleConf
                   GridSelect
                   Instances
-                  ManageDocks
                   NoBorders
                   OrgMode
                   RotateSome
@@ -452,8 +451,8 @@ test-suite tests
                   XMonad.Actions.WindowBringer
                   XMonad.Actions.WindowGo
                   XMonad.Actions.WindowNavigation
-                  XMonad.Hooks.ManageDocks
                   XMonad.Hooks.ManageHelpers
+                  XMonad.Util.Minimize
                   XMonad.Hooks.UrgencyHook
                   XMonad.Hooks.WorkspaceHistory
                   XMonad.Hooks.StatusBar.PP
@@ -480,6 +479,8 @@ test-suite tests
                   XMonad.Util.Process
                   XMonad.Util.PureX
                   XMonad.Util.Rectangle
+                  XMonad.Util.River.Compat
+                  XMonad.Util.River.Draw
                   XMonad.Util.Run
                   XMonad.Util.Stack
                   XMonad.Util.Timer
@@ -492,7 +493,6 @@ test-suite tests
   hs-source-dirs: tests, .
   build-depends: base >= 4.12 && < 5
                , QuickCheck >= 2
-               , X11 >= 1.10 && < 1.11
                , bytestring >= 0.10 && < 0.13
                , containers
                , directory
@@ -505,6 +505,11 @@ test-suite tests
                , utf8-string
                , deepseq
                , xmonad >= 0.16.9999 && < 0.19
+               -- The suite lists library modules as other-modules, so it
+               -- rebuilds them from source and needs what they need.  X11 is
+               -- gone for the same reason the library does not depend on it.
+               , cairo
+               , pango
   cpp-options: -DTESTING
   ghc-options: -Wall -Wno-unused-do-bind
   default-language: Haskell2010

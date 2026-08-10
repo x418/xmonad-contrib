@@ -140,6 +140,18 @@ XMonad.Actions.DynamicWorkspaces | toNthWorkspace | toNthWorkspace :: (String ->
 XMonad.Actions.DynamicWorkspaces | withNthWorkspace | withNthWorkspace :: (String -> WindowSet -> WindowSet) -> Int -> X ()
 XMonad.Actions.DynamicWorkspaces | withWorkspace | withWorkspace :: XPConfig -> (String -> X ()) -> X ()
 XMonad.Actions.DynamicWorkspaces | withWorkspaceIndex | withWorkspaceIndex :: (String -> WindowSet -> WindowSet) -> WorkspaceIndex -> X ()
+XMonad.Actions.EasyMotion | ChordKeys | data ChordKeys = AnyKeys [KeySym] | PerScreenKeys (Map ScreenId [KeySym])
+XMonad.Actions.EasyMotion | ChordKeys | type ChordKeys :: *
+XMonad.Actions.EasyMotion | Default | type Default :: * -> Constraint
+XMonad.Actions.EasyMotion | EasyMotionConfig | data EasyMotionConfig = EMConf {txtCol :: String, bgCol :: String, overlayF :: (Position -> Rectangle -> Rectangle), borderCol :: String, sKeys :: ChordKeys, cancelKey :: KeySym, emFont :: String, borderPx :: Int, maxChordLen :: Int}
+XMonad.Actions.EasyMotion | EasyMotionConfig | type EasyMotionConfig :: *
+XMonad.Actions.EasyMotion | a | class Default a where def :: a default def :: (Generic a, GDefault (Rep a)) => a
+XMonad.Actions.EasyMotion | bar | bar :: RealFrac f => f -> Position -> Rectangle -> Rectangle
+XMonad.Actions.EasyMotion | fixedSize | fixedSize :: (Integral a, Integral b) => a -> b -> Position -> Rectangle -> Rectangle
+XMonad.Actions.EasyMotion | fullSize | fullSize :: Position -> Rectangle -> Rectangle
+XMonad.Actions.EasyMotion | proportional | proportional :: RealFrac f => f -> Position -> Rectangle -> Rectangle
+XMonad.Actions.EasyMotion | selectWindow | selectWindow :: EasyMotionConfig -> (Maybe Window -> X ()) -> X ()
+XMonad.Actions.EasyMotion | textSize | textSize :: Position -> Rectangle -> Rectangle
 XMonad.Actions.FindEmptyWorkspace | sendToEmptyWorkspace | sendToEmptyWorkspace :: X ()
 XMonad.Actions.FindEmptyWorkspace | tagToEmptyWorkspace | tagToEmptyWorkspace :: X ()
 XMonad.Actions.FindEmptyWorkspace | viewEmptyWorkspace | viewEmptyWorkspace :: X ()
@@ -558,6 +570,11 @@ XMonad.Actions.TagWindows | withTaggedGlobal | withTaggedGlobal :: String -> (Wi
 XMonad.Actions.TagWindows | withTaggedGlobalP | withTaggedGlobalP :: String -> (Window -> WindowSet -> WindowSet) -> X ()
 XMonad.Actions.TagWindows | withTaggedP | withTaggedP :: String -> (Window -> WindowSet -> WindowSet) -> X ()
 XMonad.Actions.TiledWindowDragging | dragWindow | dragWindow :: Window -> X ()
+XMonad.Actions.ToggleFullFloat | fullFloat | fullFloat :: Window -> X ()
+XMonad.Actions.ToggleFullFloat | gcToggleFullFloat | gcToggleFullFloat :: XConfig a -> XConfig a
+XMonad.Actions.ToggleFullFloat | toggleFullFloat | toggleFullFloat :: Window -> X ()
+XMonad.Actions.ToggleFullFloat | toggleFullFloatEwmhFullscreen | toggleFullFloatEwmhFullscreen :: XConfig a -> XConfig a
+XMonad.Actions.ToggleFullFloat | unFullFloat | unFullFloat :: Window -> X ()
 XMonad.Actions.TopicSpace | (>*>) | (>*>) :: Monad m => m a -> Int -> m ()
 XMonad.Actions.TopicSpace | Dir | type Dir :: *
 XMonad.Actions.TopicSpace | Dir | type Dir = FilePath
@@ -590,6 +607,33 @@ XMonad.Actions.TopicSpace | workspaceHistory | workspaceHistory :: X [WorkspaceI
 XMonad.Actions.TopicSpace | workspaceHistoryByScreen | workspaceHistoryByScreen :: X [(ScreenId, [WorkspaceId])]
 XMonad.Actions.TopicSpace | workspaceHistoryHook | workspaceHistoryHook :: X ()
 XMonad.Actions.TopicSpace | workspaceHistoryHookExclude | workspaceHistoryHookExclude :: [WorkspaceId] -> X ()
+XMonad.Actions.TreeSelect | Default | type Default :: * -> Constraint
+XMonad.Actions.TreeSelect | Pixel | type Pixel :: *
+XMonad.Actions.TreeSelect | Pixel | type Pixel = Word32
+XMonad.Actions.TreeSelect | TSConfig | data TSConfig a = TSConfig {ts_hidechildren :: Bool, ts_background :: Pixel, ts_font :: String, ts_node :: (Pixel, Pixel), ts_nodealt :: (Pixel, Pixel), ts_highlight :: (Pixel, Pixel), ts_extra :: Pixel, ts_node_width :: Int, ts_node_height :: Int, ts_originX :: Int, ts_originY :: Int, ts_indent :: Int, ts_navigate :: Map (KeyMask, KeySym) (TreeSelect a (TSNavigation a))}
+XMonad.Actions.TreeSelect | TSConfig | type TSConfig :: * -> *
+XMonad.Actions.TreeSelect | TSConfig | type role TSConfig nominal
+XMonad.Actions.TreeSelect | TSNavigation | data TSNavigation a = TSContinue | TSCancel | TSSelect a
+XMonad.Actions.TreeSelect | TSNavigation | type TSNavigation :: * -> *
+XMonad.Actions.TreeSelect | TSNode | data TSNode a = TSNode {tsn_name :: String, tsn_extra :: String, tsn_value :: a}
+XMonad.Actions.TreeSelect | TSNode | type TSNode :: * -> *
+XMonad.Actions.TreeSelect | a | class Default a where def :: a default def :: (Generic a, GDefault (Rep a)) => a
+XMonad.Actions.TreeSelect | cancel | cancel :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | defaultNavigation | defaultNavigation :: Map (KeyMask, KeySym) (TreeSelect a (TSNavigation a))
+XMonad.Actions.TreeSelect | moveChild | moveChild :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | moveHistBack | moveHistBack :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | moveHistForward | moveHistForward :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | moveNext | moveNext :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | moveParent | moveParent :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | movePrev | movePrev :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | moveTo | moveTo :: [String] -> TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | select | select :: TreeSelect a (TSNavigation a)
+XMonad.Actions.TreeSelect | toWorkspaces | toWorkspaces :: Forest String -> [WorkspaceId]
+XMonad.Actions.TreeSelect | treeselect | treeselect :: TSConfig a -> Forest (TSNode a) -> (Maybe a -> X ()) -> X ()
+XMonad.Actions.TreeSelect | treeselectAction | treeselectAction :: TSConfig (X a) -> Forest (TSNode (X a)) -> X ()
+XMonad.Actions.TreeSelect | treeselectAt | treeselectAt :: TSConfig a -> TreeZipper (TSNode a) -> [[String]] -> (Maybe a -> X ()) -> X ()
+XMonad.Actions.TreeSelect | treeselectWorkspace | treeselectWorkspace :: TSConfig WorkspaceId -> Forest String -> (WorkspaceId -> WindowSet -> WindowSet) -> X ()
+XMonad.Actions.TreeSelect | tsDefaultConfig | tsDefaultConfig :: TSConfig a
 XMonad.Actions.UpKeys | UpKeysConfig | data UpKeysConfig = UpKeysConfig {grabKeys :: Bool, upKeys :: (Map (KeyMask, KeySym) (X ()))}
 XMonad.Actions.UpKeys | UpKeysConfig | type UpKeysConfig :: *
 XMonad.Actions.UpKeys | ezUpKeys | ezUpKeys :: XConfig l -> [(String, X ())] -> Map (KeyMask, KeySym) (X ())
@@ -702,12 +746,27 @@ XMonad.Actions.WorkspaceCursors | noWrapUp | noWrapUp :: Stack t -> Stack t
 XMonad.Actions.WorkspaceCursors | shiftLayer | shiftLayer :: (Stack (Cursors String) -> Stack (Cursors WorkspaceId)) -> Int -> X ()
 XMonad.Actions.WorkspaceCursors | shiftModifyLayer | shiftModifyLayer :: (Stack (Cursors String) -> Stack (Cursors WorkspaceId)) -> Int -> X ()
 XMonad.Actions.WorkspaceCursors | workspaceCursors | workspaceCursors :: Cursors String -> l a -> ModifiedLayout WorkspaceCursors l a
+XMonad.Actions.WorkspaceNames | getCurrentWorkspaceName | getCurrentWorkspaceName :: X (Maybe String)
+XMonad.Actions.WorkspaceNames | getWorkspaceName | getWorkspaceName :: WorkspaceId -> X (Maybe String)
+XMonad.Actions.WorkspaceNames | getWorkspaceNames | getWorkspaceNames :: String -> X (String -> WindowSpace -> String)
+XMonad.Actions.WorkspaceNames | getWorkspaceNames' | getWorkspaceNames' :: X (WorkspaceId -> Maybe String)
+XMonad.Actions.WorkspaceNames | renameWorkspace | renameWorkspace :: XPConfig -> X ()
+XMonad.Actions.WorkspaceNames | setCurrentWorkspaceName | setCurrentWorkspaceName :: String -> X ()
+XMonad.Actions.WorkspaceNames | setWorkspaceName | setWorkspaceName :: WorkspaceId -> String -> X ()
+XMonad.Actions.WorkspaceNames | swapTo | swapTo :: Direction1D -> X ()
+XMonad.Actions.WorkspaceNames | swapTo' | swapTo' :: Direction1D -> WSType -> X ()
+XMonad.Actions.WorkspaceNames | swapWithCurrent | swapWithCurrent :: WorkspaceId -> X ()
+XMonad.Actions.WorkspaceNames | workspaceNamePrompt | workspaceNamePrompt :: XPConfig -> (WorkspaceId -> X ()) -> X ()
+XMonad.Actions.WorkspaceNames | workspaceNamesEwmh | workspaceNamesEwmh :: XConfig l -> XConfig l
+XMonad.Actions.WorkspaceNames | workspaceNamesPP | workspaceNamesPP :: PP -> X PP
 XMonad.Config.Azerty | azertyConfig | azertyConfig :: XConfig (Choose Tall (Choose (Mirror Tall) Full))
 XMonad.Config.Azerty | azertyKeys | azertyKeys :: XConfig l -> Map (KeyMask, KeySym) (X ())
 XMonad.Config.Azerty | belgianConfig | belgianConfig :: XConfig (Choose Tall (Choose (Mirror Tall) Full))
 XMonad.Config.Azerty | belgianKeys | belgianKeys :: XConfig l -> Map (KeyMask, KeySym) (X ())
 XMonad.Config.Bepo | bepoConfig | bepoConfig :: XConfig (Choose Tall (Choose (Mirror Tall) Full))
 XMonad.Config.Bepo | bepoKeys | bepoKeys :: XConfig l -> Map (KeyMask, KeySym) (X ())
+XMonad.Config.Desktop | desktopConfig | desktopConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
+XMonad.Config.Desktop | desktopLayoutModifiers | desktopLayoutModifiers :: LayoutClass l a => l a -> ModifiedLayout AvoidStruts l a
 XMonad.Config.Dmwit | PPrint | class Show a => PPrint a where pprint :: Int -> a -> String
 XMonad.Config.Dmwit | PPrint | type PPrint :: * -> Constraint
 XMonad.Config.Dmwit | PPrintable | data PPrintable = forall a. PPrint a => P a
@@ -750,6 +809,19 @@ XMonad.Config.Dmwit | viewShift | viewShift :: (Ord a, Eq s, Eq i) => i -> Stack
 XMonad.Config.Dmwit | volumeDzen | volumeDzen :: String -> X ()
 XMonad.Config.Dmwit | withScreen | withScreen :: ScreenId -> (WorkspaceId -> WindowSet -> WindowSet) -> X ()
 XMonad.Config.Dmwit | xmobarCommand | xmobarCommand :: ScreenId -> String
+XMonad.Config.Droundy | config | config :: XConfig (ModifiedLayout ShowWName (ModifiedLayout WorkspaceDir (ModifiedLayout BoringWindows (ModifiedLayout SmartBorder (ModifiedLayout WindowNavigation (ModifiedLayout Magnifier (ToggleLayouts Full (ModifiedLayout AvoidStruts (Choose (ModifiedLayout Rename (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest)) (Choose (ModifiedLayout Rename (CombineTwo (DragPane ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (CombineTwo (Square ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest)))) (Choose (ModifiedLayout Rename (CombineTwo (DragPane ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (CombineTwo (DragPane ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (CombineTwo (Square ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest))))) (ModifiedLayout Rename (CombineTwo (DragPane ()) (CombineTwo (DragPane ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest)) (CombineTwo (Square ()) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest) (ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest)))))))))))))))
+XMonad.Config.Droundy | mytab | mytab :: ModifiedLayout (Decoration TabbedDecoration CustomShrink) Simplest Window
+XMonad.Config.Gnome | desktopLayoutModifiers | desktopLayoutModifiers :: LayoutClass l a => l a -> ModifiedLayout AvoidStruts l a
+XMonad.Config.Gnome | gnomeConfig | gnomeConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
+XMonad.Config.Gnome | gnomeRegister | gnomeRegister :: MonadIO m => m ()
+XMonad.Config.Kde | desktopLayoutModifiers | desktopLayoutModifiers :: LayoutClass l a => l a -> ModifiedLayout AvoidStruts l a
+XMonad.Config.Kde | kde4Config | kde4Config :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
+XMonad.Config.Kde | kdeConfig | kdeConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
+XMonad.Config.Mate | desktopLayoutModifiers | desktopLayoutModifiers :: LayoutClass l a => l a -> ModifiedLayout AvoidStruts l a
+XMonad.Config.Mate | mateConfig | mateConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
+XMonad.Config.Mate | mateLogout | mateLogout :: MonadIO m => m ()
+XMonad.Config.Mate | mateRegister | mateRegister :: MonadIO m => m ()
+XMonad.Config.Mate | mateShutdown | mateShutdown :: MonadIO m => m ()
 XMonad.Config.Prime | ($) | ($) :: (a -> b) -> a -> b
 XMonad.Config.Prime | ($) | ($) :: (a -> b) -> a -> b
 XMonad.Config.Prime | (&&) | (&&) :: Bool -> Bool -> Bool
@@ -816,7 +888,7 @@ XMonad.Config.Prime | Enum | class Enum a where succ :: a -> a pred :: a -> a to
 XMonad.Config.Prime | Enum | type Enum :: * -> Constraint
 XMonad.Config.Prime | Eq | class Eq a where (==) :: a -> a -> Bool (/=) :: a -> a -> Bool {-# MINIMAL (==) | (/=) #-}
 XMonad.Config.Prime | Eq | type Eq :: * -> Constraint
-XMonad.Config.Prime | Event | data Event = DestroyWindowEvent {ev_window :: Window} | WindowAdded {ev_window :: Window} | WindowTitleChanged {ev_window :: Window, ev_text :: (Maybe ByteString)} | WindowAppIdChanged {ev_window :: Window, ev_text :: (Maybe ByteString)} | OutputAdded {ev_output :: ObjectId} | OutputRemoved {ev_output :: ObjectId} | SeatAdded {ev_seat :: ObjectId} | SeatRemoved {ev_seat :: ObjectId} | ScreenLayoutChanged | SessionLocked | SessionUnlocked | KeyPressed {ev_state :: KeyMask, ev_keysym :: KeySym} | TimerFired Int
+XMonad.Config.Prime | Event | data Event = DestroyWindowEvent {ev_window :: Window} | WindowAdded {ev_window :: Window} | WindowTitleChanged {ev_window :: Window, ev_text :: (Maybe ByteString)} | WindowAppIdChanged {ev_window :: Window, ev_text :: (Maybe ByteString)} | OutputAdded {ev_output :: ObjectId} | OutputRemoved {ev_output :: ObjectId} | SeatAdded {ev_seat :: ObjectId} | SeatRemoved {ev_seat :: ObjectId} | ScreenLayoutChanged | SessionLocked | SessionUnlocked | KeyPressed {ev_state :: KeyMask, ev_keysym :: KeySym} | TimerFired Int | WindowFullscreenChanged {ev_window :: Window, ev_fullscreen :: Bool} | SurfaceClicked {ev_window :: Window, ev_x :: Position, ev_y :: Position}
 XMonad.Config.Prime | Event | type Event :: *
 XMonad.Config.Prime | EventType | type EventType :: *
 XMonad.Config.Prime | EventType | type EventType = Word32
@@ -1568,9 +1640,20 @@ XMonad.Config.Prime | zip | zip :: [a] -> [b] -> [(a, b)]
 XMonad.Config.Prime | zip3 | zip3 :: [a] -> [b] -> [c] -> [(a, b, c)]
 XMonad.Config.Prime | zipWith | zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
 XMonad.Config.Prime | zipWith3 | zipWith3 :: (a -> b -> c -> d) -> [a] -> [b] -> [c] -> [d]
+XMonad.Config.Sjanssen | sjanssenConfig | sjanssenConfig :: XConfig (ModifiedLayout AvoidStruts (ModifiedLayout SmartBorder (Choose (Choose HintedTile (Choose HintedTile Full)) (ModifiedLayout (Decoration TabbedDecoration DefaultShrinker) Simplest))))
+XMonad.Config.Xfce | desktopLayoutModifiers | desktopLayoutModifiers :: LayoutClass l a => l a -> ModifiedLayout AvoidStruts l a
+XMonad.Config.Xfce | xfceConfig | xfceConfig :: XConfig (ModifiedLayout AvoidStruts (Choose Tall (Choose (Mirror Tall) Full)))
 XMonad.Hooks.BorderPerWindow | actionQueue | actionQueue :: XConfig l -> XConfig l
 XMonad.Hooks.BorderPerWindow | defineBorderWidth | defineBorderWidth :: Dimension -> ManageHook
 XMonad.Hooks.CurrentWorkspaceOnTop | currentWorkspaceOnTop | currentWorkspaceOnTop :: X ()
+XMonad.Hooks.DebugStack | debugStack | debugStack :: X ()
+XMonad.Hooks.DebugStack | debugStackEventHook | debugStackEventHook :: Event -> X All
+XMonad.Hooks.DebugStack | debugStackFull | debugStackFull :: X ()
+XMonad.Hooks.DebugStack | debugStackFullEventHook | debugStackFullEventHook :: Event -> X All
+XMonad.Hooks.DebugStack | debugStackFullLogHook | debugStackFullLogHook :: X ()
+XMonad.Hooks.DebugStack | debugStackFullString | debugStackFullString :: X String
+XMonad.Hooks.DebugStack | debugStackLogHook | debugStackLogHook :: X ()
+XMonad.Hooks.DebugStack | debugStackString | debugStackString :: X String
 XMonad.Hooks.DynamicHooks | addDynamicHook | addDynamicHook :: ManageHook -> X ()
 XMonad.Hooks.DynamicHooks | dynamicMasterHook | dynamicMasterHook :: ManageHook
 XMonad.Hooks.DynamicHooks | oneShotHook | oneShotHook :: Query Bool -> ManageHook -> X ()
@@ -1627,6 +1710,27 @@ XMonad.Hooks.DynamicProperty | dynamicTitle | dynamicTitle :: ManageHook -> Even
 XMonad.Hooks.DynamicProperty | onClassChange | onClassChange :: ManageHook -> Event -> X All
 XMonad.Hooks.DynamicProperty | onTitleChange | onTitleChange :: ManageHook -> Event -> X All
 XMonad.Hooks.DynamicProperty | onXPropertyChange | onXPropertyChange :: String -> ManageHook -> Event -> X All
+XMonad.Hooks.EwmhDesktops | addEwmhWorkspaceRename | addEwmhWorkspaceRename :: X (String -> WindowSpace -> String) -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | addEwmhWorkspaceSort | addEwmhWorkspaceSort :: X WorkspaceSort -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | disableEwmhManageDesktopViewport | disableEwmhManageDesktopViewport :: XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | enableEwmhManageAboveBelowState | enableEwmhManageAboveBelowState :: XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | ewmh | ewmh :: XConfig a -> XConfig a
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsEventHook | ewmhDesktopsEventHook :: Event -> X All
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsEventHookCustom | ewmhDesktopsEventHookCustom :: WorkspaceSort -> Event -> X All
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsLogHook | ewmhDesktopsLogHook :: X ()
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsLogHookCustom | ewmhDesktopsLogHookCustom :: WorkspaceSort -> X ()
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsManageHook | ewmhDesktopsManageHook :: ManageHook
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsMaybeManageHook | ewmhDesktopsMaybeManageHook :: MaybeManageHook
+XMonad.Hooks.EwmhDesktops | ewmhDesktopsStartup | ewmhDesktopsStartup :: X ()
+XMonad.Hooks.EwmhDesktops | ewmhFullscreen | ewmhFullscreen :: XConfig a -> XConfig a
+XMonad.Hooks.EwmhDesktops | fullscreenEventHook | fullscreenEventHook :: Event -> X All
+XMonad.Hooks.EwmhDesktops | fullscreenStartup | fullscreenStartup :: X ()
+XMonad.Hooks.EwmhDesktops | setEwmhActivateHook | setEwmhActivateHook :: ManageHook -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | setEwmhFullscreenHooks | setEwmhFullscreenHooks :: ManageHook -> ManageHook -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | setEwmhHiddenWorkspaceToScreenMapping | setEwmhHiddenWorkspaceToScreenMapping :: (WindowSet -> WindowSpace -> WindowScreen) -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | setEwmhSwitchDesktopHook | setEwmhSwitchDesktopHook :: (WorkspaceId -> WindowSet -> WindowSet) -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | setEwmhWorkspaceRename | setEwmhWorkspaceRename :: X (String -> WindowSpace -> String) -> XConfig l -> XConfig l
+XMonad.Hooks.EwmhDesktops | setEwmhWorkspaceSort | setEwmhWorkspaceSort :: X WorkspaceSort -> XConfig l -> XConfig l
 XMonad.Hooks.FloatNext | floatAllNew | floatAllNew :: Bool -> X ()
 XMonad.Hooks.FloatNext | floatNext | floatNext :: Bool -> X ()
 XMonad.Hooks.FloatNext | floatNextHook | floatNextHook :: ManageHook
@@ -1675,6 +1779,13 @@ XMonad.Hooks.InsertPosition | Position | data Position = Master | End | Above | 
 XMonad.Hooks.InsertPosition | Position | type Position :: *
 XMonad.Hooks.InsertPosition | insertPosition | insertPosition :: Position -> Focus -> ManageHook
 XMonad.Hooks.InsertPosition | setupInsertPosition | setupInsertPosition :: Position -> Focus -> XConfig a -> XConfig a
+XMonad.Hooks.ManageDebug | debugManageHook | debugManageHook :: XConfig l -> XConfig l
+XMonad.Hooks.ManageDebug | debugManageHookOn | debugManageHookOn :: String -> XConfig l -> XConfig l
+XMonad.Hooks.ManageDebug | debugNextManagedWindow | debugNextManagedWindow :: X ()
+XMonad.Hooks.ManageDebug | manageDebug | manageDebug :: ManageHook
+XMonad.Hooks.ManageDebug | manageDebug' | manageDebug' :: Handle -> Bool -> ManageHook
+XMonad.Hooks.ManageDebug | manageDebugLogHook | manageDebugLogHook :: X ()
+XMonad.Hooks.ManageDebug | maybeManageDebug | maybeManageDebug :: ManageHook
 XMonad.Hooks.ManageDocks | AvoidStruts | newtype AvoidStruts a = AvoidStruts (Set Direction2D)
 XMonad.Hooks.ManageDocks | AvoidStruts | type AvoidStruts :: * -> *
 XMonad.Hooks.ManageDocks | AvoidStruts | type role AvoidStruts phantom
@@ -2305,6 +2416,26 @@ XMonad.Layout.FocusTracking | FocusTracking | newtype FocusTracking a = FocusTra
 XMonad.Layout.FocusTracking | FocusTracking | type FocusTracking :: * -> *
 XMonad.Layout.FocusTracking | FocusTracking | type role FocusTracking phantom
 XMonad.Layout.FocusTracking | focusTracking | focusTracking :: l a -> ModifiedLayout FocusTracking l a
+XMonad.Layout.Fullscreen | FullscreenFloat | data FullscreenFloat a = FullscreenFloat RationalRect (Map a (RationalRect, Bool))
+XMonad.Layout.Fullscreen | FullscreenFloat | type FullscreenFloat :: * -> *
+XMonad.Layout.Fullscreen | FullscreenFloat | type role FullscreenFloat nominal
+XMonad.Layout.Fullscreen | FullscreenFocus | data FullscreenFocus a = FullscreenFocus RationalRect [a]
+XMonad.Layout.Fullscreen | FullscreenFocus | type FullscreenFocus :: * -> *
+XMonad.Layout.Fullscreen | FullscreenFull | data FullscreenFull a = FullscreenFull RationalRect [a]
+XMonad.Layout.Fullscreen | FullscreenFull | type FullscreenFull :: * -> *
+XMonad.Layout.Fullscreen | FullscreenMessage | data FullscreenMessage = AddFullscreen Window | RemoveFullscreen Window | FullscreenChanged
+XMonad.Layout.Fullscreen | FullscreenMessage | type FullscreenMessage :: *
+XMonad.Layout.Fullscreen | fullscreenEventHook | fullscreenEventHook :: Event -> X All
+XMonad.Layout.Fullscreen | fullscreenFloat | fullscreenFloat :: LayoutClass l a => l a -> ModifiedLayout FullscreenFloat l a
+XMonad.Layout.Fullscreen | fullscreenFloatRect | fullscreenFloatRect :: LayoutClass l a => RationalRect -> l a -> ModifiedLayout FullscreenFloat l a
+XMonad.Layout.Fullscreen | fullscreenFocus | fullscreenFocus :: LayoutClass l a => l a -> ModifiedLayout FullscreenFocus l a
+XMonad.Layout.Fullscreen | fullscreenFocusRect | fullscreenFocusRect :: LayoutClass l a => RationalRect -> l a -> ModifiedLayout FullscreenFocus l a
+XMonad.Layout.Fullscreen | fullscreenFull | fullscreenFull :: LayoutClass l a => l a -> ModifiedLayout FullscreenFull l a
+XMonad.Layout.Fullscreen | fullscreenFullRect | fullscreenFullRect :: LayoutClass l a => RationalRect -> l a -> ModifiedLayout FullscreenFull l a
+XMonad.Layout.Fullscreen | fullscreenManageHook | fullscreenManageHook :: ManageHook
+XMonad.Layout.Fullscreen | fullscreenManageHookWith | fullscreenManageHookWith :: Query Bool -> ManageHook
+XMonad.Layout.Fullscreen | fullscreenSupport | fullscreenSupport :: LayoutClass l Window => XConfig l -> XConfig (ModifiedLayout FullscreenFull l)
+XMonad.Layout.Fullscreen | fullscreenSupportBorder | fullscreenSupportBorder :: LayoutClass l Window => XConfig l -> XConfig (ModifiedLayout FullscreenFull (ModifiedLayout SmartBorder (ModifiedLayout FullscreenFull l)))
 XMonad.Layout.Gaps | Direction2D | data Direction2D = U | D | R | L
 XMonad.Layout.Gaps | Direction2D | type Direction2D :: *
 XMonad.Layout.Gaps | GapMessage | data GapMessage = ToggleGaps | ToggleGap Direction2D | IncGap Int Direction2D | DecGap Int Direction2D | ModifyGaps (GapSpec -> GapSpec)
@@ -2706,6 +2837,16 @@ XMonad.Layout.Minimize | Minimize | data Minimize a = Minimize
 XMonad.Layout.Minimize | Minimize | type Minimize :: * -> *
 XMonad.Layout.Minimize | Minimize | type role Minimize phantom
 XMonad.Layout.Minimize | minimize | minimize :: l Window -> ModifiedLayout Minimize l Window
+XMonad.Layout.Monitor | Monitor | data Monitor a = Monitor {prop :: Property, rect :: Rectangle, visible :: Bool, name :: String, persistent :: Bool}
+XMonad.Layout.Monitor | Monitor | type Monitor :: * -> *
+XMonad.Layout.Monitor | Monitor | type role Monitor phantom
+XMonad.Layout.Monitor | MonitorMessage | data MonitorMessage = ToggleMonitor | ShowMonitor | HideMonitor | ToggleMonitorNamed String | ShowMonitorNamed String | HideMonitorNamed String
+XMonad.Layout.Monitor | MonitorMessage | type MonitorMessage :: *
+XMonad.Layout.Monitor | Property | data Property = Title String | ClassName String | Resource String | And Property Property | Or Property Property | Not Property | Const Bool | Tagged String
+XMonad.Layout.Monitor | Property | type Property :: *
+XMonad.Layout.Monitor | doHideIgnore | doHideIgnore :: ManageHook
+XMonad.Layout.Monitor | manageMonitor | manageMonitor :: Monitor a -> ManageHook
+XMonad.Layout.Monitor | monitor | monitor :: Monitor a
 XMonad.Layout.Mosaic | Aspect | data Aspect = Taller | Wider | Reset | SlopeMod ([Rational] -> [Rational])
 XMonad.Layout.Mosaic | Aspect | type Aspect :: *
 XMonad.Layout.Mosaic | Mosaic | data Mosaic a = Mosaic (Maybe (Bool, Rational, Int)) Rational [Rational]
@@ -2948,6 +3089,10 @@ XMonad.Layout.StateFull | StateFull | type StateFull :: * -> *
 XMonad.Layout.StateFull | StateFull | type StateFull = FocusTracking Full :: * -> *
 XMonad.Layout.StateFull | focusTracking | focusTracking :: l a -> ModifiedLayout FocusTracking l a
 XMonad.Layout.StateFull | pattern StateFull :: StateFull a | pattern StateFull :: StateFull a
+XMonad.Layout.Stoppable | Stoppable | data Stoppable a = Stoppable {mark :: String, delay :: Rational, timer :: Maybe TimerId}
+XMonad.Layout.Stoppable | Stoppable | type Stoppable :: * -> *
+XMonad.Layout.Stoppable | Stoppable | type role Stoppable phantom
+XMonad.Layout.Stoppable | stoppable | stoppable :: l a -> ModifiedLayout Stoppable l a
 XMonad.Layout.SubLayouts | Broadcast | newtype Broadcast = Broadcast SomeMessage
 XMonad.Layout.SubLayouts | Broadcast | type Broadcast :: *
 XMonad.Layout.SubLayouts | GroupMsg | data GroupMsg a = UnMerge a | UnMergeAll a | Merge a a | MergeAll a | Migrate a a | WithGroup (Stack a -> X (Stack a)) a | SubMessage SomeMessage a
@@ -3454,7 +3599,7 @@ XMonad.Prompt | XPMode | type XPMode :: *
 XMonad.Prompt | XPMode | type XPMode = XPType
 XMonad.Prompt | XPPosition | data XPPosition = Top | Bottom | CenteredAt {xpCenterY :: Rational, xpWidth :: Rational}
 XMonad.Prompt | XPPosition | type XPPosition :: *
-XMonad.Prompt | XPState | data XPState = XPS {dpy :: Display, rootw :: Window, win :: Window, screen :: Rectangle, winWidth :: Dimension, complWinDim :: Maybe ComplWindowDim, complIndex :: (Int, Int), complWin :: IORef (Maybe Window), showComplWin :: Bool, operationMode :: XPOperationMode, highlightedCompl :: Maybe String, gcon :: >_N)GC, fontS :: XMonadFont, commandHistory :: Stack String, offset :: Int, config :: XPConfig, successful :: Bool, cleanMask :: KeyMask -> KeyMask, done :: Bool, modeDone :: Bool, color :: XPColor, prompter :: String -> String, eventBuffer :: [(KeySym, String, Event)], inputBuffer :: String, currentCompletions :: Maybe [String], keyChan :: Chan (Maybe (KeySym, String)), clientH :: ClientHandle}
+XMonad.Prompt | XPState | data XPState = XPS {dpy :: Display, rootw :: Window, win :: Window, screen :: Rectangle, winWidth :: Dimension, complWinDim :: Maybe ComplWindowDim, complIndex :: (Int, Int), complWin :: IORef (Maybe Window), showComplWin :: Bool, operationMode :: XPOperationMode, highlightedCompl :: Maybe String, gcon :: >_N)GC, fontS :: XMonadFont, commandHistory :: Stack String, offset :: Int, config :: XPConfig, successful :: Bool, cleanMask :: KeyMask -> KeyMask, done :: Bool, modeDone :: Bool, color :: XPColor, prompter :: String -> String, eventBuffer :: [(KeySym, String, Event)], inputBuffer :: String, currentCompletions :: Maybe [String], keyChan :: Chan (Maybe (KeyMask, KeySym, String)), clientH :: ClientHandle}
 XMonad.Prompt | XPState | type XPState :: *
 XMonad.Prompt | XPType | data XPType = forall p. XPrompt p => XPT p
 XMonad.Prompt | XPType | type XPType :: *
@@ -3734,6 +3879,7 @@ XMonad.Util.Cursor | xC_watch | xC_watch :: Glyph
 XMonad.Util.Cursor | xC_xterm | xC_xterm :: Glyph
 XMonad.Util.CustomKeys | customKeys | customKeys :: (XConfig Layout -> [(KeyMask, KeySym)]) -> (XConfig Layout -> [((KeyMask, KeySym), X ())]) -> XConfig Layout -> Map (KeyMask, KeySym) (X ())
 XMonad.Util.CustomKeys | customKeysFrom | customKeysFrom :: XConfig l -> (XConfig Layout -> [(KeyMask, KeySym)]) -> (XConfig Layout -> [((KeyMask, KeySym), X ())]) -> XConfig Layout -> Map (KeyMask, KeySym) (X ())
+XMonad.Util.DebugWindow | debugWindow | debugWindow :: Window -> X String
 XMonad.Util.Dmenu | dmenu | dmenu :: MonadIO m => [String] -> m String
 XMonad.Util.Dmenu | dmenuMap | dmenuMap :: MonadIO m => Map String a -> m (Maybe a)
 XMonad.Util.Dmenu | dmenuXinerama | dmenuXinerama :: [String] -> X String
@@ -3832,6 +3978,7 @@ XMonad.Util.Font | textExtentsXMF | textExtentsXMF :: MonadIO m => XMonadFont ->
 XMonad.Util.Font | textWidthXMF | textWidthXMF :: MonadIO m => Display -> XMonadFont -> String -> m Int
 XMonad.Util.Grab | grab | grab :: Map (KeyMask, KeySym) (X ()) -> X ()
 XMonad.Util.Grab | ungrab | ungrab :: X ()
+XMonad.Util.Hacks | javaHack | javaHack :: XConfig l -> XConfig l
 XMonad.Util.History | History | data History k a = History {annals :: (IntMap (k, a)), recorded :: (Map k Int)}
 XMonad.Util.History | History | type History :: * -> * -> *
 XMonad.Util.History | History | type role History nominal representational

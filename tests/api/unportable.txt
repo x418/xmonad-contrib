@@ -89,6 +89,42 @@ SetStruts             no settable strut state
 ToggleStruts          no settable strut state
 defToggleStrutsKey    binds ToggleStruts
 
+# XMonad.Hooks.EwmhDesktops keeps every name it has upstream and drops none.
+# Nothing it does is possible here -- there is no root window to publish hints
+# on and no client message to read back -- but nothing it does is *wrong*
+# either: the inbound set is empty rather than ignored, and the outbound one
+# has nowhere to go.  Each name warns once on stderr instead of failing to
+# compile, because `ewmh` appears in nearly every xmonad config and a rule this
+# file exists to enforce should not cost every one of them a build error to say
+# what one line says better.  See that module's $river section, and the two
+# entries there that are gaps rather than facts about Wayland.
+
+# --- desktop panels asked to open a menu.  A client message to the root
+# window, addressed to a panel process that does not exist under Wayland.
+gnomeRun              _GNOME_PANEL_ACTION client message
+mateRun               _MATE_PANEL_ACTION client message
+matePanel             _MATE_PANEL_ACTION client message
+
+# XMonad.Layout.Monitor also loses its `opacity` field, for the same reason
+# XMonad.Hooks.FadeInactive is gone: _NET_WM_WINDOW_OPACITY is a convention
+# between an X client and a compositing manager, and river composites itself.
+# It has no entry because this check compares exported *names*, and a record
+# field is not one -- it lives inside the declaration text.  Which is a real
+# gap in the check: a field can be added to or dropped from a shared type
+# without anything here noticing.
+
+# --- XMonad.Util.Hacks.  Each of these works around something X11 let a window
+# manager reach into: answering a _NET_WM_STATE client message with a resize
+# behind the client's back, restacking another client's window found by
+# queryTree, or reporting a tray's width through a root-window property.
+windowedFullscreenFixEventHook  resizes on a _NET_WM_STATE client message
+fixSteamFlicker       intercepts a ConfigureRequest
+trayerAboveXmobarEventHook      restacks by queryTree/lowerWindow
+trayAbovePanelEventHook         restacks by queryTree/lowerWindow
+trayerPaddingXmobarEventHook    driven by ConfigureNotify, logs to a property
+trayPaddingXmobarEventHook      driven by ConfigureNotify, logs to a property
+trayPaddingEventHook            driven by ConfigureNotify on a tray window
+
 # --- not yet reviewed.  These are absent and the check pins them, but the
 # reason has not been established; do not read a decision into them.
 mkXPromptWithReturn   (unreviewed)

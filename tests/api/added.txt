@@ -22,6 +22,7 @@ unsnoc            base 4.19's Data.List, not a fork addition
 
 # Real additions.
 Navigation        GridSelect's key handling, rewritten around river bindings in place of makeXEventhandler's X event loop
+TSNavigation      TreeSelect's, for the same reason: no blocking read to recurse into, so a navigation action says what the loop should do next
 ungrab            replaces upstream's grabUngrab/ungrabKP; river has no grab, so releasing one is destroying a binding object
 showMessageWindow draws through XMonad.Util.River.Draw, which has no upstream counterpart
 
