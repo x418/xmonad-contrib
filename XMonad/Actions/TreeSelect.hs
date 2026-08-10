@@ -38,7 +38,46 @@ module XMonad.Actions.TreeSelect
       -- * Configuring
       -- $config
     , Pixel
-      -- $pixel
+      -- $river
+--
+-- Two things differ from the X11 original.
+--
+-- __'treeselect', 'treeselectAt' and 'treeselectWorkspace' take a
+-- continuation__ rather than returning what was selected, and an entry in
+-- 'ts_navigate' returns a 'TSNavigation' rather than tail-calling the loop.
+-- Both come from the same fact: upstream grabs the keyboard and blocks in
+-- @maskEvent@, so it can return an answer and an action can recurse into the
+-- read. A key binding here may only be created during a manage sequence and
+-- does not fire until that sequence has finished, so waiting inside one for a
+-- key would be waiting for something the compositor is not permitted to send.
+-- 'XMonad.River.submapNextKey' reads a key and returns immediately.
+--
+-- So a custom navigation entry that was
+--
+-- > moveWith parent >> redraw >> navigate
+--
+-- becomes
+--
+-- > moveWith parent >> redraw >> return TSContinue
+--
+-- and @select@ and @cancel@ return 'TSSelect' and 'TSCancel' where they
+-- returned @Just@ and @Nothing@. 'XMonad.Actions.GridSelect' was inverted the
+-- same way and for the same reason.
+--
+-- __A key with no binding ends the selection__, where upstream ignores it and
+-- keeps waiting. It cannot here: 'XMonad.River.submapNextKey' reports an
+-- unbound key and its 60-second abandonment deadline through the same
+-- callback, and treating an unbound key as \"keep waiting\" would treat the
+-- deadline that way too -- leaving a full-screen overlay on screen for the
+-- rest of the session with no way to remove it.
+--
+-- One smaller thing: upstream builds its window with a 32-bit visual and a
+-- private colormap so that 'ts_background' can be translucent. This draws on
+-- an ordinary window manager surface, as "XMonad.Layout.Decoration" does, and
+-- the alpha byte of 'ts_background' is ignored. Translucency would have to
+-- come from the compositor.
+
+-- $pixel
 
     , TSConfig(..)
     , tsDefaultConfig
@@ -46,6 +85,7 @@ module XMonad.Actions.TreeSelect
 
       -- * Navigation
       -- $navigation
+    , TSNavigation(..)
     , defaultNavigation
     , select
     , cancel
@@ -56,6 +96,9 @@ module XMonad.Actions.TreeSelect
     , moveHistBack
     , moveHistForward
     , moveTo
+
+      -- * Differences under river
+      -- $river
 
       -- * Advanced usage
       -- $advusage
@@ -77,12 +120,11 @@ import XMonad.Util.NamedWindows
 import XMonad.Util.TreeZipper
 import XMonad.Hooks.WorkspaceHistory
 import qualified Data.Map as M
-
-#ifdef XFT
-import qualified Data.List.NonEmpty as NE
-import Graphics.X11.Xrender
-import Graphics.X11.Xft
-#endif
+import Data.IORef (newIORef, readIORef, writeIORef)
+import Text.Printf (printf)
+import XMonad.River (submapNextKey)
+import XMonad.Util.River.Compat (GC, createGC, freeGC, fillRectangle, setForeground)
+import XMonad.Util.XUtils (createNewWindow, deleteWindow, showWindow)
 
 -- $usage
 --
@@ -150,6 +192,45 @@ import Graphics.X11.Xft
 -- >                , ts_navigate     = defaultNavigation
 -- >                }
 
+-- $river
+--
+-- Two things differ from the X11 original.
+--
+-- __'treeselect', 'treeselectAt' and 'treeselectWorkspace' take a
+-- continuation__ rather than returning what was selected, and an entry in
+-- 'ts_navigate' returns a 'TSNavigation' rather than tail-calling the loop.
+-- Both come from the same fact: upstream grabs the keyboard and blocks in
+-- @maskEvent@, so it can return an answer and an action can recurse into the
+-- read. A key binding here may only be created during a manage sequence and
+-- does not fire until that sequence has finished, so waiting inside one for a
+-- key would be waiting for something the compositor is not permitted to send.
+-- 'XMonad.River.submapNextKey' reads a key and returns immediately.
+--
+-- So a custom navigation entry that was
+--
+-- > moveWith parent >> redraw >> navigate
+--
+-- becomes
+--
+-- > moveWith parent >> redraw >> return TSContinue
+--
+-- and @select@ and @cancel@ return 'TSSelect' and 'TSCancel' where they
+-- returned @Just@ and @Nothing@. 'XMonad.Actions.GridSelect' was inverted the
+-- same way and for the same reason.
+--
+-- __A key with no binding ends the selection__, where upstream ignores it and
+-- keeps waiting. It cannot here: 'XMonad.River.submapNextKey' reports an
+-- unbound key and its 60-second abandonment deadline through the same
+-- callback, and treating an unbound key as \"keep waiting\" would treat the
+-- deadline that way too -- leaving a full-screen overlay on screen for the
+-- rest of the session with no way to remove it.
+--
+-- One smaller thing: upstream builds its window with a 32-bit visual and a
+-- private colormap so that 'ts_background' can be translucent. This draws on
+-- an ordinary window manager surface, as "XMonad.Layout.Decoration" does, and
+-- the alpha byte of 'ts_background' is ignored. Translucency would have to
+-- come from the compositor.
+
 -- $pixel
 --
 -- The 'Pixel' Color format is in the form of @0xaarrggbb@.
@@ -174,7 +255,7 @@ import Graphics.X11.Xft
 --
 -- This is the definition of 'defaultNavigation'
 --
--- > defaultNavigation :: M.Map (KeyMask, KeySym) (TreeSelect a (Maybe a))
+-- > defaultNavigation :: M.Map (KeyMask, KeySym) (TreeSelect a (TSNavigation a))
 -- > defaultNavigation = M.fromList
 -- >     [ ((0, xK_Escape), cancel)
 -- >     , ((0, xK_Return), select)
@@ -215,7 +296,7 @@ data TSConfig a = TSConfig { ts_hidechildren :: Bool -- ^ when enabled, only the
 
                            , ts_indent :: Int -- ^ indentation amount for each level in pixels
 
-                           , ts_navigate :: M.Map (KeyMask, KeySym) (TreeSelect a (Maybe a)) -- ^ key bindings for navigating the tree
+                           , ts_navigate :: M.Map (KeyMask, KeySym) (TreeSelect a (TSNavigation a)) -- ^ key bindings for navigating the tree
                            }
 
 instance Default (TSConfig a) where
@@ -234,12 +315,25 @@ instance Default (TSConfig a) where
                    , ts_navigate     = defaultNavigation
                    }
 
+-- | What a navigation action asks the selection loop to do next.
+--
+-- Upstream has no such type: an entry in 'ts_navigate' either returns a
+-- @Maybe a@ to stop, or tail-calls @navigate@ to keep going, because the loop
+-- is a blocking read it can recurse into. There is no blocking read here, so
+-- an action says what should happen and the loop does it. See $river.
+--
+-- @'TSSelect' a@ is upstream's @return (Just a)@, 'TSCancel' its
+-- @return Nothing@, and 'TSContinue' its @navigate@.
+data TSNavigation a = TSContinue      -- ^ redraw and wait for the next key
+                    | TSCancel        -- ^ stop, selecting nothing
+                    | TSSelect a      -- ^ stop, selecting this
+
 -- | Default navigation
 --
 -- * navigation using either arrow key or vi style hjkl
 -- * Return or Space to confirm
 -- * Escape or Backspace to cancel to
-defaultNavigation :: M.Map (KeyMask, KeySym) (TreeSelect a (Maybe a))
+defaultNavigation :: M.Map (KeyMask, KeySym) (TreeSelect a (TSNavigation a))
 defaultNavigation = M.fromList
     [ ((0, xK_Escape), cancel)
     , ((0, xK_Return), select)
@@ -274,12 +368,9 @@ data TSNode a = TSNode { tsn_name  :: String
 -- Contains all needed information such as the window, font and a zipper over the tree.
 data TSState a = TSState { tss_tree     :: TreeZipper (TSNode a)
                          , tss_window   :: Window
-                         , tss_display  :: Display
                          , tss_size     :: (Int, Int) -- ^ size of 'tz_window'
                          , tss_xfont    :: XMonadFont
                          , tss_gc       :: GC
-                         , tss_visual   :: Visual
-                         , tss_colormap :: Colormap
                          , tss_history  :: ([[String]], [[String]]) -- ^ history zipper, navigated with 'moveHistBack' and 'moveHistForward'
                          }
 
@@ -298,82 +389,65 @@ liftX = TreeSelect . lift . lift
 -- * for selecting actions use 'treeselectAction'
 treeselect :: TSConfig a         -- ^ config file
            -> Forest (TSNode a)  -- ^ a list of 'Data.Tree.Tree's to select from.
-           -> X (Maybe a)
+           -> (Maybe a -> X ())  -- ^ what to do with the selection; see $river
+           -> X ()
 treeselect c t = treeselectAt c (fromForest t) []
 
 -- | Same as 'treeselect' but ad a specific starting position
 treeselectAt :: TSConfig a         -- ^ config file
              -> TreeZipper (TSNode a)  -- ^ tree structure with a cursor position (starting node)
              -> [[String]] -- ^ list of paths that can be navigated with 'moveHistBack' and 'moveHistForward' (bound to the 'o' and 'i' keys)
-             -> X (Maybe a)
-treeselectAt conf@TSConfig{..} zipper hist = withDisplay $ \display -> do
-    -- create a window on the currently focused screen
-    rootw <- asks theRoot
+             -> (Maybe a -> X ())  -- ^ what to do with the selection; see $river
+             -> X ()
+treeselectAt conf@TSConfig{..} zipper hist k = do
+    -- Upstream builds an override-redirect window on the root with a 32-bit
+    -- visual and its own colormap, so that ts_background can be translucent.
+    -- There is no root to parent to and no visual to match: this is a window
+    -- manager surface, the same kind XMonad.Layout.Decoration draws on, sized
+    -- to the focused screen.  Translucency would have to come from the
+    -- compositor rather than from a visual; see $river.
     Rectangle{..} <- gets $ screenRect . W.screenDetail . W.current . windowset
+    let r = Rectangle rect_x rect_y rect_width rect_height
+    win <- createNewWindow r Nothing (pixelToHex ts_background) True
+    showWindow win
 
-    Just vinfo <- liftIO $ matchVisualInfo display (defaultScreen display) 32 4
+    gc <- liftIO createGC
+    xfont <- initXMF ts_font
 
-    colormap <- liftIO $ createColormap display rootw (visualInfo_visual vinfo) allocNone
+    ref <- liftIO $ newIORef TSState
+        { tss_tree     = zipper
+        , tss_window   = win
+        , tss_xfont    = xfont
+        , tss_size     = (fromIntegral rect_width, fromIntegral rect_height)
+        , tss_gc       = gc
+        , tss_history  = ([], hist)
+        }
 
-    win <- liftIO $ allocaSetWindowAttributes $ \attributes -> do
-        set_override_redirect attributes True
-        set_colormap attributes colormap
-        set_background_pixel attributes ts_background
-        set_border_pixel attributes 0
-        w <- createWindow display rootw rect_x rect_y rect_width rect_height 0 (visualInfo_depth vinfo) inputOutput (visualInfo_visual vinfo) (cWColormap .|. cWBorderPixel .|. cWBackPixel) attributes
-        setClassHint display w (ClassHint "xmonad-tree_select" "xmonad")
-        pure w
-
-    liftIO $ do
-        -- TODO: move below?
-        -- make the window visible
-        mapWindow display win
-
-        -- listen to key and mouse button events
-        selectInput display win (exposureMask .|. keyPressMask .|. buttonReleaseMask)
-
-        -- TODO: enable mouse select?
-        -- and mouse button 1
-        grabButton display button1 anyModifier win True buttonReleaseMask grabModeAsync grabModeAsync none none
-
-    -- grab the keyboard
-    status <- liftIO $ grabKeyboard display win True grabModeAsync grabModeAsync currentTime
-
-    r <- if status == grabSuccess
-        then do
-            -- load the XMF font
-            gc <- liftIO $ createGC display win
-            xfont <- initXMF ts_font
-
-            -- run the treeselect Monad
-            ret <- evalStateT (runReaderT (runTreeSelect (redraw >> navigate)) conf)
-                TSState{ tss_tree     = zipper
-                       , tss_window   = win
-                       , tss_display  = display
-                       , tss_xfont    = xfont
-                       , tss_size     = (fromIntegral rect_width, fromIntegral rect_height)
-                       , tss_gc       = gc
-                       , tss_visual   = visualInfo_visual vinfo
-                       , tss_colormap = colormap
-                       , tss_history = ([], hist)
-                       }
-
-            -- release the XMF font
+    let finish result = do
             releaseXMF xfont
-            liftIO $ freeGC display gc
-            return ret
+            liftIO $ freeGC gc
+            deleteWindow win
+            k result
 
-        else return Nothing
+        -- One step of the loop: read a key, run what it selects, and either
+        -- stop or arm the next one.  Upstream is a blocking maskEvent loop and
+        -- this cannot be; see $river.
+        step = do
+            st <- liftIO (readIORef ref)
+            let run act = do
+                    (nav, st') <- runStateT (runReaderT (runTreeSelect act) conf) st
+                    liftIO (writeIORef ref st')
+                    case nav of
+                        TSContinue -> step
+                        TSCancel   -> finish Nothing
+                        TSSelect a -> finish (Just a)
+            -- An unbound key ends the selection rather than being ignored,
+            -- and so does submapNextKey's abandonment deadline, which arrives
+            -- through the same callback.  See $river.
+            submapNextKey (M.map run ts_navigate) (finish Nothing)
 
-    -- destroy the window
-    liftIO $ do
-        unmapWindow display win
-        destroyWindow display win
-        freeColormap display colormap
-        -- Flush the output buffer and wait for all the events to be processed
-        -- TODO: is this needed?
-        sync display False
-    return r
+    _ <- runStateT (runReaderT (runTreeSelect redraw) conf) =<< liftIO (readIORef ref)
+    step
 
 -- | Select a workspace and execute a \"view\" function from "XMonad.StackSet" on it.
 treeselectWorkspace :: TSConfig WorkspaceId
@@ -400,7 +474,8 @@ treeselectWorkspace c xs f = do
         -- get the current workspace path
         me <- gets (W.tag . W.workspace . W.current . windowset)
         hist <- workspaceHistory
-        treeselectAt c (fromJust $ followPath tsn_name (splitPath me) $ fromForest wsf) (map splitPath hist) >>= maybe (return ()) (windows . f)
+        treeselectAt c (fromJust $ followPath tsn_name (splitPath me) $ fromForest wsf) (map splitPath hist) $
+            maybe (return ()) (windows . f)
 
       else liftIO $ do
         -- error!
@@ -410,9 +485,10 @@ treeselectWorkspace c xs f = do
                             , ""
                             , "XConfig.workspaces: "
                             ] ++ map tag ws
+        -- Upstream also pops this up with xmessage.  That name is not part of
+        -- this fork -- it spawned an X11 helper -- so a misconfigured config
+        -- is reported to the log only.
         hPutStrLn stderr msg
-        xmessage msg
-        return ()
   where
     mkNode n w = do
         -- find the focused window's name on this workspace
@@ -454,7 +530,7 @@ splitPath i = case break (== '.') i of
 -- >        ]
 -- >    ]
 treeselectAction :: TSConfig (X a) -> Forest (TSNode (X a)) -> X ()
-treeselectAction c xs = treeselect c xs >>= \case
+treeselectAction c xs = treeselect c xs $ \case
     Just a  -> void a
     Nothing -> return ()
 
@@ -466,56 +542,56 @@ mapMTree f (Node x xs) = Node <$> f x <*>  mapM (mapMTree f) xs
 
 
 -- | Quit returning the currently selected node
-select :: TreeSelect a (Maybe a)
-select = gets (Just . (tsn_value . cursor . tss_tree))
+select :: TreeSelect a (TSNavigation a)
+select = gets (TSSelect . tsn_value . cursor . tss_tree)
 
 -- | Quit without returning anything
-cancel :: TreeSelect a (Maybe a)
-cancel = return Nothing
+cancel :: TreeSelect a (TSNavigation a)
+cancel = return TSCancel
 
 -- TODO: redraw only what is necessary.
 -- Examples: redrawAboveCursor, redrawBelowCursor and redrawCursor
 
 -- | Move the cursor to its parent node
-moveParent :: TreeSelect a (Maybe a)
-moveParent = moveWith parent >> redraw >> navigate
+moveParent :: TreeSelect a (TSNavigation a)
+moveParent = moveWith parent >> redraw >> return TSContinue
 
 -- | Move the cursor one level down, highlighting its first child-node
-moveChild :: TreeSelect a (Maybe a)
-moveChild = moveWith children >> redraw >> navigate
+moveChild :: TreeSelect a (TSNavigation a)
+moveChild = moveWith children >> redraw >> return TSContinue
 
 -- | Move the cursor to the next child-node
-moveNext :: TreeSelect a (Maybe a)
-moveNext = moveWith nextChild >> redraw >> navigate
+moveNext :: TreeSelect a (TSNavigation a)
+moveNext = moveWith nextChild >> redraw >> return TSContinue
 
 -- | Move the cursor to the previous child-node
-movePrev :: TreeSelect a (Maybe a)
-movePrev = moveWith previousChild >> redraw >> navigate
+movePrev :: TreeSelect a (TSNavigation a)
+movePrev = moveWith previousChild >> redraw >> return TSContinue
 
 -- | Move backwards in history
-moveHistBack :: TreeSelect a (Maybe a)
+moveHistBack :: TreeSelect a (TSNavigation a)
 moveHistBack = do
     s <- get
     case tss_history s of
         (xs, a:y:ys) -> do
             put s{tss_history = (a:xs, y:ys)}
             moveTo y
-        _ -> navigate
+        _ -> return TSContinue
 
 -- | Move forward in history
-moveHistForward :: TreeSelect a (Maybe a)
+moveHistForward :: TreeSelect a (TSNavigation a)
 moveHistForward = do
     s <- get
     case tss_history s of
         (x:xs, ys) -> do
             put s{tss_history = (xs, x:ys)}
             moveTo x
-        _ -> navigate
+        _ -> return TSContinue
 
 -- | Move to a specific node
 moveTo :: [String] -- ^ path, always starting from the top
-       -> TreeSelect a (Maybe a)
-moveTo i = moveWith (followPath tsn_name i . rootNode) >> redraw >> navigate
+       -> TreeSelect a (TSNavigation a)
+moveTo i = moveWith (followPath tsn_name i . rootNode) >> redraw >> return TSContinue
 
 -- | Apply a transformation on the internal 'XMonad.Util.TreeZipper.TreeZipper'.
 moveWith :: (TreeZipper (TSNode a) -> Maybe (TreeZipper (TSNode a))) -> TreeSelect a ()
@@ -526,34 +602,25 @@ moveWith f = do
         Just t -> put s{ tss_tree = t }
         Nothing -> return ()
 
--- | wait for keys and run navigation
-navigate :: TreeSelect a (Maybe a)
-navigate = gets tss_display >>= \d -> join . liftIO . allocaXEvent $ \e -> do
-    maskEvent d (exposureMask .|. keyPressMask .|. buttonReleaseMask .|. buttonPressMask) e
-
-    ev <- getEvent e
-
-    if | ev_event_type ev == keyPress -> do
-           ks <- keycodeToKeysym d (ev_keycode ev) 0
-           return $ do
-               mask <- liftX $ cleanKeyMask <*> pure (ev_state ev)
-               f <- asks ts_navigate
-               fromMaybe navigate $ M.lookup (mask, ks) f
-       | ev_event_type ev == buttonPress -> do
-           -- See XMonad.Prompt Note [Allow ButtonEvents]
-           allowEvents d replayPointer currentTime
-           return navigate
-       | otherwise -> return navigate
+-- Upstream also has `navigate`, the blocking maskEvent loop that read a key,
+-- looked it up in ts_navigate and recursed.  Its replacement is the `step`
+-- function inside 'treeselectAt': the same dispatch, driven by
+-- 'XMonad.River.submapNextKey' and continuation-passing rather than by
+-- recursion into a blocking read.  See $river.
 
 -- | Request a full redraw
 redraw :: TreeSelect a ()
 redraw = do
     win <- gets tss_window
-    dpy <- gets tss_display
+    TSConfig{..} <- ask
+    (w, h) <- gets tss_size
 
     -- clear window
     -- TODO: not always needed!
-    liftIO $ clearWindow dpy win
+    gc <- gets tss_gc
+    liftIO $ do
+      setForeground gc ts_background
+      fillRectangle win gc 0 0 (fromIntegral w) (fromIntegral h)
 
     t <- gets tss_tree
     _ <- drawLayers 0 0 (reverse $ (tz_before t, cursor t, tz_after t) : tz_parents t)
@@ -602,12 +669,10 @@ drawNode :: Int -- ^ indentation level (not in pixels)
 drawNode ix iy TSNode{..} col = do
     TSConfig{..} <- ask
     window       <- gets tss_window
-    display      <- gets tss_display
     font         <- gets tss_xfont
     gc           <- gets tss_gc
-    colormap <- gets tss_colormap
-    visual   <- gets tss_visual
-    liftIO $ drawWinBox window display visual colormap gc font col tsn_name ts_extra tsn_extra
+    display      <- liftX (asks display)
+    liftIO $ drawWinBox display window gc font col tsn_name ts_extra tsn_extra
         (ix * ts_indent + ts_originX) (iy * ts_node_height + ts_originY)
         ts_node_width ts_node_height
 
@@ -615,64 +680,35 @@ drawNode ix iy TSNode{..} col = do
     -- drawWinBox window fnt col2 nodeH (scW-x) (mes) (x+nodeW) y 8
 
 -- | Draw a simple box with text
-drawWinBox :: Window -> Display -> Visual -> Colormap -> GC -> XMonadFont -> (Pixel, Pixel) -> String -> Pixel -> String -> Int -> Int -> Int -> Int -> IO ()
-drawWinBox win display visual colormap gc font (fg, bg) text fg2 text2 x y w h = do
+--
+-- Upstream reaches for Xlib and Xft directly here, because it wants colours as
+-- 'Pixel' where 'XMonad.Util.Font.printStringXMF' takes them as names.  That
+-- was the only reason for the private copy, so this converts instead: there is
+-- one text-drawing path here and it goes through 'XMonad.Util.Font', which is
+-- built on "XMonad.Util.River.Draw".
+drawWinBox :: Display -> Window -> GC -> XMonadFont -> (Pixel, Pixel) -> String -> Pixel -> String
+           -> Int -> Int -> Int -> Int -> IO ()
+drawWinBox dpy win gc font (fg, bg) text fg2 text2 x y w h = do
     -- draw box
-    setForeground display gc bg
-    fillRectangle display win gc (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
+    setForeground gc bg
+    fillRectangle win gc (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
 
-    -- dreaw text
-    drawStringXMF display win visual colormap gc font fg
+    -- draw text
+    printStringXMF dpy win font gc (pixelToHex fg) (pixelToHex bg)
         (fromIntegral $ x + 8)
         (fromIntegral $ y + h - 8)
         text
 
-    -- dreaw extra text
-    drawStringXMF display win visual colormap gc font fg2
+    -- draw extra text
+    printStringXMF dpy win font gc (pixelToHex fg2) (pixelToHex bg)
         (fromIntegral $ x + w + 8)
         (fromIntegral $ y + h - 8)
         text2
 
--- | Modified version of 'XMonad.Util.Font.printStringXMF' that uses 'Pixel' as color format
-drawStringXMF :: Display -> Drawable -> Visual -> Colormap -> GC
-              -> XMonadFont -- ^ XMF Font
-              -> Pixel -- ^ font color
-              -> Position   -- ^ x-position
-              -> Position   -- ^ y-position
-              -> String -- ^ string text
-              -> IO ()
-drawStringXMF display window visual colormap gc font col x y text = case font of
-    Core fnt -> do
-        setForeground display gc col
-        setFont display gc $ fontFromFontStruct fnt
-        drawImageString display window gc x y text
-    Utf8 fnt -> do
-        setForeground display gc col
-        wcDrawImageString display window fnt gc x y text
-#ifdef XFT
-    Xft fnts -> do
-        withXftDraw display window visual colormap $
-            \ft_draw -> withXftColorValue display visual colormap (fromARGB col) $
-#if MIN_VERSION_X11_xft(0, 3, 4)
-            \ft_color -> xftDrawStringFallback ft_draw ft_color (NE.toList fnts) (fi x) (fi y) text
-#else
-            \ft_color -> xftDrawString ft_draw ft_color (NE.head fnts) x y text
-#endif
-
--- | Convert 'Pixel' to 'XRenderColor'
+-- | A 'Pixel' as the @\"#rrggbb\"@ string the drawing layer takes.
 --
--- Note that it uses short to represent its components
-fromARGB :: Pixel -> XRenderColor
-fromARGB x =
-#if MIN_VERSION_X11_xft(0, 3, 3)
-    XRenderColor r g b a
-#else
-    -- swapped green/blue as a workaround for the faulty Storable instance in X11-xft < 0.3.3
-    XRenderColor r b g a
-#endif
-  where
-    r = fromIntegral $ 0xff00 .&. shiftR x 8
-    g = fromIntegral $ 0xff00 .&. x
-    b = fromIntegral $ 0xff00 .&. shiftL x 8
-    a = fromIntegral $ 0xff00 .&. shiftR x 16
-#endif
+-- The one adapter this port needs: TreeSelect's config is entirely in 'Pixel'
+-- -- see $pixel -- and nothing below 'XMonad.Util.Font' speaks that.
+pixelToHex :: Pixel -> String
+pixelToHex p = printf "#%02x%02x%02x"
+    ((p `shiftR` 16) .&. 0xff) ((p `shiftR` 8) .&. 0xff) (p .&. 0xff)

@@ -209,25 +209,20 @@ fullscreenFloatRect :: LayoutClass l a =>
 fullscreenFloatRect r = ModifiedLayout $ FullscreenFloat r M.empty
 
 -- | The event hook required for the layout modifiers to work
+--
+-- Upstream this reads a @_NET_WM_STATE@ client message carrying
+-- add\/remove\/toggle, has to fetch the window's current state to resolve the
+-- toggle case, and then writes the property back before telling the layouts.
+-- River decides none of that: it delivers 'WindowFullscreenChanged' with the
+-- answer already in it, and owns the state that
+-- 'XMonad.Hooks.ManageHelpers.isFullscreen' reads, so there is no property to
+-- write and no toggle to resolve.
+--
+-- What is left is the part that was always the point -- telling the layouts.
 fullscreenEventHook :: Event -> X All
-fullscreenEventHook (ClientMessageEvent _ _ _ dpy win typ (action:dats)) = do
-  wmstate <- getAtom "_NET_WM_STATE"
-  fullsc <- getAtom "_NET_WM_STATE_FULLSCREEN"
-  wstate <- fromMaybe [] <$> getProp32 wmstate win
-  let isFull = fi fullsc `elem` wstate
-      remove = 0
-      add = 1
-      toggle = 2
-      chWState f = io $ changeProperty32 dpy win wmstate aTOM propModeReplace (f wstate)
-  when (typ == wmstate && fi fullsc `elem` dats) $ do
-    when (action == add || (action == toggle && not isFull)) $ do
-      chWState (fi fullsc:)
-      broadcastMessage $ AddFullscreen win
-      sendMessage FullscreenChanged
-    when (action == remove || (action == toggle && isFull)) $ do
-      chWState $ delete (fi fullsc)
-      broadcastMessage $ RemoveFullscreen win
-      sendMessage FullscreenChanged
+fullscreenEventHook WindowFullscreenChanged{ev_window = w, ev_fullscreen = full} = do
+  broadcastMessage $ if full then AddFullscreen w else RemoveFullscreen w
+  sendMessage FullscreenChanged
   return $ All True
 
 fullscreenEventHook DestroyWindowEvent{ev_window = w} = do

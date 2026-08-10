@@ -37,6 +37,9 @@ module XMonad.Actions.EasyMotion ( -- * Usage
                                  , textSize
                                  , proportional
                                  , bar
+
+                                   -- * Differences under river
+                                   -- $river
                                  ) where
 
 import           XMonad
@@ -44,9 +47,10 @@ import           XMonad.Prelude
 import qualified XMonad.StackSet          as W
 import           XMonad.Util.Font         (releaseXMF, initXMF, Align(AlignCenter), XMonadFont(..), textExtentsXMF)
 import           XMonad.Util.XUtils       (createNewWindow, paintAndWrite, deleteWindow, showWindow)
+import           XMonad.River             (submapNextKey)
 
 import           Control.Arrow            ((&&&))
-import qualified Data.Map.Strict as M     (Map, elems, map, mapWithKey)
+import qualified Data.Map.Strict as M     (Map, elems, fromList, map, mapWithKey)
 
 -- $usage
 --
@@ -62,18 +66,18 @@ import qualified Data.Map.Strict as M     (Map, elems, map, mapWithKey)
 -- Then add a keybinding and an action to the 'selectWindow' function.
 -- In this case @M-f@ to focus the selected window:
 --
--- >    , ((modm, xK_f), selectWindow def >>= (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def (`whenJust` windows . W.focusWindow))
 --
 -- Similarly, to kill a window with @M-f@:
 --
--- >    , ((modm, xK_f), selectWindow def >>= (`whenJust` killWindow))
+-- >    , ((modm, xK_f), selectWindow def (`whenJust` killWindow))
 --
 -- See 'EasyMotionConfig' for all configuration options. A short summary follows.
 --
 -- Default chord keys are @s,d,f,j,k,l@. To customise these and display options assign
 -- different values to 'def' (the default configuration):
 --
--- >    , ((modm, xK_f), (selectWindow def{sKeys = AnyKeys [xK_f, xK_d]}) >>= (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def{sKeys = AnyKeys [xK_f, xK_d]} (`whenJust` windows . W.focusWindow))
 --
 -- You must supply at least two different keys in the 'sKeys' list. Keys provided earlier in the list
 -- will be used preferentially—therefore, keys you would like to use more frequently should be
@@ -87,11 +91,11 @@ import qualified Data.Map.Strict as M     (Map, elems, map, mapWithKey)
 -- >    emConf :: EasyMotionConfig
 -- >    emConf = def { sKeys = PerScreenKeys $ StrictMap.fromList [(0, [xK_f, xK_d, xK_s, xK_a]), (1, [xK_h, xK_j, xK_k, xK_l])] }
 -- >    -- key bindings
--- >    , ((modm, xK_f), selectWindow emConf >>= (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow emConf (`whenJust` windows . W.focusWindow))
 --
 -- To customise the font:
 --
--- >    , ((modm, xK_f), (selectWindow def{emFont = "xft: Sans-40"}) >>= (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def{emFont = "xft: Sans-40"} (`whenJust` windows . W.focusWindow))
 --
 -- The 'emFont' field provided is supplied directly to the 'initXMF' function. The default is
 -- @"xft:Sans-100"@. Some example options:
@@ -105,10 +109,10 @@ import qualified Data.Map.Strict as M     (Map, elems, map, mapWithKey)
 -- the selection chord and the rectangle of the window to be overlaid. Some are provided:
 --
 -- >    import XMonad.Actions.EasyMotion (selectWindow, EasyMotionConfig(..), proportional, bar, fullSize)
--- >    , ((modm, xK_f), (selectWindow def{ overlayF = proportional 0.3  }) >>= (`whenJust` windows . W.focusWindow))
--- >    , ((modm, xK_f), (selectWindow def{ overlayF = bar 0.5           }) >>= (`whenJust` windows . W.focusWindow))
--- >    , ((modm, xK_f), (selectWindow def{ overlayF = fullSize          }) >>= (`whenJust` windows . W.focusWindow))
--- >    , ((modm, xK_f), (selectWindow def{ overlayF = fixedSize 300 350 }) >>= (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def{ overlayF = proportional 0.3  } (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def{ overlayF = bar 0.5           } (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def{ overlayF = fullSize          } (`whenJust` windows . W.focusWindow))
+-- >    , ((modm, xK_f), selectWindow def{ overlayF = fixedSize 300 350 } (`whenJust` windows . W.focusWindow))
 
 -- TODO:
 --  - An overlay function that creates an overlay a proportion of the width XOR height of the
@@ -250,12 +254,11 @@ bar f th r = Rectangle { rect_width  = rect_width r
    f' = min 0.0 $ max f 1.0
 
 -- | Handles overlay display and window selection. Called after config has been sanitised.
-handleSelectWindow :: EasyMotionConfig -> X (Maybe Window)
-handleSelectWindow EMConf { sKeys = AnyKeys [] } = return Nothing
-handleSelectWindow c = do
+handleSelectWindow :: EasyMotionConfig -> (Maybe Window -> X ()) -> X ()
+handleSelectWindow EMConf { sKeys = AnyKeys [] } k = k Nothing
+handleSelectWindow c k = do
   f <- initXMF $ emFont c
   th <- (\(asc, dsc) -> asc + dsc + 2) <$> textExtentsXMF f (concatMap keysymToString (allKeys . sKeys $ c))
-  XConf { theRoot = rw, display = dpy } <- ask
   XState { mapped = mappedWins, windowset = ws } <- get
   -- build overlays depending on key configuration
   overlays :: [Overlay] <- case sKeys c of
@@ -277,20 +280,18 @@ handleSelectWindow c = do
       visibleWindowsOnScreen sid = filter (`elem` toList mappedWins) $ W.integrate' $ screenById sid >>= W.stack . W.workspace
       sortedOverlayWindows :: ScreenId -> X [OverlayWindow]
       sortedOverlayWindows sid = sortOverlayWindows <$> buildOverlayWindows th (visibleWindowsOnScreen sid)
-  status <- io $ grabKeyboard dpy rw True grabModeAsync grabModeAsync currentTime
-  if status == grabSuccess
-    then do
-      resultWin <- handleKeyboard dpy (displayOverlay f) (cancelKey c) overlays []
-      io $ ungrabKeyboard dpy currentTime
-      mapM_ (deleteWindow . overlay . overlayWin) overlays
-      io $ sync dpy False
-      releaseXMF f
-      case resultWin of
-        -- focus the selected window
-        Selected o -> return . Just . win . overlayWin $ o
-        -- return focus correctly
-        _ -> whenJust (W.peek ws) (windows . W.focusWindow) $> Nothing
-    else releaseXMF f $> Nothing
+  -- Upstream grabs the keyboard on the root window and sits in maskEvent until
+  -- a chord arrives.  There is no root and no grab; 'submapNextKey' is what
+  -- reads a key here, and it returns immediately rather than blocking, so
+  -- everything after the selection has to be a continuation.  See $river.
+  handleKeyboard (displayOverlay f) (cancelKey c) overlays [] $ \result -> do
+    mapM_ (deleteWindow . overlay . overlayWin) overlays
+    releaseXMF f
+    case result of
+      -- focus the selected window
+      Selected o -> k (Just (win . overlayWin $ o))
+      -- return focus correctly
+      _ -> whenJust (W.peek ws) (windows . W.focusWindow) >> k Nothing
  where
   allKeys :: ChordKeys -> [KeySym]
   allKeys (AnyKeys ks) = ks
@@ -323,10 +324,43 @@ handleSelectWindow c = do
     showWindow o
     paintAndWrite o f (fi (rect_width r)) (fi (rect_height r)) (fi (borderPx c)) (bgCol c) (borderCol c) (txtCol c) (bgCol c) [AlignCenter] [concatMap keysymToString ch]
 
+-- $river
+--
+-- Two things differ from the X11 original, both forced by river having no
+-- keyboard grab.
+--
+-- __'selectWindow' takes a continuation__ rather than returning the window it
+-- selected. Upstream grabs the keyboard on the root window and blocks in
+-- @maskEvent@ until a chord arrives, so it can return an answer. A binding
+-- here may only be created during a manage sequence and does not fire until
+-- that sequence has finished, so waiting inside one for a key would be waiting
+-- for something the compositor is not permitted to send yet.
+-- 'XMonad.River.submapNextKey' is what reads a key, and it returns
+-- immediately. So
+--
+-- > selectWindow def >>= (`whenJust` windows . W.focusWindow)
+--
+-- becomes
+--
+-- > selectWindow def (`whenJust` windows . W.focusWindow)
+--
+-- which is the same thing to read and the same thing to write; anything
+-- sequenced /after/ the call now runs before the key is pressed rather than
+-- after.
+--
+-- __A key that is not part of any chord dismisses the overlay.__ Upstream
+-- ignores it and keeps waiting. It cannot here: 'XMonad.River.submapNextKey'
+-- reports an unbound key and its 60-second abandonment deadline through the
+-- same callback, so treating an unbound key as \"keep waiting\" would also
+-- treat the deadline that way -- and the overlays, which cover every window on
+-- screen, would stay there for the rest of the session with no way to remove
+-- them. Dismissing on both is the choice that cannot strand them. The cancel
+-- key still works as it always did.
+
 -- | Display overlay windows and chords for window selection
-selectWindow :: EasyMotionConfig -> X (Maybe Window)
-selectWindow conf =
-  handleSelectWindow conf { sKeys = sanitiseKeys (sKeys conf) }
+selectWindow :: EasyMotionConfig -> (Maybe Window -> X ()) -> X ()
+selectWindow conf k =
+  handleSelectWindow conf { sKeys = sanitiseKeys (sKeys conf) } k
  where
   -- make sure the key lists don't contain: backspace, our cancel key, or duplicates
   sanitise :: [KeySym] -> [KeySym]
@@ -356,36 +390,32 @@ appendChords maxUserSelectedLen ks overlayWins =
 data HandleResult = Exit | Selected Overlay | Backspace
 
 -- | Handle key press events for window selection.
-handleKeyboard :: Display -> (Overlay -> X()) -> KeySym -> [Overlay] -> [Overlay] -> X HandleResult
-handleKeyboard _ _ _ [] _ = return Exit
-handleKeyboard dpy drawFn cancel selected deselected = do
+--
+-- Upstream this blocks in @maskEvent@ and returns the result. Here it installs
+-- a one-shot key capture with 'submapNextKey' and returns immediately; the
+-- continuation runs when a key actually arrives. See $river.
+handleKeyboard :: (Overlay -> X ()) -> KeySym -> [Overlay] -> [Overlay]
+               -> (HandleResult -> X ()) -> X ()
+handleKeyboard _ _ [] _ k = k Exit
+handleKeyboard drawFn cancel selected deselected k = do
   redraw
-  ev <- io $ allocaXEvent $ \e -> do
-    maskEvent dpy (keyPressMask .|. keyReleaseMask .|. buttonPressMask) e
-    getEvent e
-  if | ev_event_type ev == keyPress -> do
-         s <- io $ keycodeToKeysym dpy (ev_keycode ev) 0
-         if | s == cancel -> return Exit
-            | s == xK_BackSpace -> return Backspace
-            | isNextOverlayKey s -> handleNextOverlayKey s
-            | otherwise -> handleKeyboard dpy drawFn cancel selected deselected
-     | ev_event_type ev == buttonPress -> do
-         -- See XMonad.Prompt Note [Allow ButtonEvents]
-         io $ allowEvents dpy replayPointer currentTime
-         handleKeyboard dpy drawFn cancel selected deselected
-     | otherwise -> handleKeyboard dpy drawFn cancel selected deselected
+  submapNextKey keymap (k Exit)
  where
-  redraw = mapM (mapM_ drawFn) [selected, deselected]
-  retryBackspace x =
-    case x of
-      Backspace -> redraw >> handleKeyboard dpy drawFn cancel selected deselected
-      _ -> return x
-  isNextOverlayKey keySym = isJust (find ((== Just keySym) . listToMaybe .chord) selected)
+  redraw = mapM_ (mapM_ drawFn) [selected, deselected]
+  keymap = M.fromList $
+      ((0, cancel), k Exit)
+    : ((0, xK_BackSpace), k Backspace)
+    : [ ((0, s), handleNextOverlayKey s) | s <- nextKeys ]
+  nextKeys = nub (mapMaybe (listToMaybe . chord) selected)
   handleNextOverlayKey keySym =
     case fg of
-      [x] -> return $ Selected x
-      _   -> handleKeyboard dpy drawFn cancel (trim fg) (clear bg) >>= retryBackspace
+      [x] -> k (Selected x)
+      _   -> handleKeyboard drawFn cancel (trim fg) (clear bg) retryBackspace
    where
     (fg, bg) = partition ((== Just keySym) . listToMaybe . chord) selected
     trim = map (\o -> o { chord = drop 1 $ chord o })
     clear = map (\o -> o { chord = [] })
+    retryBackspace x =
+      case x of
+        Backspace -> handleKeyboard drawFn cancel selected deselected k
+        _ -> k x
