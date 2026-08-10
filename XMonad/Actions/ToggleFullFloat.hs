@@ -38,8 +38,10 @@ import qualified XMonad.Util.ExtensibleState as XS
 -- >
 -- > main = xmonad $ … . toggleFullFloatEwmhFullscreen . ewmhFullscreen . ewmh . … $ def{…}
 --
--- Additionally, this "smart" fullscreening can be bound to a key and invoked
--- manually whenever one needs a larger window temporarily:
+-- Under river 'ewmhFullscreen' is inert and says so at startup, so that line
+-- installs nothing; see "XMonad.Hooks.EwmhDesktops".  What still works is the
+-- manual path -- bind 'toggleFullFloat' to a key, and apply
+-- 'gcToggleFullFloat' so a closed window's remembered geometry is dropped:
 --
 -- >   , ((modMask .|. shiftMask, xK_t), withFocused toggleFullFloat)
 

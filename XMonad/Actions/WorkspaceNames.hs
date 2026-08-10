@@ -78,6 +78,11 @@ import qualified Data.Map as M
 --
 -- > main = xmonad $ … . workspaceNamesEwmh . ewmh . … $ def{…}
 --
+-- Under river that pair is inert and says so at startup: there is no
+-- @_NET_DESKTOP_NAMES@ to append to, and no pager reading one.
+-- 'workspaceNamesPP' feeds the same names to a status bar over a pipe, which
+-- is where they can still be seen.
+--
 -- We also provide a modification of "XMonad.Actions.SwapWorkspaces"\'s
 -- functionality, which may be used this way:
 --
@@ -186,6 +191,6 @@ workspaceNamesPP :: PP -> X PP
 workspaceNamesPP pp = getWorkspaceNames ":" <&> \ren -> pp{ ppRename = ppRename pp >=> ren }
 
 -- | Tell "XMonad.Hooks.EwmhDesktops" to append workspace names to desktop
--- names.
+-- names.  Inert under river; see that module.
 workspaceNamesEwmh :: XConfig l -> XConfig l
 workspaceNamesEwmh = addEwmhWorkspaceRename $ getWorkspaceNames ":"
