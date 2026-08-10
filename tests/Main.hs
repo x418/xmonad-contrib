@@ -4,7 +4,6 @@ import Test.Hspec
 import Test.Hspec.QuickCheck
 
 import qualified ExtensibleConf
-import qualified ManageDocks
 import qualified NoBorders
 import qualified RotateSome
 import qualified Selective
@@ -18,9 +17,6 @@ import qualified WindowNavigation
 
 main :: IO ()
 main = hspec $ do
-    context "ManageDocks" $ do
-        prop "prop_r2c_c2r" ManageDocks.prop_r2c_c2r
-        prop "prop_c2r_r2c" ManageDocks.prop_c2r_r2c
     context "Selective" $ do
         prop "prop_select_length"     Selective.prop_select_length
         prop "prop_update_idem"       Selective.prop_update_idem

@@ -10,7 +10,11 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Functor.Identity
 
+import Data.Word (Word32)
+
 import XMonad
+import XMonad.River.Wire (ObjectId(..))
+import XMonad.Util.River.Compat (Point(..))
 import XMonad.Util.Types (Direction2D(..))
 import XMonad.Actions.WindowNavigation (goPure, swapPure, WNState)
 import qualified XMonad.StackSet as W
@@ -22,12 +26,11 @@ spec = do
     -- ┌─────┬──────┐
     -- │ 1 ──┼─►  2 │
     -- └─────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1, 2], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1, 2], windowRect)
     runNav R M.empty (mkws 1 [] [2])
       `shouldBe` (mkstate 960 640, mkws 2 [1] [])
 
@@ -36,12 +39,11 @@ spec = do
     -- ┌─────┬──────┐
     -- │ 1 ──┼─►  2 │
     -- └─────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1, 2], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1, 2], windowRect)
     runNav R (mkstate 100 100) (mkws 1 [] [2])
       `shouldBe` (mkstate 960 100, mkws 2 [1] [])
 
@@ -50,12 +52,11 @@ spec = do
     -- ┌─────┬──────┐
     -- │ 1 ──┼─►  2 │
     -- └─────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1, 2], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1, 2], windowRect)
     runNav R (mkstate 1000 100) (mkws 1 [] [2])
       `shouldBe` (mkstate 960 640, mkws 2 [1] [])
 
@@ -64,12 +65,11 @@ spec = do
     -- ┌─────┬──────┐
     -- │ 1 ◄─┼─►  2 │
     -- └─────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           ]
-    runIdentity (swapPure R (M.empty, mkws 1 [] [2], S.fromList [1, 2], windowRect))
+    runIdentity (swapPure R (M.empty, mkws 1 [] [2], wins [1, 2], windowRect))
       `shouldBe` (mkstate 960 640, mkws 1 [2] [])
 
   it "tall layout, go up" $ do
@@ -78,13 +78,12 @@ spec = do
     -- │  1  ├───┼─┤
     -- │     │ 3 │ │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 640)
           , (3, Rectangle 960 640 960 640)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1, 2, 3], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1, 2, 3], windowRect)
     runNav U M.empty (mkws 3 [] [1, 2])
       `shouldBe` (mkstate 1440 639, mkws 2 [1, 3] [])
 
@@ -96,14 +95,13 @@ spec = do
     -- │     ├───┼─┤
     -- │     │ 4 ▼ │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
           , (4, Rectangle 960 800 960 480)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     runNav D M.empty (mkws 3 [] [1, 2, 4])
       `shouldBe` (mkstate 1440 800, mkws 4 [2, 1, 3] [])
 
@@ -115,14 +113,13 @@ spec = do
     -- │     ├─────┤
     -- │     │   4 │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
           , (4, Rectangle 960 800 960 480)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     runNav L M.empty (mkws 2 [] [1, 3, 4])
       `shouldBe` (mkstate 959 200, mkws 1 [2] [3, 4])
 
@@ -135,14 +132,13 @@ spec = do
     -- │     ├─────┤
     -- │     │   4 │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
           , (4, Rectangle 960 800 960 480)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav L M.empty (mkws 2 [] [1, 3, 4])
     (st2, ws2) `shouldBe` (mkstate 959 200, mkws 1 [2] [3, 4])
     let (st3, ws3) = runNav R st2 ws2
@@ -157,14 +153,13 @@ spec = do
     -- │     ├─────┤
     -- │     │   4 │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
           , (4, Rectangle 960 800 960 480)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav L M.empty (mkws 3 [] [1, 2, 4])
     (st2, ws2) `shouldBe` (mkstate 959 600, mkws 1 [3] [2, 4])
     let (st3, ws3) = runNav R st2 ws2
@@ -179,14 +174,13 @@ spec = do
     -- │   ◄─┼── 4 │
     -- │   ──┼─►   │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
           , (4, Rectangle 960 800 960 480)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav L M.empty (mkws 4 [] [1, 2, 3])
     (st2, ws2) `shouldBe` (mkstate 959 1040, mkws 1 [4] [2, 3])
     let (st3, ws3) = runNav R st2 ws2
@@ -202,14 +196,13 @@ spec = do
     -- │     │     │
     -- │ 3 ◄─┼── 4 │
     -- └─────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 640)
           , (2, Rectangle 960 0 960 640)
           , (3, Rectangle 0 640 960 640)
           , (4, Rectangle 960 640 960 640)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav R M.empty (mkws 1 [] [2, 3, 4])
     (st2, ws2) `shouldBe` (mkstate 960 320, mkws 2 [1] [3, 4])
     let (st3, ws3) = runNav D st2 ws2
@@ -226,14 +219,13 @@ spec = do
     -- │ └───┬──────┬────┘ │
     -- │  1  │  2 ──┼─► 3  │
     -- └─────┴──────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 600 1280)
           , (2, Rectangle 600 0 600 1280)
           , (3, Rectangle 1200 0 720 1280)
           , (4, Rectangle 200 200 1520 400)
           ]
-    runIdentity (goPure R (mkstate 900 900, mkws 2 [] [1, 3, 4], S.fromList [1..4], windowRect))
+    runIdentity (goPure R (mkstate 900 900, mkws 2 [] [1, 3, 4], wins [1..4], windowRect))
       `shouldBe` (mkstate 1200 900, mkws 3 [1,2] [4])
 
   it "go to window that fully overlaps the current window in parallel direction when pos is inside it" $ do
@@ -248,14 +240,13 @@ spec = do
     -- │  3  │      │    │
     -- │     └──────┘    │
     -- └─────────────────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 1920 400)
           , (2, Rectangle 0 400 1920 400)
           , (3, Rectangle 0 800 1920 480)
           , (4, Rectangle 800 200 400 880)
           ]
-    runIdentity (goPure R (mkstate 1000 600, mkws 4 [] [1, 2, 3], S.fromList [1..4], windowRect))
+    runIdentity (goPure R (mkstate 1000 600, mkws 4 [] [1, 2, 3], wins [1..4], windowRect))
       `shouldBe` (mkstate 1200 600, mkws 2 [1,4] [3])
 
   it "go from inner window to outer" $ do
@@ -264,12 +255,11 @@ spec = do
     -- │  1 ◄─┼── 2  │ │
     -- │      └──────┘ │
     -- └───────────────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 1920 1280)
           , (2, Rectangle 600 600 600 600)
           ]
-    runIdentity (goPure L (M.empty, mkws 2 [] [1], S.fromList [1, 2], windowRect))
+    runIdentity (goPure L (M.empty, mkws 2 [] [1], wins [1, 2], windowRect))
       `shouldBe` (mkstate 599 900, mkws 1 [2] [])
 
   it "if there are multiple outer windows, go to the smaller one" $ do
@@ -280,13 +270,12 @@ spec = do
     -- │  │      └──────┘ │     │
     -- │  └───────────────┘     │
     -- └────────────────────────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 1920 1280)
           , (2, Rectangle 200 200 1520 880)
           , (3, Rectangle 400 400 400 400)
           ]
-    runIdentity (goPure L (M.empty, mkws 3 [] [1, 2], S.fromList [1..3], windowRect))
+    runIdentity (goPure L (M.empty, mkws 3 [] [1, 2], wins [1..3], windowRect))
       `shouldBe` (mkstate 399 600, mkws 2 [1, 3] [])
 
   it "two tiled and one floating, floating fully inside" $ do
@@ -297,13 +286,12 @@ spec = do
     -- │   │     ◄─┼──   ◄─┼──   │
     -- │   └───────┘       │     │
     -- └───────────────────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           , (3, Rectangle 400 400 400 400)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..3], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..3], windowRect)
     let (st2, ws2) = runNav R (mkstate 100 100) (mkws 1 [] [2, 3])
     (st2, ws2) `shouldBe` (mkstate 400 400, mkws 3 [2, 1] [])
     let (st3, ws3) = runNav R st2 ws2
@@ -333,14 +321,13 @@ spec = do
     -- │    ▼    │
     -- │    2    │
     -- └─────────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 1920 640)
           , (2, Rectangle 0 640 1920 640)
           , (3, Rectangle 200 200 100 100)
           , (4, Rectangle 1000 400 100 100)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav D (mkstate 1000 250) (mkws 1 [] [2, 3, 4])
     (st2, ws2) `shouldBe` (mkstate 299 250, mkws 3 [2, 1] [4])
     let (st3, ws3) = runNav D st2 ws2
@@ -358,13 +345,12 @@ spec = do
     -- │ ──┼─► 3 ──┼─►  │
     -- │   └───┬───┘    │
     -- └───────┴────────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           , (3, Rectangle 860 540 200 200)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..3], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..3], windowRect)
     let (st2, ws2) = runNav R M.empty (mkws 1 [] [2, 3])
     (st2, ws2) `shouldBe` (mkstate 860 640, mkws 3 [2, 1] [])
     let (st3, ws3) = runNav R st2 ws2
@@ -378,15 +364,14 @@ spec = do
     -- │ ──┼─► 5 ──┼─► │
     -- │ 3 └───┬───┘ 4 │
     -- └───────┴───────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 640)
           , (2, Rectangle 960 0 960 640)
           , (3, Rectangle 0 640 960 640)
           , (4, Rectangle 960 640 960 640)
           , (5, Rectangle 760 440 400 400)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..5], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..5], windowRect)
     let (st2, ws2) = runNav R (mkstate 480 640) (mkws 3 [] [1, 2, 4, 5])
     (st2, ws2) `shouldBe` (mkstate 760 640, mkws 5 [4, 2, 1, 3] [])
     let (st3, ws3) = runNav R st2 ws2
@@ -401,14 +386,13 @@ spec = do
     -- │   └───────┘       │       │       │      │
     -- │                   └───────┘       │      │
     -- └───────────────────────────────────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           , (3, Rectangle 200 200 200 200)
           , (4, Rectangle 600 600 200 200)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav R (mkstate 100 100) (mkws 1 [] [2, 3, 4])
     (st2, ws2) `shouldBe` (mkstate 200 200, mkws 3 [2,1] [4])
     let (st3, ws3) = runNav R st2 ws2
@@ -440,14 +424,13 @@ spec = do
     -- │ └────┤      │       │      │
     -- │      └──────┘       │      │
     -- └─────────────────────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           , (3, Rectangle 200 200 400 400)
           , (4, Rectangle 300 300 400 400)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..4], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..4], windowRect)
     let (st2, ws2) = runNav R M.empty (mkws 3 [] [1, 2, 4])
     (st2, ws2) `shouldBe` (mkstate 400 400, mkws 4 [2, 1, 3] [])
     let (st3, ws3) = runNav R st2 ws2
@@ -468,13 +451,12 @@ spec = do
     -- │  └── │      │  │     │
     -- │      └──────┘  │     │
     -- └────────────────┴─────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 1280)
           , (3, Rectangle 400 400 200 200)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..3], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..3], windowRect)
     runNav L (mkstate 100 640) (mkws 1 [] [2, 3])
       `shouldBe` (mkstate 400 599, mkws 3 [2, 1] [])
 
@@ -486,8 +468,7 @@ spec = do
     -- │     ├──────┤  └────────┘
     -- │     │  4   │
     -- └─────┴──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
@@ -503,7 +484,7 @@ spec = do
                   W.Workspace
                   { W.tag = "A"
                   , W.layout = Layout NullLayout
-                  , W.stack = Just $ W.Stack { W.focus = 3, W.up = [], W.down = [1, 2, 4] }
+                  , W.stack = Just $ W.Stack { W.focus = w 3, W.up = [], W.down = [w 1, w 2, w 4] }
                   }
               , W.screen = 1
               , W.screenDetail = SD { screenRect = Rectangle 0 0 1920 1280 }
@@ -514,7 +495,7 @@ spec = do
                     W.Workspace
                     { W.tag = "B"
                     , W.layout = Layout NullLayout
-                    , W.stack = Just $ W.Stack { W.focus = 5, W.up = [], W.down = [6] }
+                    , W.stack = Just $ W.Stack { W.focus = w 5, W.up = [], W.down = [w 6] }
                     }
                 , W.screen = 2
                 , W.screenDetail = SD { screenRect = Rectangle 1920 0 1280 768 }
@@ -531,7 +512,7 @@ spec = do
                   W.Workspace
                   { W.tag = "B"
                   , W.layout = Layout NullLayout
-                  , W.stack = Just $ W.Stack { W.focus = 6, W.up = [5], W.down = [] }
+                  , W.stack = Just $ W.Stack { W.focus = w 6, W.up = [w 5], W.down = [] }
                   }
               , W.screen = 2
               , W.screenDetail = SD { screenRect = Rectangle 1920 0 1280 768 }
@@ -542,7 +523,7 @@ spec = do
                     W.Workspace
                     { W.tag = "A"
                     , W.layout = Layout NullLayout
-                    , W.stack = Just $ W.Stack { W.focus = 3, W.up = [], W.down = [1, 2, 4] }
+                    , W.stack = Just $ W.Stack { W.focus = w 3, W.up = [], W.down = [w 1, w 2, w 4] }
                     }
                 , W.screen = 1
                 , W.screenDetail = SD { screenRect = Rectangle 0 0 1920 1280 }
@@ -552,7 +533,7 @@ spec = do
           , W.floating = M.empty
           }
 
-    runIdentity (goPure R (M.empty, initWindowSet, S.fromList [1..6], windowRect))
+    runIdentity (goPure R (M.empty, initWindowSet, wins [1..6], windowRect))
       `shouldBe` (M.fromList [("B", Point 1920 600)], expectedWindowSet)
 
   it "floating window overlapping fully in the orthogonal direction" $ do
@@ -566,15 +547,14 @@ spec = do
     -- │     │    4 │       │   │
     -- │     │      └───────┘   │
     -- └─────┴──────────────────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 960 0 960 400)
           , (3, Rectangle 960 400 960 400)
           , (4, Rectangle 960 800 960 480)
           , (5, Rectangle 1360 200 200 800)
           ]
-        runNav dir st ws = runIdentity $ goPure dir (st, ws, S.fromList [1..5], windowRect)
+        runNav dir st ws = runIdentity $ goPure dir (st, ws, wins [1..5], windowRect)
     let (st2, ws2) = runNav L (mkstate 1800 600) (mkws 3 [] [1, 2, 4, 5])
     (st2, ws2) `shouldBe` (mkstate 1559 600, mkws 5 [4, 2, 1, 3] [])
     let (st3, ws3) = runNav L st2 ws2
@@ -592,17 +572,16 @@ spec = do
     -- │      │
     -- │      │
     -- └──────┘
-    let windowRect w =
-          Identity $ M.lookup w $ M.fromList
+    let windowRect = rects
           [ (1, Rectangle 0 0 960 1280)
           , (2, Rectangle 1200 400 400 400)
           ]
-    runIdentity (goPure R (M.empty, mkws 1 [] [2], S.fromList [1, 2], windowRect))
+    runIdentity (goPure R (M.empty, mkws 1 [] [2], wins [1, 2], windowRect))
       `shouldBe` (mkstate 1200 640, mkws 2 [1] [])
 
   it "switch between windows in Full layout" $ do
-    let windowRect w = Identity $ M.lookup w $ M.fromList [(1, Rectangle 0 0 1920 1280)]
-    runIdentity (goPure D (M.empty, mkws 1 [] [2, 3], S.fromList [1], windowRect))
+    let windowRect = rects [(1, Rectangle 0 0 1920 1280)]
+    runIdentity (goPure D (M.empty, mkws 1 [] [2, 3], wins [1], windowRect))
       `shouldBe` (M.empty, mkws 2 [1] [3])
 
 data NullLayout a = NullLayout deriving (Show, Read, Eq)
@@ -618,8 +597,8 @@ mkstate :: Position -> Position -> WNState
 mkstate px py = M.fromList [("A", Point px py)]
 
 -- make a single-workspace WindowSet
-mkws :: Window -> [Window] -> [Window] -> WindowSet
-mkws focusedWindow upWindows downWindows = W.StackSet
+mkws :: Word32 -> [Word32] -> [Word32] -> WindowSet
+mkws focusedWindow' upWindows' downWindows' = W.StackSet
   { W.current = W.Screen
     { W.workspace = W.Workspace
       { W.tag = "A"
@@ -633,3 +612,25 @@ mkws focusedWindow upWindows downWindows = W.StackSet
   , W.hidden = []
   , W.floating = M.empty
   }
+  where
+    focusedWindow = w focusedWindow'
+    upWindows     = map w upWindows'
+    downWindows   = map w downWindows'
+
+-- A window id, from the number these tests name it by.
+--
+-- Upstream writes them as bare literals, because an X11 Window is a Word64 and
+-- @1@ is one.  A river Window is a Wayland object id -- a newtype with no
+-- arithmetic, deliberately, since adding two of them is meaningless -- so the
+-- ids have to be built.  'mkws', 'wins' and 'rects' convert at their edges so
+-- that the tests themselves still read as \"windows 1 and 2\".
+w :: Word32 -> Window
+w = ObjectId
+
+-- The set of windows a navigation is allowed to consider.
+wins :: [Word32] -> S.Set Window
+wins = S.fromList . map w
+
+-- A @windowRect@ lookup function, from a table keyed by those same numbers.
+rects :: [(Word32, Rectangle)] -> Window -> Identity (Maybe Rectangle)
+rects table win = Identity $ M.lookup win $ M.fromList [ (w n, r) | (n, r) <- table ]

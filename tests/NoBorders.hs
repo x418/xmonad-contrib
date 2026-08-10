@@ -9,7 +9,10 @@ import Test.Hspec.QuickCheck
 
 import qualified Data.Map as M
 
+import Data.Word (Word32)
+
 import XMonad hiding (Screen)
+import XMonad.River.Wire (ObjectId(..))
 import qualified XMonad.Layout.NoBorders as NB
 import XMonad.Prelude
 import XMonad.StackSet
@@ -17,32 +20,32 @@ import XMonad.StackSet
 spec :: Spec
 spec = do
     describe "dualhead, fullscreen float on each" $ do
-        let s1 = differentiate [1]
-        let s2 = differentiate [2]
-        let floats = [(1, rrFull), (2, rrFull)]
+        let s1 = differentiate [w 1]
+        let s2 = differentiate [w 2]
+        let floats = [(w 1, rrFull), (w 2, rrFull)]
         let ws = wsDualHead s1 s2 floats
         context "Ambiguity(Never)" $ do
             let amb = NB.Never
             it "removes border on current screen" $ do
-                NB.hiddens amb ws r1 s1 [] `shouldBe` [1]
-                NB.hiddens amb ws r3 s1 [] `shouldBe` [1]
+                NB.hiddens amb ws r1 s1 [] `shouldBe` [w 1]
+                NB.hiddens amb ws r3 s1 [] `shouldBe` [w 1]
             it "removes border on visible screen" $ do
-                NB.hiddens amb ws r2 s2 [] `shouldBe` [2]
-                NB.hiddens amb ws r4 s2 [] `shouldBe` [2]
+                NB.hiddens amb ws r2 s2 [] `shouldBe` [w 2]
+                NB.hiddens amb ws r4 s2 [] `shouldBe` [w 2]
         context "Ambiguity(OnlyScreenFloat)" $ do
             let amb = NB.OnlyScreenFloat
             it "removes border on current screen" $ do
-                NB.hiddens amb ws r1 s1 [] `shouldBe` [1]
-                NB.hiddens amb ws r3 s1 [] `shouldBe` [1]
+                NB.hiddens amb ws r1 s1 [] `shouldBe` [w 1]
+                NB.hiddens amb ws r3 s1 [] `shouldBe` [w 1]
             it "removes border on visible screen" $ do
-                NB.hiddens amb ws r2 s2 [] `shouldBe` [2]
-                NB.hiddens amb ws r4 s2 [] `shouldBe` [2]
+                NB.hiddens amb ws r2 s2 [] `shouldBe` [w 2]
+                NB.hiddens amb ws r4 s2 [] `shouldBe` [w 2]
         context "Ambiguity(OnlyLayoutFloat)" $ do
             let amb = NB.OnlyLayoutFloat
             it "removes border on current screen" $ do
-                NB.hiddens amb ws r1 s1 [] `shouldBe` [1]
+                NB.hiddens amb ws r1 s1 [] `shouldBe` [w 1]
             it "removes border on visible screen" $ do
-                NB.hiddens amb ws r2 s2 [] `shouldBe` [2]
+                NB.hiddens amb ws r2 s2 [] `shouldBe` [w 2]
         prop "prop_OnlyFloat" prop_OnlyFloat
 
 -- | All floating windows should be borderless.
@@ -80,6 +83,11 @@ r4 = Rectangle 110 10  80  80
 
 rrFull :: RationalRect
 rrFull = RationalRect 0 0 1 1
+
+-- | A window id, from the number this test names it by; see the note in
+-- @tests\/WindowNavigation.hs@.
+w :: Word32 -> Window
+w = ObjectId
 
 -- | Current screen @r1@ with window stack @w1@,
 -- visible screen @r2@ with ws @w2@,

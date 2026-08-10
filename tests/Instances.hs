@@ -3,7 +3,6 @@
 module Instances where -- copied (and adapted) from the core library
 
 
-import           XMonad.Hooks.ManageDocks
 import           XMonad.Layout.LimitWindows
 import           Test.QuickCheck
 import           Utils
@@ -12,7 +11,18 @@ import           XMonad.StackSet
 import           Control.Monad
 import           Data.List                      ( nub )
 
-import           Graphics.X11                   ( Rectangle(Rectangle) )
+import           XMonad                          ( Rectangle(Rectangle) )
+import           XMonad.River.Wire               ( ObjectId(..) )
+
+-- | A window id.
+--
+-- Upstream needs no such instance: an X11 @Window@ is a @Word64@ and
+-- QuickCheck has one for that.  A river @Window@ is a Wayland object id, so
+-- this says what a generated one looks like.  Never zero -- that is
+-- @nullObject@, which names no window and which no property here means to
+-- generate.
+instance Arbitrary ObjectId where
+  arbitrary = ObjectId . getPositive <$> arbitrary
 
 arbNat :: Gen Int
 arbNat = abs <$> arbitrary
@@ -107,17 +117,6 @@ instance Arbitrary NonEmptyWindowsStackSet where
     NonEmptyWindowsStackSet
       `fmap` (arbitrary `suchThat` (not . null . allWindows))
 
-instance Arbitrary RectC where
-  arbitrary = do
-    (x :: Int, y :: Int) <- arbitrary
-    NonNegative w        <- arbitrary
-    NonNegative h        <- arbitrary
-    return $ RectC
-      ( fromIntegral x
-      , fromIntegral y
-      , fromIntegral $ x + w
-      , fromIntegral $ y + h
-      )
 
 instance Arbitrary Rectangle where
   arbitrary = Rectangle <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
