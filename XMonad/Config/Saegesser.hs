@@ -16,7 +16,6 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.UrgencyHook
-import XMonad.Hooks.FadeInactive
 
 import XMonad.Layout.NoBorders
 import XMonad.Layout.ResizableTile
@@ -77,4 +76,7 @@ myLogHook p =  do
                               , ppUrgent = xmobarColor "white" "red"
                               , ppTitle  = xmobarColor "green" "" . shorten 180
                               }
-  fadeInactiveLogHook 0.6
+  -- Upstream also runs @fadeInactiveLogHook 0.6@ here, which sets
+  -- @_NET_WM_WINDOW_OPACITY@ for a compositing manager to act on.  River
+  -- composites itself and gives the window manager no say in per-window
+  -- opacity, so "XMonad.Hooks.FadeInactive" is not part of this fork.

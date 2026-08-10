@@ -62,7 +62,14 @@ for line in src[start:end].split('\n'):
 
 open('xmonad-contrib.cabal', 'w').write(src[:start] + '\n'.join(out) + src[end:])
 
-unknown = working - {m for m in re.findall(r'XMonad\.[\w.]+', src[start:end])}
+# Not every .hs in the tree is library API. Upstream keeps XMonad.Config.LXQt
+# and XMonad.Config.Saegesser as files without exposing them, so they build in
+# a survey -- which compiles everything on disk -- and still must not be added
+# here: exposing a module upstream does not is how this fork would grow API
+# rather than lose it. The upstream golden is the authority on which is which.
+upstream = {l.strip() for l in open('tests/api/upstream/modules.txt')
+            if l.strip() and not l.startswith('#')}
+unknown = (working & upstream) - set(re.findall(r'XMonad\.[\w.]+', src[start:end]))
 if unknown:
     print('not listed in the cabal file, add them by hand: '
           + ', '.join(sorted(unknown)), file=sys.stderr)

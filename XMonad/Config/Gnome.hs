@@ -18,7 +18,6 @@ module XMonad.Config.Gnome (
     -- * Usage
     -- $usage
     gnomeConfig,
-    gnomeRun,
     gnomeRegister,
     desktopLayoutModifiers
     ) where
@@ -46,23 +45,13 @@ gnomeConfig = desktopConfig
     , keys     = gnomeKeys <> keys desktopConfig
     , startupHook = gnomeRegister >> startupHook desktopConfig }
 
+-- | Upstream also binds mod-p to @gnomeRun@, which asks gnome-panel to open
+-- its "Run Application" dialog by sending a @_GNOME_PANEL_ACTION@ client
+-- message to the root window.  There is no root window to send it to and no
+-- gnome-panel to receive it, so that binding is gone; bind mod-p to
+-- @spawn "..."@ for whatever launcher the session actually runs.
 gnomeKeys XConfig{modMask = modm} = M.fromList
-    [ ((modm, xK_p), gnomeRun)
-    , ((modm .|. shiftMask, xK_q), spawn "gnome-session-quit --logout") ]
-
--- | Launch the "Run Application" dialog.  gnome-panel must be running for this
--- to work.
-gnomeRun :: X ()
-gnomeRun = withDisplay $ \dpy -> do
-    rw <- asks theRoot
-    gnome_panel <- getAtom "_GNOME_PANEL_ACTION"
-    panel_run   <- getAtom "_GNOME_PANEL_ACTION_RUN_DIALOG"
-
-    io $ allocaXEvent $ \e -> do
-        setEventType e clientMessage
-        setClientMessageEvent e rw gnome_panel 32 panel_run 0
-        sendEvent dpy rw False structureNotifyMask e
-        sync dpy False
+    [ ((modm .|. shiftMask, xK_q), spawn "gnome-session-quit --logout") ]
 
 -- | Register xmonad with gnome. 'dbus-send' must be in the $PATH with which
 -- xmonad is started.

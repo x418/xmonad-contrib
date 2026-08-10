@@ -30,6 +30,10 @@ module XMonad.Config.Desktop (
     --
     -- <https://specifications.freedesktop.org/wm/latest/>
     --
+    -- Note that under river the @ewmh@ half of this is inert and says so at
+    -- startup; a DE's panel learns nothing from it. See
+    -- "XMonad.Hooks.EwmhDesktops".
+    --
     -- See also: "XMonad.Hooks.EwmhDesktops", "XMonad.Hooks.ManageDocks",
     -- "XMonad.Util.EZConfig".
 
@@ -173,8 +177,11 @@ desktopConfig = docks $ ewmh def
     , layoutHook      = desktopLayoutModifiers $ layoutHook def
     , keys            = desktopKeys <> keys def }
 
+-- | Empty here: its only binding was mod-b for 'ToggleStruts', and there is
+-- nothing to toggle -- a panel's exclusive zone is negotiated with river.  It
+-- stays so that a config naming it, or overriding it, still builds.
 desktopKeys :: XConfig l -> M.Map (KeyMask, KeySym) (X ())
-desktopKeys XConfig{modMask = modm} = M.fromList
+desktopKeys _ = M.empty
 
 desktopLayoutModifiers :: LayoutClass l a => l a -> ModifiedLayout AvoidStruts l a
 desktopLayoutModifiers = avoidStruts

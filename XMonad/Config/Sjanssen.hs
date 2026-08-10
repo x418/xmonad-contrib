@@ -26,8 +26,12 @@ import XMonad.Layout.TwoPane
 
 import qualified Data.Map as M
 
+-- Upstream logs with @xmonadPropLog@, which writes the @_XMONAD_LOG@ property
+-- on the X root window.  There is none, so the log goes to stdout instead and
+-- the xmobar this spawns wants @StdinReader@ and an @xmonad | xmobar@
+-- pipeline.  @ewmh@ stays and is inert; see "XMonad.Hooks.EwmhDesktops".
 sjanssenConfig =
-    docks $ ewmh $ def
+    docks $ ewmh def
         { terminal = "exec urxvt"
         , workspaces = ["irc", "web"] ++ map show [3 .. 9 :: Int]
         , mouseBindings = \XConfig {modMask = modm} -> M.fromList
@@ -35,7 +39,7 @@ sjanssenConfig =
                 , ((modm, button2), \w -> focus w >> windows W.swapMaster)
                 , ((modm.|. shiftMask, button1), \w -> focus w >> mouseResizeWindow w) ]
         , keys = \c -> mykeys c `M.union` keys def c
-        , logHook = dynamicLogString sjanssenPP >>= xmonadPropLog
+        , logHook = dynamicLogWithPP sjanssenPP
         , layoutHook  = modifiers layouts
         , manageHook  = composeAll [className =? x --> doShift w
                                     | (x, w) <- [ ("Firefox", "web")

@@ -22,8 +22,6 @@ module XMonad.Config.Mate (
     -- * Usage
     -- $usage
     mateConfig,
-    mateRun,
-    matePanel,
     mateRegister,
     mateLogout,
     mateShutdown,
@@ -33,11 +31,9 @@ module XMonad.Config.Mate (
 import System.Environment (getEnvironment)
 import qualified Data.Map as M
 
-import XMonad hiding (unGrab)
+import XMonad
 import XMonad.Config.Desktop
-import XMonad.Prelude (toUpper)
 import XMonad.Util.Run (safeSpawn)
-import XMonad.Util.Ungrab (unGrab)
 
 -- $usage
 -- To use this module, start with the following @xmonad.hs@:
@@ -54,31 +50,15 @@ mateConfig = desktopConfig
     , keys     = mateKeys <> keys desktopConfig
     , startupHook = mateRegister >> startupHook desktopConfig }
 
+-- Upstream also binds mod-p and mod-d to @mateRun@ and @matePanel@, which ask
+-- mate-panel to open its run dialog or main menu by sending a
+-- @_MATE_PANEL_ACTION@ client message to the root window.  There is no root
+-- window to send it to and no client reading one, so both are gone along with
+-- their bindings; bind mod-p to @spawn "..."@ for whatever launcher the
+-- session actually runs.  Losing @matePanel@ takes the @unGrab@ that guarded
+-- it with them, which is just as well -- see "XMonad.Util.Ungrab".
 mateKeys XConfig{modMask = modm} = M.fromList
-    [ ((modm, xK_p), mateRun)
-    , ((modm, xK_d), unGrab >> matePanel "MAIN_MENU")
-    , ((modm .|. shiftMask, xK_q), mateLogout) ]
-
--- | Launch the "Run Application" dialog.  mate-panel must be running for this
--- to work.  partial application for existing keybinding compatibility.
-mateRun :: X ()
-mateRun = matePanel "RUN_DIALOG"
-
--- | Launch a panel action. Either the "Run Application" dialog ("run_dialog" parameter,
--- see above) or the main menu ("main_menu" parameter).  mate-panel must be running
--- for this to work.
-matePanel :: String -> X ()
-matePanel action = withDisplay $ \dpy -> do
-    let panel = "_MATE_PANEL_ACTION"
-    rw <- asks theRoot
-    mate_panel <- getAtom panel
-    panel_action <- getAtom (panel ++ "_" ++ map toUpper action)
-
-    io $ allocaXEvent $ \e -> do
-        setEventType e clientMessage
-        setClientMessageEvent e rw mate_panel 32 panel_action 0
-        sendEvent dpy rw False structureNotifyMask e
-        sync dpy False
+    [ ((modm .|. shiftMask, xK_q), mateLogout) ]
 
 -- | Register xmonad with mate. 'dbus-send' must be in the $PATH with which
 -- xmonad is started.

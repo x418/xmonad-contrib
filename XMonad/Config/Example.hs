@@ -9,8 +9,8 @@ module Main (main) where
 import System.Exit
 import XMonad
 import XMonad.Config.Desktop
-import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.StatusBar
 import XMonad.Layout.BinarySpacePartition (emptyBSP)
 import XMonad.Layout.NoBorders (noBorders)
 import XMonad.Layout.ResizableTile (ResizableTall(..))
@@ -22,16 +22,17 @@ import XMonad.Util.EZConfig
 
 --------------------------------------------------------------------------------
 main = do
-  spawn "xmobar" -- Start a task bar such as xmobar.
+  -- Start a task bar such as xmobar and feed it over a pipe.  Upstream's
+  -- example logs to a root-window property with 'xmonadPropLog' instead;
+  -- there is no root window under river, so a pipe is the channel.
+  bar <- statusBarPipe "xmobar" (pure def)
 
   -- Start xmonad using the main desktop configuration with a few
   -- simple overrides:
-  xmonad $ desktopConfig
+  xmonad $ withSB bar desktopConfig
     { modMask    = mod4Mask -- Use the "Win" key for the mod key
     , manageHook = myManageHook <> manageHook desktopConfig
     , layoutHook = desktopLayoutModifiers myLayouts
-    , logHook    = (dynamicLogString def >>= xmonadPropLog)
-                    <> logHook desktopConfig
     }
 
     `additionalKeysP` -- Add some extra key bindings:

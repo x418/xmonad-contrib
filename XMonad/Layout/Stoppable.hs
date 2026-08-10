@@ -38,7 +38,7 @@
 --
 -- * Note
 -- This module doesn't work on programs that do fancy things with processes
--- (such as Chromium) and programs that do not set _NET_WM_PID.
+-- (such as Chromium) and programs whose pid river does not know.
 -----------------------------------------------------------------------------
 
 module XMonad.Layout.Stoppable
@@ -50,8 +50,7 @@ module XMonad.Layout.Stoppable
 import XMonad
 import XMonad.Prelude
 import XMonad.Actions.WithAll
-import XMonad.Util.WindowProperties
-import XMonad.Util.RemoteWindows
+import XMonad.Hooks.ManageHelpers (pid)
 import XMonad.Util.Timer
 import XMonad.StackSet hiding (filter)
 import XMonad.Layout.LayoutModifier
@@ -66,26 +65,25 @@ import System.Posix.Signals
 -- > main = xmonad def
 -- >    { layoutHook = layoutHook def ||| stoppable (layoutHook def) }
 --
--- Note that the module has to distinguish between local and remote
--- proccesses, which means that it needs to know the hostname, so it looks
--- for environment variables (e.g. HOST).
---
--- Environment variables will work for most cases, but won't work if the
--- hostname changes. To cover dynamic hostnames case, in addition to
--- layoutHook you have to provide manageHook from
--- "XMonad.Util.RemoteWindows" module.
+-- Upstream signals only windows it decides are local, by comparing a window's
+-- @WM_CLIENT_MACHINE@ against the hostname -- an X client could be running on
+-- another machine, where sending it a signal would be meaningless.  Wayland
+-- has no network transparency, so every window here belongs to a process on
+-- this machine and the distinction, along with "XMonad.Util.RemoteWindows",
+-- has nothing left to describe.
 --
 -- For more detailed instructions on editing the layoutHook see
 -- <https://xmonad.org/TUTORIAL.html#customizing-xmonad the tutorial> and
 -- "XMonad.Doc.Extending#Editing_the_layout_hook".
 
+-- | Signal the process that created a window, if river knows which one that
+-- is.  @river_window_v1.unreliable_pid@ is what @_NET_WM_PID@ was, with the
+-- same caveat under both: a client may lie about it, and a pid may have been
+-- reused since.
 signalWindow :: Signal -> Window -> X ()
 signalWindow s w = do
-    pid <- getProp32s "_NET_WM_PID" w
-    io $ (signalProcess s . fromIntegral) `mapM_` fromMaybe [] pid
-
-signalLocalWindow :: Signal -> Window -> X ()
-signalLocalWindow s w  = isLocalWindow w >>= flip when (signalWindow s w)
+    p <- runQuery pid w
+    io $ signalProcess s `mapM_` p
 
 withAllOn :: (a -> X ()) -> Workspace i l a -> X ()
 withAllOn f wspc = f `mapM_` integrate' (stack wspc)
@@ -98,7 +96,7 @@ withAllFiltered p wspcs f = withAllOn f `mapM_` filter p wspcs
 sigStoppableWorkspacesHook :: String -> X ()
 sigStoppableWorkspacesHook k = do
     ws <- gets windowset
-    withAllFiltered isStoppable (hidden ws) (signalLocalWindow sigSTOP)
+    withAllFiltered isStoppable (hidden ws) (signalWindow sigSTOP)
   where
     isStoppable ws = k `elem` words (description $ layout ws)
 
@@ -114,7 +112,7 @@ data Stoppable a = Stoppable
 instance LayoutModifier Stoppable Window where
     modifierDescription = mark
 
-    hook _   = withAll $ signalLocalWindow sigCONT
+    hook _   = withAll $ signalWindow sigCONT
 
     handleMess (Stoppable m _ (Just tid)) msg
         | Just ev <- fromMessage msg = handleTimer tid ev run

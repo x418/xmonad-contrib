@@ -37,7 +37,6 @@ import XMonad.Prelude (unless)
 import XMonad.Layout.LayoutModifier
 import XMonad.Util.WindowProperties
 import XMonad.Hooks.ManageHelpers (doHideIgnore)
-import XMonad.Hooks.FadeInactive (setOpacity)
 
 -- $usage
 -- You can use this module with the following in your @xmonad.hs@:
@@ -63,15 +62,13 @@ import XMonad.Hooks.FadeInactive (setOpacity)
 -- >    , rect = Rectangle (1280-150) (800-150) 150 150
 -- >      -- avoid flickering
 -- >    , persistent = True
--- >      -- make the window transparent
--- >    , opacity = 0.6
 -- >      -- hide on start
 -- >    , visible = False
 -- >      -- assign it a name to be able to toggle it independently of others
 -- >    , name = "clock"
 -- >    }
 --
--- Add ManageHook to de-manage monitor windows and apply opacity settings.
+-- Add ManageHook to de-manage monitor windows.
 --
 -- > manageHook = myManageHook <> manageMonitor clock
 --
@@ -95,8 +92,13 @@ data Monitor a = Monitor
     , visible :: Bool     -- ^ is it visible by default?
     , name :: String      -- ^ name of monitor (useful when we have many of them)
     , persistent :: Bool  -- ^ is it shown on all layouts?
-    , opacity :: Rational -- ^ opacity level
     } deriving (Read, Show)
+
+-- Upstream also has an @opacity@ field here, which 'manageMonitor' applies by
+-- setting @_NET_WM_WINDOW_OPACITY@ on the monitor window.  That is a
+-- convention between an X client and a compositing manager; river composites
+-- itself and gives the window manager no say in per-window opacity, so there
+-- is nothing for the field to mean and it is gone rather than ignored.
 
 -- | Template for 'Monitor' record. At least 'prop' and 'rect' should be
 -- redefined. Default settings: 'visible' is 'True', 'persistent' is 'False'.
@@ -107,7 +109,6 @@ monitor = Monitor
     , visible = True
     , name = ""
     , persistent = False
-    , opacity = 1
     }
 
 -- | Messages without names affect all monitors. Messages with names affect only
@@ -129,8 +130,12 @@ withMonitor p a fn = do
 instance LayoutModifier Monitor Window where
     redoLayout mon _ _ rects = withMonitor (prop mon) (rects, Nothing) $ \w ->
         if visible mon
-            then do tileWindow w (rect mon)
-                    reveal w
+            -- Upstream also calls @tileWindow w (rect mon)@ here.  Under river
+            -- the rectangle returned below /is/ the placement -- the render
+            -- sequence positions everything the layout named -- so the extra
+            -- immediate move would be saying the same thing twice, and
+            -- 'XMonad.Operations.tileWindow' is not exported for it.
+            then do reveal w
                     return ((w,rect mon):rects, Nothing)
             else do hide w
                     return (rects, Nothing)
@@ -147,11 +152,9 @@ instance LayoutModifier Monitor Window where
         | Just Hide <- fromMessage mess = do unless (persistent mon) $ withMonitor (prop mon) () hide; return Nothing
         | otherwise = return Nothing
 
--- | ManageHook which demanages monitor window and applies opacity settings.
+-- | ManageHook which demanages monitor window.
 manageMonitor :: Monitor a -> ManageHook
-manageMonitor mon = propertyToQuery (prop mon) --> do
-    w <- ask
-    liftX $ setOpacity w $ opacity mon
+manageMonitor mon = propertyToQuery (prop mon) -->
     if persistent mon then doIgnore else doHideIgnore
 
 -- $hints

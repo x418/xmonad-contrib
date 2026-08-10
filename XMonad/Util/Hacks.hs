@@ -22,78 +22,17 @@
 -----------------------------------------------------------------------------
 
 module XMonad.Util.Hacks (
-  -- * Windowed fullscreen
-  -- $windowedFullscreenFix
-  windowedFullscreenFixEventHook,
-
   -- * Java Hack
   -- $java
   javaHack,
 
-  -- * Stacking trays (trayer) above panels (xmobar)
-  -- $raiseTrayer
-  trayerAboveXmobarEventHook,
-  trayAbovePanelEventHook,
-
-  -- * Inform xmobar when trays (e.g. trayer) change width
-  -- $padTrayer
-  trayerPaddingXmobarEventHook,
-  trayPaddingXmobarEventHook,
-  trayPaddingEventHook,
-
-  -- * Steam flickering fix
-  fixSteamFlicker,
+  -- * What upstream has and this does not
+  -- $unportable
   ) where
 
 
-import XMonad
-import XMonad.Hooks.FloatConfigureReq (fixSteamFlicker)
-import XMonad.Hooks.StatusBar (xmonadPropLog')
-import XMonad.Prelude (All (All), fi, filterM, when)
+import XMonad (XConfig (..), io)
 import System.Posix.Env (putEnv)
-
-
--- $windowedFullscreenFix
--- Windowed fullscreen describes the behaviour in which XMonad,
--- by default, does not automatically put windows that request being fullscreened
--- into actual fullscreen, but keeps them constrained
--- to their normal window dimensions, still rendering them in fullscreen.
---
--- With chromium based applications like Chrome, Discord and others this
--- can cause issues, where the window does not correctly see the size of the window
--- when displaying the fullscreen content, thus cutting off the window content.
---
--- This function works around that issue by forcing the window to recalculate their
--- dimensions after initiating fullscreen, thus making chrome-based applications
--- behave properly when in windowed fullscreen.
---
--- The following gif shows the behaviour of chrome (left) without this fix
--- compared to firefox, which already behaves as expected by default:
--- <<https://user-images.githubusercontent.com/79924233/115355075-e61dd280-a1ec-11eb-81d3-927ca462945f.gif>>
---
--- Using this function, chrome will now behave as expected as well:
--- <<https://user-images.githubusercontent.com/5300871/99186115-4dbb8780-274e-11eb-9ed2-b7815ba9e597.gif>>
---
--- Usage:
--- add to handleEventHook as follows:
---
--- > handleEventHook = handleEventHook def <> Hacks.windowedFullscreenFixEventHook
---
-
--- | Fixes fullscreen behaviour of chromium based apps by quickly applying and undoing a resize.
--- This causes chromium to recalculate the fullscreen window
--- dimensions to match the actual "windowed fullscreen" dimensions.
-windowedFullscreenFixEventHook :: Event -> X All
-windowedFullscreenFixEventHook (ClientMessageEvent _ _ _ dpy win typ (_:dats)) = do
-  wmstate <- getAtom "_NET_WM_STATE"
-  fullscreen <- getAtom "_NET_WM_STATE_FULLSCREEN"
-  when (typ == wmstate && fromIntegral fullscreen `elem` dats) $
-    withWindowAttributes dpy win $ \attrs ->
-      liftIO $ do
-        resizeWindow dpy win (fromIntegral $ wa_width attrs - 1) (fromIntegral $ wa_height attrs)
-        resizeWindow dpy win (fromIntegral $ wa_width attrs) (fromIntegral $ wa_height attrs)
-  return $ All True
-windowedFullscreenFixEventHook _ = return $ All True
 
 
 -- $java
@@ -112,105 +51,27 @@ javaHack conf = conf
   }
 
 
--- $raiseTrayer
--- Placing @trayer@ on top of @xmobar@ is somewhat tricky:
+-- $unportable
+-- Upstream also has @windowedFullscreenFixEventHook@,
+-- @trayerAboveXmobarEventHook@, @trayAbovePanelEventHook@,
+-- @trayerPaddingXmobarEventHook@, @trayPaddingXmobarEventHook@,
+-- @trayPaddingEventHook@ and @fixSteamFlicker@.  Each is a workaround for
+-- something X11 let a window manager reach into and Wayland does not:
 --
--- - they both should be lowered to the bottom of the stacking order to avoid
---   overlapping fullscreen windows
+-- * the windowed-fullscreen and Steam fixes answer a @_NET_WM_STATE@ client
+--   message by resizing a window behind its back.  Neither the message nor
+--   the resize exists here -- a river client negotiates its own size with the
+--   compositor;
 --
--- - the tray needs to be stacked on top of the panel regardless of which
---   happens to start first
+-- * the tray stacking hook walks @queryTree@ and calls @lowerWindow@.  River
+--   restacks from the layout on every frame, so there is no persistent
+--   stacking order to poke at, and no tree to walk;
 --
--- 'trayerAboveXmobarEventHook' (and the more generic
--- 'trayAbovePanelEventHook') is an event hook that ensures the latter:
--- whenever the tray lowers itself to the bottom of the stack, it checks
--- whether there are any panels above it and lowers these again.
+-- * the tray padding hooks are driven by @ConfigureNotify@ on another
+--   client's window, and report the new width through a root-window property
+--   for xmobar to read.  A window manager under Wayland is not told when a
+--   client resizes itself, and there is no root window.
 --
--- To ensure the former, that is having both @trayer@ and @xmobar@ lower
--- themselves, which is a necessary prerequisite for this event hook to
--- trigger:
---
--- - set @lowerOnStart = True@ and @overrideRedirect = True@ in @~/.xmobarrc@
--- - pass @-l@ to @trayer@
---
--- Usage:
---
--- > handleEventHook = … <> Hacks.trayerAboveXmobarEventHook
-
--- | Like 'trayAbovePanelEventHook', but specialised for trayer/xmobar.
-trayerAboveXmobarEventHook :: Event -> X All
-trayerAboveXmobarEventHook = trayAbovePanelEventHook (className =? "trayer") (appName =? "xmobar")
-
--- | Whenever a tray window lowers itself to the bottom of the stack, look for
--- any panels above it and lower these.
-trayAbovePanelEventHook
-  :: Query Bool -- ^ tray
-  -> Query Bool -- ^ panel
-  -> (Event -> X All) -- ^ event hook
-trayAbovePanelEventHook trayQ panelQ ConfigureEvent{ev_window = w, ev_above = a} | a == none = do
-  whenX (runQuery trayQ w) $ withDisplay $ \dpy -> do
-    rootw <- asks theRoot
-    (_, _, ws) <- io $ queryTree dpy rootw
-    let aboveTrayWs = dropWhile (w /=) ws
-    panelWs <- filterM (runQuery panelQ) aboveTrayWs
-    mapM_ (io . lowerWindow dpy) panelWs
-  mempty
-trayAbovePanelEventHook _ _ _ = mempty
-
--- $padTrayer
--- Communicating tray (e.g., trayer) resize events to xmobar so that
--- padding space may be reserved on xmobar for the tray.
---
--- Basic Usage with trayer:
---
--- First, add the padding hook to your @handleEventHook@ as follows:
---
--- > main = xmonad $ def
--- > { ...
--- > , handleEventHook = handleEventHook def
--- >                  <> Hacks.trayerPaddingXmobarEventHook
--- > }
---
--- Then, assuming the tray is placed on the right, update your
--- @xmobarrc@ as follows:
---
--- > Config { ...
--- >        , commands = [ ...
--- >                     , Run XPropertyLog "_XMONAD_TRAYPAD", ... ]
--- >        , template = " ... %_XMONAD_TRAYPAD%"
--- >        }
---
--- As an example of what happens in this basic usage, consider the
--- case where trayer updates to a width of 53 pixels.
--- The following property will appear on the root window:
---
--- > _XMONAD_TRAYPAD(UTF8_STRING) = "<hspace=53/>"
-
--- | A simple trayer/xmobar-specific event hook that watches for trayer window
--- resize changes and updates the _XMONAD_TRAYPAD property with xmobar markup
--- that leaves a gap for the trayer.
-trayerPaddingXmobarEventHook :: Event -> X All -- ^ event hook
-trayerPaddingXmobarEventHook = trayPaddingXmobarEventHook (className =? "trayer") "_XMONAD_TRAYPAD"
-
--- | A generic version of 'trayerPaddingXmobarEventHook' that
--- allows the user to specify how to identify a tray window and the property
--- to use with 'xmonadPropLog''. This is useful for other trays like
--- stalonetray and also when space for more than one tray-like window needs to
--- be reserved.
-trayPaddingXmobarEventHook
-  :: Query Bool     -- ^ query to identify the tray window
-  -> String         -- ^ 'xmonadPropLog'' property to use
-  -> Event -> X All -- ^ resulting event hook
-trayPaddingXmobarEventHook trayQ prop = trayPaddingEventHook trayQ hspaceLog
-  where hspaceLog width = xmonadPropLog' prop ("<hspace=" ++ show width ++ "/>")
-
--- | A fully generic tray resize hook that invokes a callback whenever a
--- tray-like window changes width.
-trayPaddingEventHook
-  :: Query Bool     -- ^ query to identify the tray window
-  -> (Int -> X ())  -- ^ action to perform when tray width changes
-  -> Event -> X All -- ^ resulting event hook
-trayPaddingEventHook trayQ widthChanged ConfigureEvent{ ev_window = w, ev_width = wa } = do
-  whenX (runQuery trayQ w) $ widthChanged (fi wa)
-  mempty
-trayPaddingEventHook _ _ _ = mempty
+-- 'javaHack' is what is left, because it was never about X11 in the first
+-- place: it sets an environment variable, and the AWT toolkit it aims at
+-- still reads it when running under XWayland.

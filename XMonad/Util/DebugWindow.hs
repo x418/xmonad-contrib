@@ -10,7 +10,31 @@
 -- Portability :  not portable
 --
 -- Module to dump window information for diagnostic/debugging purposes. See
--- "XMonad.Hooks.DebugEvents" and "XMonad.Hooks.DebugStack" for practical uses.
+-- "XMonad.Hooks.DebugStack" for practical uses.
+--
+-- Upstream builds its line by reading the window's X properties: @WM_CLASS@,
+-- @WM_NAME@ and its EWMH replacements, @WM_COMMAND@, @WM_CLIENT_MACHINE@,
+-- @_NET_WM_PID@, @_NET_WM_WINDOW_TYPE@ and @_NET_WM_STATE@, plus the geometry
+-- and map state from @XGetWindowAttributes@.  None of that is readable here --
+-- a Wayland client's identity is whatever it told the compositor, and the
+-- compositor forwards a fixed set of it.
+--
+-- So this reports what river actually knows, in the same shape: the window id,
+-- its title, the rectangle the last layout gave it, its @app_id@, and the pid
+-- of the process that created it.  What is gone with the properties:
+--
+-- * the ICCCM resource /name/ -- river has one @app_id@ where X11 had an
+--   instance and a class, so one string is printed rather than @name\/class@;
+--
+-- * @WM_COMMAND@ and @WM_CLIENT_MACHINE@.  Nothing carries a client's argv,
+--   and Wayland has no network transparency for a hostname to distinguish;
+--
+-- * the override-redirect marker.  There is no such flag: a Wayland client
+--   cannot opt out of window management, it can only use a different shell;
+--
+-- * the EWMH window type.  'XMonad.Hooks.ManageHelpers.isDialog' answers the
+--   one question it was usually asked, from @xdg_toplevel.set_parent@, so a
+--   window with a parent is reported as transient instead.
 --
 -----------------------------------------------------------------------------
 
@@ -20,133 +44,60 @@ import           Prelude
 
 import           XMonad
 import           XMonad.Prelude
+import           XMonad.River                    (windowRect)
+import           XMonad.Hooks.ManageHelpers      (isFullscreen, isMinimized, pid, transientTo)
+import qualified XMonad.StackSet                 as W
+import qualified Data.Map                        as M
 
-import           Codec.Binary.UTF8.String        (decodeString)
-import           Control.Exception                                     as E
-import           Foreign.C.String
-import           Numeric                         (showHex)
-import           System.Exit
-
--- | Output a window by ID in hex, decimal, its ICCCM resource name and class,
---   its title if available, and EWMH type and state if available.  Also
---   indicate override_redirect with an exclamation mark, and wrap in brackets
---   if it is unmapped or withdrawn.
+-- | Output a window by ID, its title if available, the rectangle the last
+--   layout run gave it, its @app_id@, and the pid of its client.  Wrap in
+--   brackets if the window is not currently placed on a screen -- which is
+--   this backend's version of unmapped, and covers a window on a hidden
+--   workspace as well as one that has just appeared and not yet been laid out.
+--
+--   The id is shown as river's own logs and @wayland-debug@ spell it -- @#12@
+--   rather than upstream's zero-padded hex -- so that a line here can be
+--   matched against a river log by eye.  There is no null window to special
+--   case: upstream's @debugWindow 0@ answered for X11's @none@, and a
+--   'Window' here is a Wayland object id, which is only ever one river sent.
 debugWindow   :: Window -> X String
-debugWindow 0 =  return "-no window-"
 debugWindow w =  do
-  d <- asks display
-  let wx = pad 8 '0' $ showHex w ""
-  w' <- safeGetWindowAttributes w
-  case w' of
-    Nothing                                   ->
-      return $ "(deleted window " ++ wx ++ ")"
-    Just WindowAttributes
-      { wa_x                 = x
-      , wa_y                 = y
-      , wa_width             = wid
-      , wa_height            = ht
-      , wa_border_width      = bw
-      , wa_map_state         = m
-      , wa_override_redirect = o
-      } -> do
-      c' <- io (getWindowProperty8 d wM_CLASS w)
-      let c = case c' of
-                Nothing -> ""
-                Just c''  -> intercalate "/" $
-                             flip unfoldr (map (toEnum . fromEnum) c'') $
-                             \s -> if null s
-                                     then Nothing
-                                     else let (w'',s'') = break (== '\NUL') s
-                                              s'        = drop 1 s''
-                                          in Just (w'',s')
-      t <- catchX' (wrap <$> getEWMHTitle  "VISIBLE" w) $
-           catchX' (wrap <$> getEWMHTitle  ""        w) $
-           catchX' (wrap <$> getICCCMTitle           w) $
-           return ""
-      h' <- getMachine w
-      let h = if null h' then "" else '@':h'
-      -- if it has WM_COMMAND use it, else use the appName
-      -- NB. modern stuff often does not set WM_COMMAND since it's only ICCCM required and not some
-      -- horrible gnome/freedesktop session manager thing like Wayland intended. How helpful of them.
-      p' <- safeGetCommand d w
-      let p = if null p' then "" else wrap $ unwords p'
-      nWP <- getAtom "_NET_WM_PID"
-      pid' <- io $ getWindowProperty32 d nWP w
-      let pid = case pid' of
-                  Just [pid''] -> '(':show pid'' ++ ")"
-                  _            -> ""
-      let cmd = p ++ pid ++ h
-      let (lb,rb) = case () of
-                      () | m == waIsViewable -> ("","")
-                         | otherwise         -> ("[","]")
-          o'      = if o then "!" else ""
-      wT <- getAtom "_NET_WM_WINDOW_TYPE"
-      wt' <- io $ getWindowProperty32 d wT w
-      ewmh <- case wt' of
-                Just wt'' -> windowType d w (fmap fi wt'')
-                _         -> return ""
+  let wx = show w
+  known <- withWindowSet $ return . W.member w
+  r <- windowRect w
+  if not known && isNothing r
+    then return $ "(unknown window " ++ wx ++ ")"
+    else do
+      t  <- runQuery title w
+      c  <- runQuery className w
+      p  <- runQuery pid w
+      tr <- runQuery transientTo w
+      st <- windowState w
+      let (lb,rb) = if isJust r then ("","") else ("[","]")
       return $ concat [lb
-                      ,o'
                       ,wx
-                      ,t
-                      ," "
-                      ,show wid
-                      ,'x':show ht
-                      ,if bw == 0 then "" else '+':show bw
-                      ,"@"
-                      ,show x
-                      ,',':show y
+                      ,if null t then "" else wrap t
+                      ,maybe "" geometry r
                       ,if null c then "" else ' ':c
-                      ,if null cmd then "" else ' ':cmd
-                      ,ewmh
+                      ,maybe "" (\p' -> "(" ++ show p' ++ ")") p
+                      ,maybe "" (\tw -> " ->" ++ show tw) tr
+                      ,st
                       ,rb
                       ]
 
-getEWMHTitle       :: String -> Window -> X String
-getEWMHTitle sub w =  do
-  a <- getAtom $ "_NET_WM_" ++ (if null sub then "" else '_':sub) ++ "_NAME"
-  getDecodedStringProp w a -- should always be UTF8_STRING but rules are made to be broken
+geometry :: Rectangle -> String
+geometry (Rectangle x y wid ht) =
+  ' ' : show wid ++ 'x' : show ht ++ '@' : show x ++ ',' : show y
 
-getICCCMTitle   :: Window -> X String
-getICCCMTitle w =  getDecodedStringProp w wM_NAME
-
-getDecodedStringProp     :: Window -> Atom -> X String
-getDecodedStringProp w a =  do
-  t@(TextProperty t' _ 8 _) <- withDisplay $ \d -> io $ getTextProperty d w a
-  [s] <- catchX' (tryUTF8     t) $ -- shouldn't happen but some apps do it
-         catchX' (tryCompound t) $
-         io ((:[]) <$> peekCString t')
-  return s
-
-tryUTF8                          :: TextProperty -> X [String]
-tryUTF8 (TextProperty s enc _ _) =  do
-  uTF8_STRING <- getAtom "UTF8_STRING"
-  when (enc /= uTF8_STRING) $ error "String is not UTF8_STRING"
-  map decodeString . splitNul <$> io (peekCAString s)
-
-tryCompound                            :: TextProperty -> X [String]
-tryCompound t@(TextProperty _ enc _ _) =  do
-  cOMPOUND_TEXT <- getAtom "COMPOUND_TEXT"
-  when (enc /= cOMPOUND_TEXT) $ error "String is not COMPOUND_TEXT"
-  withDisplay $ \d -> io $ wcTextPropertyToTextList d t
-
-splitNul    :: String -> [String]
-splitNul "" =  []
-splitNul s  =  let (s',ss') = break (== '\NUL') s in s' : splitNul ss'
-
-pad       :: Int -> Char -> String -> String
-pad w c s =  replicate (w - length s) c ++ s
-
--- modified 'catchX' without the print to 'stderr'
-catchX' :: X a -> X a -> X a
-catchX' job errcase = do
-  st <- get
-  c <- ask
-  (a, s') <- io $ runX c st job `E.catch` \e -> case fromException e of
-    Just x -> throw e `const` (x `asTypeOf` ExitSuccess)
-    _      -> runX c st errcase
-  put s'
-  return a
+-- | The window state river reports, in the slot upstream fills with the EWMH
+--   window type and @_NET_WM_STATE@.
+windowState   :: Window -> X String
+windowState w =  do
+  f <- runQuery isFullscreen w
+  m <- runQuery isMinimized w
+  flt <- withWindowSet $ return . M.member w . W.floating
+  let ss = ["fullscreen" | f] ++ ["minimized" | m] ++ ["floating" | flt]
+  return $ if null ss then "" else " (" ++ unwords ss ++ ")"
 
 wrap   :: String -> String
 wrap s =  ' ' : '"' : wrap' s ++ "\""
@@ -155,67 +106,3 @@ wrap s =  ' ' : '"' : wrap' s ++ "\""
                   | s' == '\\' = '\\' : s' : wrap' ss
                   | otherwise  =        s' : wrap' ss
     wrap' ""                   =             ""
-
--- and so is getCommand
-safeGetCommand     :: Display -> Window -> X [String]
-safeGetCommand d w =  do
-  wC <- getAtom "WM_COMMAND"
-  p <- io $ getWindowProperty8 d wC w
-  case p of
-    Nothing  -> return []
-    Just cs' -> do
-      let cs                    = map (toEnum . fromEnum) cs'
-          go  (a,(s,"\NUL"))    = (s:a,("",""))
-          go  (a,(s,'\NUL':ss)) = go (s:a,go' ss)
-          go  r                 = r -- ???
-          go'                   = break (== '\NUL')
-       in return $ reverse $ fst $ go ([],go' cs)
-
-getMachine   :: Window -> X String
-getMachine w =  catchX' (getAtom "WM_CLIENT_MACHINE" >>= getDecodedStringProp w) (return "")
-
--- if it's one EWMH atom then we strip prefix and lowercase, otherwise we
--- return the whole thing. we also get the state here, with similar rules
--- (all EWMH = all prefixes removed and lowercased)
-windowType        :: Display -> Window -> [Atom] -> X String
-windowType d w ts =  do
-  tstr <- decodeType ts
-  wS <- getAtom "_NET_WM_STATE"
-  ss' <- io $ getWindowProperty32 d wS w
-  sstr <- case ss' of
-            Just ss -> windowState (fmap fi ss)
-            _       -> return ""
-  return $ " (" ++ tstr ++ sstr ++ ")"
-  where
-    decodeType     :: [Atom] -> X String
-    decodeType []  =  return ""
-    decodeType [t] =  simplify "_NET_WM_WINDOW_TYPE_" t
-    decodeType tys =  unAtoms tys " (" False
-
-    unAtoms             :: [Atom] -> String -> Bool -> X String
-    unAtoms []     t i  =  return $ if i then t else t ++ ")"
-    unAtoms (a:as) t i  =  do
-                            s' <- io $ getAtomName d a
-                            let s = case s' of
-                                      Just s'' -> s''
-                                      _        -> '<':show a ++ ">"
-                            unAtoms as (t ++ (if i then ' ':s else s)) True
-
-    simplify       :: String -> Atom -> X String
-    simplify pfx a =  do
-                        s' <- io $ getAtomName d a
-                        case s' of
-                          Nothing -> return $ '<':show a ++ ">"
-                          Just s  -> if pfx `isPrefixOf` s then
-                                       return $ map toLower (drop (length pfx) s)
-                                     else
-                                       return s
-
-    -- note that above it says this checks all of them before simplifying.
-    -- I'll do that after I'm confident this works as intended.
-    windowState     :: [Atom] -> X String
-    windowState []  =  return ""
-    windowState as' =  go as' ";"
-      where
-        go []     t = return t
-        go (a:as) t = simplify "_NET_WM_STATE_" a >>= \t' -> go as (t ++ ' ':t')
