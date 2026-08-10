@@ -575,6 +575,7 @@ defaultNavigation stroke = do
           ,((0,xK_Up)         , move (0,-1) >> pure Continue)
           ,((0,xK_k)          , move (0,-1) >> pure Continue)
           ,((0,xK_Tab)        , moveNext >> pure Continue)
+          ,((shiftMask,xK_Tab), movePrev >> pure Continue)
           ,((0,xK_n)          , moveNext >> pure Continue)
           ,((0,xK_p)          , movePrev >> pure Continue)
           ]
@@ -594,6 +595,7 @@ navNSearch = shadowWithKeymap navNSearchKeyMap navNSearchDefaultHandler
           ,((0,xK_Down)       , move (0,1) >> pure Continue)
           ,((0,xK_Up)         , move (0,-1) >> pure Continue)
           ,((0,xK_Tab)        , moveNext >> pure Continue)
+          ,((shiftMask,xK_Tab), movePrev >> pure Continue)
           ,((0,xK_BackSpace)  , transformSearchString (\s -> if s == "" then "" else init s) >> pure Continue)
           ]
         -- The navigation handler ignores unknown key symbols, therefore we const
@@ -770,10 +772,10 @@ gridselect gsconfig elements cont = do
                 releaseXMF font
                 cont result
 
-        onKey sym txt = postAction xconf $ whenX (not <$> io (readIORef done)) $ do
+        onKey mask sym txt = postAction xconf $ whenX (not <$> io (readIORef done)) $ do
             st <- io (readIORef ref)
             (nav, st') <- runStateT
-                (unTwoD (gs_navigate gsconfig (fromIntegral sym, txt, 0))) st
+                (unTwoD (gs_navigate gsconfig (fromIntegral sym, txt, mask))) st
             io $ writeIORef ref st'
             case nav of
                 Continue -> io redraw

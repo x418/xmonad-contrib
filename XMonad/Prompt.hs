@@ -170,9 +170,10 @@ data XPState =
         , eventBuffer           :: [(KeySym, String, Event)]
         , inputBuffer           :: String
         , currentCompletions    :: Maybe [String]
-        , keyChan               :: Chan (Maybe (KeySym, String))
-        -- ^ Keys from the prompt's client thread; 'Nothing' when that client
-        -- is gone and no more are coming.
+        , keyChan               :: Chan (Maybe (KeyMask, KeySym, String))
+        -- ^ Keys from the prompt's client thread: the modifiers held, the
+        -- keysym, and the text produced.  'Nothing' when that client is gone
+        -- and no more are coming.
           -- ^ Keystrokes, from the prompt's own Wayland connection.
           --
           -- Upstream reads them from an X event queue with @maskEvent@.  This
@@ -647,7 +648,7 @@ mkXPromptImplementationWith historyKey conf om finish = do
     , csMargin   = (0, 0, 0, 0)
     , csKeyboard = True
     , csDraw    = renderDrawableInto frame
-    , csOnKey   = \sym txt -> writeChan chan (Just (fi sym, txt))
+    , csOnKey   = \m sym txt -> writeChan chan (Just (m, fi sym, txt))
       -- Waking the prompt is the whole job here.  The client can go away
       -- without the prompt asking -- the compositor closes the surface, the
       -- startup watchdog decides it was never usable, a panic binding calls
@@ -741,7 +742,7 @@ eventLoop handle stopAction = do
                 -- the window manager's thread.
                 ch <- gets keyChan
                 io (readChan ch) <&> \case
-                  Just (ks, str) -> Just (ks, str, KeyPressed 0 ks)
+                  Just (m, ks, str) -> Just (ks, str, KeyPressed m ks)
                   Nothing        -> Nothing
         (l : ls) -> do
                 modify $ \s -> s { eventBuffer = ls }
@@ -1601,7 +1602,7 @@ redrawComplWin compl = do
           _      -> (fi cwY, 0, 0, 0)
       , csKeyboard = False
       , csDraw    = renderDrawableInto w
-      , csOnKey   = \_ _ -> pure ()
+      , csOnKey   = \_ _ _ -> pure ()
       , csOnClose = pure ()
       }
     io $ modifyIORef' complClients ((w, h) :)
