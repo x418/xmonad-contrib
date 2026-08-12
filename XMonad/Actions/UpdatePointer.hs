@@ -26,7 +26,7 @@ module XMonad.Actions.UpdatePointer
 
 import XMonad
 import XMonad.Prelude
-import XMonad.River (pointerPosition, windowUnderPointer)
+import XMonad.River (afterLayout, pointerPosition, windowUnderPointer)
 import XMonad.StackSet (member, peek, screenDetail, current)
 
 import Control.Arrow ((&&&), (***))
@@ -66,24 +66,37 @@ import Control.Arrow ((&&&), (***))
 -- operation that updates the focus instead. The two can be combined in a
 -- single config if neither goes into 'logHook' but are invoked explicitly in
 -- individual key bindings.
+--
+-- The warp waits for the layout.  This is normally reached from a 'logHook',
+-- which 'XMonad.Operations.windows' runs before the layout has been applied,
+-- so asking where the focused window is would answer with where it was.  For
+-- anything that moves a window rather than only the focus -- swapping two
+-- windows, say -- that is the wrong rectangle, and the pointer is left behind
+-- on the window that took the old position.  See 'XMonad.River.afterLayout'.
 updatePointer :: (Rational, Rational) -> (Rational, Rational) -> X ()
 updatePointer refPos ratio = do
-  ws <- gets windowset
-  let defaultRect = screenRect $ screenDetail $ current ws
-  rect <- case peek ws of
-        Nothing -> return defaultRect
-        Just w  -> maybe defaultRect windowAttributesToRectangle
-               <$> safeGetWindowAttributes w
-
+  -- Both of these are read now rather than after the layout, because both say
+  -- why this call is happening and neither survives the wait.  'mouseFocused'
+  -- is scoped to the dynamic extent of 'XMonad.Operations.focus' by 'local',
+  -- so once that has returned it reads 'False' whatever set it -- and the
+  -- guard against fighting the user's own mouse would never fire.
   mouseIsMoving <- asks mouseFocused
-  -- queryPointer answered three things at once: where the pointer is and what
-  -- it is over.  River separates them; see 'XMonad.River.windowUnderPointer'
-  -- for why the second is computed rather than asked.  A pointer over no
-  -- managed window is what @currentWindow == none@ meant.
-  (rootX, rootY) <- fromMaybe (0, 0) <$> pointerPosition
-  currentWindow <- windowUnderPointer
   drag <- gets dragging
-  unless (pointWithin (fi rootX) (fi rootY) rect
+  afterLayout $ do
+   ws <- gets windowset
+   let defaultRect = screenRect $ screenDetail $ current ws
+   rect <- case peek ws of
+         Nothing -> return defaultRect
+         Just w  -> maybe defaultRect windowAttributesToRectangle
+                <$> safeGetWindowAttributes w
+
+   -- queryPointer answered three things at once: where the pointer is and what
+   -- it is over.  River separates them; see 'XMonad.River.windowUnderPointer'
+   -- for why the second is computed rather than asked.  A pointer over no
+   -- managed window is what @currentWindow == none@ meant.
+   (rootX, rootY) <- fromMaybe (0, 0) <$> pointerPosition
+   currentWindow <- windowUnderPointer
+   unless (pointWithin (fi rootX) (fi rootY) rect
           || mouseIsMoving
           || isJust drag
           || not (maybe True (`member` ws) currentWindow)) $ let

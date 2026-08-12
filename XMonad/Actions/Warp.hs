@@ -25,7 +25,7 @@ module XMonad.Actions.Warp (
 
 import XMonad.Prelude
 import XMonad
-import XMonad.River (windowRect)
+import XMonad.River (afterLayout, windowRect)
 import XMonad.StackSet as W
 
 {- $usage
@@ -93,8 +93,16 @@ fraction f x = floor (f * fromIntegral x)
 --   a window wherever it was; river only knows where the layout put it, and a
 --   window on a hidden workspace was not put anywhere.  See
 --   'XMonad.River.windowRect'.
+--
+--   The warp waits for the layout, because the usual way to reach this is
+--   through something that has just rearranged the windows -- @windows
+--   W.swapUp >> warpToWindow (1\/2) (1\/2)@.  Asking where the focused window
+--   is before the layout has run answers with where it was, which for a swap
+--   is where the pointer already is: the pointer does not move, and with
+--   focus-follows-mouse it then pulls the focus back to whatever took the old
+--   position.  See 'XMonad.River.afterLayout'.
 warpToWindow :: Rational -> Rational -> X ()
-warpToWindow h v = withFocused $ \w ->
+warpToWindow h v = afterLayout $ withFocused $ \w ->
   windowRect w >>= flip whenJust (\r ->
     warpPointer (rect_x r + fraction h (rect_width  r))
                 (rect_y r + fraction v (rect_height r)))
