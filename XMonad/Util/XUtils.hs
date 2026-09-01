@@ -47,8 +47,8 @@ import XMonad
 import XMonad.Util.River.Compat
     ( Drawable, EventMask, GC, Pixel, commitDrawable, copyArea
     , createDrawableWindow, createGC, createPixmap, destroyDrawable, drawOn
-    , fillRectangle, freeGC, freePixmap, mapDrawable, pixelFromString
-    , pixelToColour, setForeground, unmapDrawable )
+    , drawableNode, fillRectangle, freeGC, freePixmap, mapDrawable
+    , pixelFromString, pixelToColour, setForeground, unmapDrawable )
 import qualified XMonad.Util.River.Draw as D
 import XMonad.River (submapNextKey, warnUnimplemented)
 import XMonad.River.State (RiverState (..))
@@ -57,6 +57,7 @@ import XMonad.Util.Font
 import XMonad.Util.Image
 import qualified XMonad.StackSet as W
 import Data.Bits ((.&.))
+import Data.IORef (modifyIORef')
 import qualified Data.Map as M
 
 -- $usage
@@ -122,6 +123,7 @@ showWindow w = do
   -- Mapping alone shows nothing: a wl_surface with no buffer is not mapped,
   -- so whatever has been queued has to be presented too.
   mapM_ (\s -> io (commitDrawable d s w)) shm
+  raiseDrawable w
 
 -- | the list version
 showWindows :: [Window] -> X ()
@@ -132,6 +134,7 @@ hideWindow :: Window -> X ()
 hideWindow w = do
   d <- asks display
   io (unmapDrawable d w)
+  dropDrawable w
 
 -- | the list version
 hideWindows :: [Window] -> X ()
@@ -141,7 +144,30 @@ hideWindows = mapM_ hideWindow
 deleteWindow :: Window -> X ()
 deleteWindow w = do
   d <- asks display
+  dropDrawable w
   io (destroyDrawable d w)
+
+-- | Record this surface's node as one to stack above the windows.
+--
+-- The render sequence restates the stacking order on every frame from the
+-- layout's placements, which name windows only, so a surface this process
+-- drew is buried by them a frame after it appears unless it is listed
+-- somewhere the render sequence also reads.  'XMonad.River.State.riverOverlays'
+-- is that list.  Appended, so the most recently shown surface is topmost.
+raiseDrawable :: Window -> X ()
+raiseDrawable w = do
+  ref <- asks (riverOverlays . riverState)
+  io $ do
+    mNode <- drawableNode w
+    forM_ mNode $ \n -> modifyIORef' ref ((++ [n]) . filter (/= n))
+
+-- | Stop stacking this surface, because it is unmapped or gone.
+dropDrawable :: Window -> X ()
+dropDrawable w = do
+  ref <- asks (riverOverlays . riverState)
+  io $ do
+    mNode <- drawableNode w
+    forM_ mNode $ \n -> modifyIORef' ref (filter (/= n))
 
 -- | the list version
 deleteWindows :: [Window] -> X ()

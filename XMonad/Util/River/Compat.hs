@@ -59,6 +59,7 @@ module XMonad.Util.River.Compat
     , commitDrawable
     , drawableSize
     , isDrawable
+    , drawableNode
       -- * Graphics contexts
     , GC
     , createGC
@@ -173,6 +174,16 @@ isDrawable d = M.member d <$> readIORef drawables
 
 lookupDrawable :: Drawable -> IO (Maybe DrawableState)
 lookupDrawable d = M.lookup d <$> readIORef drawables
+
+-- | The node of an on-screen drawable, for stacking it.
+--
+-- 'Nothing' for a pixmap, which has no node, and for an id that is not ours.
+drawableNode :: Drawable -> IO (Maybe ObjectId)
+drawableNode d = do
+  st <- lookupDrawable d
+  pure $ case dsBacking <$> st of
+    Just (OnScreen surf) -> Just (R.surfNode surf)
+    _ -> Nothing
 
 -- | Create a window-manager surface and register it as a drawable.
 createDrawableWindow
