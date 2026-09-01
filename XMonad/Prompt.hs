@@ -645,7 +645,20 @@ mkXPromptImplementationWith historyKey conf om finish = do
         Top          -> AnchorTop
         Bottom       -> AnchorBottom
         CenteredAt{} -> AnchorCentre
-    , csMargin   = (0, 0, 0, 0)
+    -- A layer surface is placed against the output's edge, but the rectangle
+    -- the prompt was sized and positioned for is the /tiling/ area, which a
+    -- bar's exclusive zone has already been subtracted from.  Offsetting by
+    -- that difference is what keeps a Top prompt below a top bar instead of
+    -- underneath it, and it is zero when nothing reserves space.
+    , csMargin   = case position conf of
+        Top    -> (fi (rect_y s), 0, 0, 0)
+        -- Not the mirror of Top: rect_y is the offset from the output's top
+        -- edge, and the gap at the bottom is whatever is left below the
+        -- tiling area -- which needs the output's height, and a layer
+        -- surface is never told it.  A Bottom prompt under a bottom bar is
+        -- the same bug and wants the layer area reported, not guessed.
+        Bottom -> (0, 0, 0, 0)
+        CenteredAt{} -> (0, 0, 0, 0)
     , csKeyboard = True
     , csDraw    = renderDrawableInto frame
     , csOnKey   = \m sym txt -> writeChan chan (Just (m, fi sym, txt))
@@ -1596,7 +1609,10 @@ redrawComplWin compl = do
           Bottom -> AnchorBottom
           _      -> AnchorTop
       -- A layer surface has no coordinates, only a distance from its anchor,
-      -- so the absolute cwY upstream computes becomes a margin.
+      -- so the absolute cwY upstream computes becomes a margin.  cwY is
+      -- rect_y + the prompt's height, measured from the output's top edge --
+      -- the same origin the prompt surface above anchors to, and the same
+      -- rect_y it adds -- so the two line up and this needs no adjustment.
       , csMargin = case position cfg of
           Bottom -> (0, 0, fi (height cfg), 0)
           _      -> (fi cwY, 0, 0, 0)
