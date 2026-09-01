@@ -460,6 +460,10 @@ multimediaKeys = filter ((/= noSymbol) . snd) . map (id &&& stringToKeysym) $
   , "XF86Music"
   , "XF86TouchpadToggle"
   , "XF86AudioMicMute"
+  -- Not in the historical list, but on every laptop keyboard made this
+  -- decade: the radio-kill key, which reports as XF86RFKill.  Without it
+  -- <XF86RFKill> is not parseable and the key cannot be bound at all.
+  , "XF86RFKill"
   , "XF86_Switch_VT_1"
   , "XF86_Switch_VT_2"
   , "XF86_Switch_VT_3"
