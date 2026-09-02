@@ -43,7 +43,7 @@ import XMonad
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.Layout.Decoration (Shrinker (..), shrinkWhile, shrinkText)
-import XMonad.River (windowUnderPointer)
+import XMonad.River (dpyConn, windowUnderPointer)
 import XMonad.River.State (RiverState (..))
 import XMonad.Util.River.Compat (EventMask, commitDrawable, copyArea,
                                  createGC, createPixmap, fillRectangle,
@@ -518,7 +518,7 @@ paintDecorationSimple deco win windowWidth windowHeight shrinker dd isExpose = d
     io $ freeGC        gc
     -- Present it.  X11 flushed on the next round trip; a surface shows nothing
     -- until its buffer is committed.
-    mapM_ (\sh -> io (commitDrawable dpy sh win)) shm
+    mapM_ (\sh -> io (commitDrawable (dpyConn dpy) sh win)) shm
   where
     drawLineWith dpy pixmap gc x y w h colorName = do
       color <- stringToPixel dpy colorName

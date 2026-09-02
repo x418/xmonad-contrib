@@ -55,7 +55,6 @@ module XMonad.Util.River.Compat
     , destroyDrawable
     , mapDrawable
     , unmapDrawable
-    , moveResizeDrawable
     , commitDrawable
     , drawableSize
     , isDrawable
@@ -186,11 +185,15 @@ drawableNode d = do
     _ -> Nothing
 
 -- | Create a window-manager surface and register it as a drawable.
+--
+-- Where it goes is not sent from here: @river_node_v1.set_position@ is
+-- rendering state, legal only inside a sequence, and this runs on the worker.
+-- The caller records the position in 'XMonad.River.State.riverOverlayPos' and
+-- the render sequence applies it.
 createDrawableWindow
   :: Connection -> ObjectId -> ObjectId -> Rectangle -> IO Drawable
 createDrawableWindow conn compositor manager r = do
   surf <- R.newSurface conn compositor manager
-  R.moveSurface conn surf (rect_x r) (rect_y r)
   rref <- newIORef r
   ops  <- newIORef []
   mref <- newIORef False
@@ -248,13 +251,6 @@ unmapDrawable conn d = withDrawable d $ \st -> do
   case dsBacking st of
     -- Attaching a null buffer is how a wl_surface is unmapped.
     OnScreen surf -> R.hideSurface conn surf
-    Offscreen -> pure ()
-
-moveResizeDrawable :: Connection -> Drawable -> Rectangle -> IO ()
-moveResizeDrawable conn d r = withDrawable d $ \st -> do
-  writeIORef (dsRect st) r
-  case dsBacking st of
-    OnScreen surf -> R.moveSurface conn surf (rect_x r) (rect_y r)
     Offscreen -> pure ()
 
 withDrawable :: Drawable -> (DrawableState -> IO ()) -> IO ()

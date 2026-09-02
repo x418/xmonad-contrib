@@ -54,7 +54,8 @@ module XMonad.Hooks.EwmhDesktops (
 import XMonad
 import XMonad.Prelude
 import XMonad.Hooks.ManageHelpers (MaybeManageHook)
-import XMonad.River (warnUnimplemented)
+import XMonad.River (informFullscreen, warnUnimplemented)
+import qualified XMonad.StackSet as W
 import XMonad.Util.WorkspaceCompare (WorkspaceSort)
 
 -- $usage
@@ -105,15 +106,14 @@ import XMonad.Util.WorkspaceCompare (WorkspaceSort)
 --
 -- [@ewmh@] everything on the publish-and-command side above.
 --
--- [@ewmhFullscreen@] 'ewmhFullscreen', 'setEwmhFullscreenHooks',
--- 'fullscreenStartup' and 'fullscreenEventHook'.  __The request does arrive
--- here, and something else handles it.__  River sends
--- @fullscreen_requested@ and @exit_fullscreen_requested@, the backend records
--- them and reports the change as @WindowFullscreenChanged@, and
--- "XMonad.Layout.Fullscreen" acts on it.  So this is inert because the EWMH
--- spelling of the question is, not because the question cannot be answered:
--- use @XMonad.Layout.Fullscreen.fullscreenSupport@, or act on
--- 'XMonad.Hooks.ManageHelpers.isFullscreen' in a @manageHook@.
+-- [@ewmhFullscreen@] __works.__  River sends @fullscreen_requested@ and
+-- @exit_fullscreen_requested@, the backend reports them as
+-- @WindowFullscreenChanged@, and 'fullscreenEventHook' does what upstream's
+-- does: floats the window over the whole screen and sinks it again, and --
+-- through 'XMonad.River.informFullscreen' -- tells the client, so it drops
+-- its toolbars.  For fullscreen inside a tiled layout use
+-- "XMonad.Layout.Fullscreen" instead, as under X11.  'setEwmhFullscreenHooks'
+-- alone is inert: the hooks it would install are the ones above.
 --
 -- [@setEwmhActivateHook@] __a gap, not a fact about Wayland.__  River
 -- implements @xdg-activation-v1@, but its @handleRequestActivate@ does nothing
@@ -130,12 +130,9 @@ ewmhWarning = warnUnimplemented "ewmh" $
     ++ "workspaces. Feed it with XMonad.Hooks.StatusBar.statusBarPipe instead."
 
 fullscreenWarning :: MonadIO m => m ()
-fullscreenWarning = warnUnimplemented "ewmhFullscreen" $
-    "Unlike the rest of EwmhDesktops the request does arrive, and is already "
-    ++ "handled elsewhere: river sends fullscreen_requested, and "
-    ++ "XMonad.Layout.Fullscreen acts on it. Use fullscreenSupport from that "
-    ++ "module instead of this, or act on "
-    ++ "XMonad.Hooks.ManageHelpers.isFullscreen in your manageHook."
+fullscreenWarning = warnUnimplemented "setEwmhFullscreenHooks" $
+    "ewmhFullscreen floats a fullscreen window over the screen and sinks it "
+    ++ "again; the hooks that would customise that are not configurable here."
 
 activateWarning :: MonadIO m => m ()
 activateWarning = warnUnimplemented "setEwmhActivateHook" $
@@ -152,10 +149,11 @@ atStartup warn c = c{ startupHook = startupHook c <> warn }
 ewmh :: XConfig a -> XConfig a
 ewmh = atStartup ewmhWarning
 
--- | Add fullscreen support to the given config.  Inert, but the thing it asks
--- for is done elsewhere -- see $river and "XMonad.Layout.Fullscreen".
+-- | Add fullscreen support to the given config: a client asking for
+-- fullscreen floats over the whole screen and is told it is fullscreen; one
+-- asking to leave is sunk.  See $river.
 ewmhFullscreen :: XConfig a -> XConfig a
-ewmhFullscreen = atStartup fullscreenWarning
+ewmhFullscreen c = c { handleEventHook = handleEventHook c <> fullscreenEventHook }
 
 -- | Add (compose after) a function to sort/filter the workspace list before
 -- publishing it.  There is nothing to publish; see $river.
@@ -240,13 +238,18 @@ ewmhDesktopsEventHook _ = ewmhWarning >> mempty
 ewmhDesktopsEventHookCustom :: WorkspaceSort -> Event -> X All
 ewmhDesktopsEventHookCustom _ _ = ewmhWarning >> mempty
 
--- | Advertise fullscreen support.  See $river.
+-- | Advertise fullscreen support.  Nothing to advertise: river asks the
+-- window manager about every fullscreen request regardless.
 {-# DEPRECATED fullscreenStartup "Use ewmhFullscreen instead." #-}
 fullscreenStartup :: X ()
-fullscreenStartup = fullscreenWarning
+fullscreenStartup = pure ()
 
--- | Act on a client's request to be fullscreen.  The request arrives, but is
--- delivered to "XMonad.Layout.Fullscreen" rather than here; see $river.
+-- | Act on a client's request to be fullscreen: float it over the screen, or
+-- sink it, and tell it which.  What 'ewmhFullscreen' installs.
 {-# DEPRECATED fullscreenEventHook "Use ewmhFullscreen instead." #-}
 fullscreenEventHook :: Event -> X All
-fullscreenEventHook _ = fullscreenWarning >> mempty
+fullscreenEventHook WindowFullscreenChanged{ev_window = w, ev_fullscreen = full} = do
+    windows $ if full then W.float w (W.RationalRect 0 0 1 1) else W.sink w
+    informFullscreen w full
+    pure (All True)
+fullscreenEventHook _ = pure (All True)

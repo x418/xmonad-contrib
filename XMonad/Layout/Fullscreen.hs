@@ -39,6 +39,7 @@ import           XMonad.Layout.LayoutModifier
 import           XMonad.Layout.NoBorders        (SmartBorder, smartBorders)
 import           XMonad.Hooks.EwmhDesktops      (fullscreenStartup)
 import           XMonad.Hooks.ManageHelpers     (isFullscreen)
+import           XMonad.River                   (informFullscreen)
 import           XMonad.Util.WindowProperties
 import qualified XMonad.Util.Rectangle          as R
 import qualified XMonad.StackSet                as W
@@ -223,6 +224,9 @@ fullscreenEventHook :: Event -> X All
 fullscreenEventHook WindowFullscreenChanged{ev_window = w, ev_fullscreen = full} = do
   broadcastMessage $ if full then AddFullscreen w else RemoveFullscreen w
   sendMessage FullscreenChanged
+  -- The layout owns the geometry; the client is told what it is, so it drops
+  -- its toolbars.
+  informFullscreen w full
   return $ All True
 
 fullscreenEventHook DestroyWindowEvent{ev_window = w} = do

@@ -1,61 +1,7 @@
-## 1. `mouseDrag` can leave a drag that never ends
+## 1. `mouseDrag` can leave a drag that never ends -- closed
 
-**Repo:** `../xmonad-river` — `src-river/XMonad/Operations.hs` (`mouseDrag`),
-`src-river/XMonad/River/WM.hs` (`addSeat`, `reapClosed`)
-
-`mouseDrag` records `dragging = Just (motion, cleanup)` in `XState` and the only
-thing that clears it is `river_seat_v1.op_release`:
-
-```haskell
-RiverSeatV1OpRelease -> do
-  riverSeatV1OpEnd conn seat
-  queueAction rt $ do
-    drag <- gets dragging
-    whenJust drag $ \(_, cleanup) -> cleanup
-```
-
-If that event never arrives, `dragging` stays `Just` forever. `mouseDrag` opens
-with
-
-```haskell
-drag <- gets dragging
-case drag of
-    Just _ -> return () -- already dragging
-```
-
-so **every subsequent drag in the session is silently ignored**. Mouse-driven
-move and resize stop working, with no error and nothing on screen to explain it.
-The only recovery is a restart, and since the symptom is "dragging stopped
-working" rather than "something broke", the connection to a drag that ended
-badly minutes earlier is not obvious.
-
-Ways `op_release` can fail to arrive:
-
-- the seat is removed mid-drag (`rsRemoved`), which `reapClosed` handles by
-  destroying the seat object — without clearing `dragging`;
-- the dragged window closes mid-drag;
-- any protocol-level unhappiness that makes river drop the operation.
-
-There is a second, smaller bug in the same function: it picks the drag seat with
-`M.elems seats` and takes the head **without filtering `rsRemoved`**, so a drag
-can be started against a seat that is on its way out.
-
-### Sketch
-
-Cheap and worth doing regardless of the above:
-
-- Clear `dragging` in `reapClosed` when the seat that owns it goes away, running
-  `cleanup` so the caller's `done` action still fires. Callers use it to commit
-  the float geometry, so skipping it loses the drag rather than merely ending it.
-- Filter `rsRemoved` in `mouseDrag`'s seat selection.
-- Consider a deadline, as `submapNextKey` now has: a drag that has not seen a
-  delta in some generous interval is over, whatever river thinks. Less clearly
-  correct than the submap case — a slow drag is real, where an abandoned submap
-  is not — so this one may be better left out.
-
-Severity is well below the keyboard case: it degrades one input path rather than
-locking the session. But it is the same shape of bug, it is cheap, and the
-diagnosis cost is high because the symptom appears long after the cause.
+Closed in xmonad-river: `reapClosed` ends a drag whose seat has been removed,
+`mouseDrag` ignores removed seats, and `op_end` goes through the op queue.
 
 ## 2. Smaller things
 

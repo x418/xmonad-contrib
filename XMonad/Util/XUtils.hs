@@ -50,14 +50,14 @@ import XMonad.Util.River.Compat
     , drawableNode, fillRectangle, freeGC, freePixmap, mapDrawable
     , pixelFromString, pixelToColour, setForeground, unmapDrawable )
 import qualified XMonad.Util.River.Draw as D
-import XMonad.River (submapNextKey, warnUnimplemented)
+import XMonad.River (dpyConn, submapNextKey, warnUnimplemented)
 import XMonad.River.State (RiverState (..))
 import XMonad.River.Wire (nullObject)
 import XMonad.Util.Font
 import XMonad.Util.Image
 import qualified XMonad.StackSet as W
 import Data.Bits ((.&.))
-import Data.IORef (modifyIORef')
+import Data.IORef (atomicModifyIORef')
 import qualified Data.Map as M
 
 -- $usage
@@ -107,7 +107,11 @@ createNewWindow r _ col _ = do
         "wl_compositor is unavailable, so window manager surfaces (prompts, decorations) cannot be created and this returns a null id."
       pure nullObject
     Just compositor -> do
-      win <- io (createDrawableWindow d compositor mgr r)
+      win <- io (createDrawableWindow (dpyConn d) compositor mgr r)
+      -- The render sequence positions the surface; see 'raiseDrawable'.
+      posRef <- asks (riverOverlayPos . riverState)
+      io $ drawableNode win >>= mapM_ (\n ->
+        atomicModifyIORef' posRef (\m -> (M.insert n (rect_x r, rect_y r) m, ())))
       -- The background colour is painted rather than set as a window
       -- attribute: there is no server-side background to set.
       io $ drawOn win $ \_ -> D.fillRect (D.parseColour col) 0 0
@@ -122,7 +126,7 @@ showWindow w = do
   io (mapDrawable w)
   -- Mapping alone shows nothing: a wl_surface with no buffer is not mapped,
   -- so whatever has been queued has to be presented too.
-  mapM_ (\s -> io (commitDrawable d s w)) shm
+  mapM_ (\s -> io (commitDrawable (dpyConn d) s w)) shm
   raiseDrawable w
 
 -- | the list version
@@ -133,7 +137,7 @@ showWindows = mapM_ showWindow
 hideWindow :: Window -> X ()
 hideWindow w = do
   d <- asks display
-  io (unmapDrawable d w)
+  io (unmapDrawable (dpyConn d) w)
   dropDrawable w
 
 -- | the list version
@@ -145,21 +149,24 @@ deleteWindow :: Window -> X ()
 deleteWindow w = do
   d <- asks display
   dropDrawable w
-  io (destroyDrawable d w)
+  posRef <- asks (riverOverlayPos . riverState)
+  io $ drawableNode w >>= mapM_ (\n ->
+    atomicModifyIORef' posRef (\m -> (M.delete n m, ())))
+  io (destroyDrawable (dpyConn d) w)
 
 -- | Record this surface's node as one to stack above the windows.
 --
--- The render sequence restates the stacking order on every frame from the
--- layout's placements, which name windows only, so a surface this process
--- drew is buried by them a frame after it appears unless it is listed
--- somewhere the render sequence also reads.  'XMonad.River.State.riverOverlays'
--- is that list.  Appended, so the most recently shown surface is topmost.
+-- The render sequence stacks from the layout's placements, which name
+-- windows only; 'XMonad.River.State.riverOverlays' is where it finds the
+-- window manager's own surfaces, and 'riverOverlayPos' where they go.
+-- Appended, so the most recently shown surface is topmost.  Atomic: the
+-- render sequence reads these from the other thread.
 raiseDrawable :: Window -> X ()
 raiseDrawable w = do
   ref <- asks (riverOverlays . riverState)
   io $ do
     mNode <- drawableNode w
-    forM_ mNode $ \n -> modifyIORef' ref ((++ [n]) . filter (/= n))
+    forM_ mNode $ \n -> atomicModifyIORef' ref (\ns -> (filter (/= n) ns ++ [n], ()))
 
 -- | Stop stacking this surface, because it is unmapped or gone.
 dropDrawable :: Window -> X ()
@@ -167,7 +174,7 @@ dropDrawable w = do
   ref <- asks (riverOverlays . riverState)
   io $ do
     mNode <- drawableNode w
-    forM_ mNode $ \n -> modifyIORef' ref (filter (/= n))
+    forM_ mNode $ \n -> atomicModifyIORef' ref (\ns -> (filter (/= n) ns, ()))
 
 -- | the list version
 deleteWindows :: [Window] -> X ()
@@ -362,4 +369,4 @@ paintWindow' win (Rectangle _ _ wh ht) bw color b_color strStuff iconStuff = do
   io $ copyArea p win 0 0
   io $ freePixmap p
   io $ freeGC gc
-  mapM_ (\sh -> io (commitDrawable d sh win)) shm
+  mapM_ (\sh -> io (commitDrawable (dpyConn d) sh win)) shm
