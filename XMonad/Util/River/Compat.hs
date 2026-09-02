@@ -55,6 +55,7 @@ module XMonad.Util.River.Compat
     , destroyDrawable
     , mapDrawable
     , unmapDrawable
+    , moveResizeDrawable
     , commitDrawable
     , drawableSize
     , isDrawable
@@ -201,7 +202,7 @@ createDrawableWindow conn compositor manager r = do
       -- The shell surface's id is the drawable's id, so callers get something
       -- indistinguishable from a Window and every signature keeps working.
       oid = R.surfShell surf
-  modifyIORef' drawables (M.insert oid st)
+  atomicModifyIORef' drawables (\states -> (M.insert oid st states, ()))
   pure oid
 
 -- | An offscreen drawable of the given size.
@@ -215,7 +216,8 @@ createPixmap w h = do
   -- Ids for offscreen drawables come from a counter well above anything the
   -- compositor will allocate, so they cannot collide with a real object.
   oid <- atomicModifyIORef' pixmapCounter $ \(ObjectId n) -> (ObjectId (n + 1), ObjectId n)
-  modifyIORef' drawables (M.insert oid (DrawableState Offscreen rref ops mref))
+  atomicModifyIORef' drawables
+    (\states -> (M.insert oid (DrawableState Offscreen rref ops mref) states, ()))
   pure oid
 
 {-# NOINLINE pixmapCounter #-}
@@ -234,10 +236,18 @@ destroyDrawable conn d = do
   forget d
 
 forget :: Drawable -> IO ()
-forget d = modifyIORef' drawables (M.delete d)
+forget d = atomicModifyIORef' drawables (\states -> (M.delete d states, ()))
 
 drawableSize :: Drawable -> IO (Maybe Rectangle)
 drawableSize d = lookupDrawable d >>= traverse (readIORef . dsRect)
+
+-- | Record new geometry for a drawable.
+--
+-- Moving an on-screen surface is rendering state and must be done by the
+-- xmonad event loop.  "XMonad.Util.XUtils" records that position for the loop;
+-- this layer owns the rectangle used to size the next committed buffer.
+moveResizeDrawable :: Drawable -> Rectangle -> IO ()
+moveResizeDrawable d r = withDrawable d $ \st -> atomicWriteIORef (dsRect st) r
 
 -- | Show a drawable.  Nothing appears until the next 'commitDrawable', because
 -- a surface with no buffer attached is not mapped.

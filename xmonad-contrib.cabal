@@ -436,6 +436,7 @@ test-suite tests
                   NoBorders
                   OrgMode
                   RotateSome
+                  RiverDefects
                   Selective
                   SwapWorkspaces
                   WindowNavigation
@@ -454,6 +455,7 @@ test-suite tests
                   XMonad.Actions.WindowBringer
                   XMonad.Actions.WindowGo
                   XMonad.Actions.WindowNavigation
+                  XMonad.Hooks.EwmhDesktops
                   XMonad.Hooks.ManageHelpers
                   XMonad.Util.Minimize
                   XMonad.Hooks.UrgencyHook

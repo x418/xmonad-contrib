@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module       : XMonad.Hooks.EwmhDesktops
@@ -46,6 +47,9 @@ module XMonad.Hooks.EwmhDesktops (
     ewmhDesktopsEventHookCustom,
     fullscreenEventHook,
     fullscreenStartup,
+#ifdef TESTING
+    applyFullscreenTransition,
+#endif
 
     -- * Differences under river
     -- $river
@@ -55,6 +59,8 @@ import XMonad
 import XMonad.Prelude
 import XMonad.Hooks.ManageHelpers (MaybeManageHook)
 import XMonad.River (informFullscreen, warnUnimplemented)
+import qualified XMonad.Util.ExtensibleState as XS
+import qualified Data.Map.Strict as M
 import qualified XMonad.StackSet as W
 import XMonad.Util.WorkspaceCompare (WorkspaceSort)
 
@@ -244,12 +250,50 @@ ewmhDesktopsEventHookCustom _ _ = ewmhWarning >> mempty
 fullscreenStartup :: X ()
 fullscreenStartup = pure ()
 
--- | Act on a client's request to be fullscreen: float it over the screen, or
--- sink it, and tell it which.  What 'ewmhFullscreen' installs.
+newtype FullscreenFloats =
+    FullscreenFloats (M.Map Window (Maybe W.RationalRect))
+    deriving (Read, Show)
+
+instance ExtensionClass FullscreenFloats where
+    initialValue = FullscreenFloats M.empty
+    extensionType = PersistentExtension
+
+applyFullscreenTransition
+    :: Bool
+    -> Window
+    -> M.Map Window W.RationalRect
+    -> M.Map Window (Maybe W.RationalRect)
+    -> (M.Map Window W.RationalRect, M.Map Window (Maybe W.RationalRect))
+applyFullscreenTransition full w floats saved
+    | full
+    , M.notMember w saved =
+        ( M.insert w (W.RationalRect 0 0 1 1) floats
+        , M.insert w (M.lookup w floats) saved
+        )
+    | full =
+        (M.insert w (W.RationalRect 0 0 1 1) floats, saved)
+    | not full
+    , Just previous <- M.lookup w saved =
+        ( maybe (M.delete w floats) (\r -> M.insert w r floats) previous
+        , M.delete w saved
+        )
+    | otherwise = (floats, saved)
+
+-- | Act on guarded fullscreen transitions, preserving whether the window was
+-- tiled or floating (and its floating rectangle) before it entered fullscreen.
 {-# DEPRECATED fullscreenEventHook "Use ewmhFullscreen instead." #-}
 fullscreenEventHook :: Event -> X All
 fullscreenEventHook WindowFullscreenChanged{ev_window = w, ev_fullscreen = full} = do
-    windows $ if full then W.float w (W.RationalRect 0 0 1 1) else W.sink w
+    FullscreenFloats saved <- XS.get
+    floats <- gets (W.floating . windowset)
+    let (floats', saved') = applyFullscreenTransition full w floats saved
+    when (floats' /= floats || saved' /= saved) $ do
+        XS.put (FullscreenFloats saved')
+        windows (\ws -> ws { W.floating = floats' })
     informFullscreen w full
+    pure (All True)
+fullscreenEventHook DestroyWindowEvent{ev_window = w} = do
+    XS.modify' $ \(FullscreenFloats saved) ->
+        FullscreenFloats (M.delete w saved)
     pure (All True)
 fullscreenEventHook _ = pure (All True)

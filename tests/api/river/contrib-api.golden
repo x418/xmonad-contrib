@@ -4398,6 +4398,7 @@ XMonad.Util.XUtils | deleteWindows | deleteWindows :: [Window] -> X ()
 XMonad.Util.XUtils | fi | fi :: (Integral a, Num b) => a -> b
 XMonad.Util.XUtils | hideWindow | hideWindow :: Window -> X ()
 XMonad.Util.XUtils | hideWindows | hideWindows :: [Window] -> X ()
+XMonad.Util.XUtils | moveResizeDrawable | moveResizeDrawable :: Window -> Rectangle -> X ()
 XMonad.Util.XUtils | paintAndWrite | paintAndWrite :: Window -> XMonadFont -> Dimension -> Dimension -> Dimension -> String -> String -> String -> String -> [Align] -> [String] -> X ()
 XMonad.Util.XUtils | paintTextAndIcons | paintTextAndIcons :: Window -> XMonadFont -> Dimension -> Dimension -> Dimension -> String -> String -> String -> String -> [Align] -> [String] -> [Placement] -> [[[Bool]]] -> X ()
 XMonad.Util.XUtils | paintWindow | paintWindow :: Window -> Dimension -> Dimension -> Dimension -> String -> String -> X ()

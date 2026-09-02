@@ -162,6 +162,7 @@ instance (DecorationEngine engine widget Window, DecorationGeometry geom Window,
                                   Nothing -> return $ WidgetLayout [] [] []
                                   Just decoRect -> placeWidgets engine theme shrinker decoState decoRect window (themeWidgets theme)
                 mbDecoWindow  <- createDecoWindowIfNeeded (findDecoWindow i dd) mbDecoRect
+                sequence_ $ moveResizeDrawable <$> mbDecoWindow <*> mbDecoRect
                 let newDd = WindowDecoration window rect mbDecoWindow mbDecoRect (widgetLayout widgetPlaces)
                 restDd <- resync decoState dd xs
                 return $ newDd : restDd
@@ -323,4 +324,3 @@ decorationEx :: (DecorationEngine engine widget a, DecorationGeometry geom a, Sh
              -> l a                  -- ^ Underlying layout to be decorated
              -> ModifiedLayout (DecorationEx engine widget geom shrinker) l a
 decorationEx shrinker theme engine geom = ModifiedLayout (DecorationEx (I Nothing) shrinker theme engine geom)
-

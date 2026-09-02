@@ -13,6 +13,14 @@
 
 ### Bug Fixes and Minor Changes
 
+  * River decorations now update reused overlay geometry and destroy protocol
+    objects on the event-loop thread.
+
+  * River fullscreen transitions now preserve the prior floating state,
+    tolerate unmatched exits, and re-enter fullscreen after a manual sink.
+
+  * River prompts now release frame pixmaps on every cleanup path.
+
   * `XMonad.Hooks.ManageDebug`
 
     - `debugManageHookOn` now sends the debug output to `$XMONAD_XMESSAGE`

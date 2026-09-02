@@ -95,6 +95,9 @@ module XMonad.Prompt
     , historyDownMatching
     -- * Types
     , XPState
+#ifdef TESTING
+    , cleanupPromptFrame
+#endif
     ) where
 
 import           XMonad                       hiding (cleanMask, config)
@@ -680,7 +683,8 @@ mkXPromptImplementationWith historyKey conf om finish = do
   -- action -- happens after, so a failure while saving history cannot take the
   -- keyboard with it either.
   io . void . forkIO $ do
-    st' <- runXP st `E.finally` (chClose h >> closeComplClients)
+    st' <- runXP st `E.finally`
+      cleanupPromptFrame frame (chClose h >> closeComplClients)
     -- Back on the window manager's thread: history and the action both want
     -- the X monad, and this thread must not have one.
     postAction xconf $ do
@@ -727,6 +731,9 @@ runXP st =
         eventLoop handleMain evDefaultStop)
     st
   `finally` (mapM_ freePixmap =<< readIORef (complWin st))
+
+cleanupPromptFrame :: Drawable -> IO a -> IO a
+cleanupPromptFrame frame cleanup = cleanup `E.finally` freePixmap frame
 
 type KeyStroke = (KeySym, String)
 

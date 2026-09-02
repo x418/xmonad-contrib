@@ -14,6 +14,7 @@ import qualified OrgMode
 import qualified GridSelect
 import qualified EZConfig
 import qualified WindowNavigation
+import qualified RiverDefects
 
 main :: IO ()
 main = hspec $ do
@@ -51,3 +52,4 @@ main = hspec $ do
     context "GridSelect"     GridSelect.spec
     context "EZConfig"       EZConfig.spec
     context "WindowNavigation" WindowNavigation.spec
+    context "River regressions" RiverDefects.spec

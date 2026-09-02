@@ -28,6 +28,7 @@ module XMonad.Util.XUtils
     , WindowRect(..)
     , averagePixels
     , createNewWindow
+    , moveResizeDrawable
     , showWindow
     , showWindows
     , hideWindow
@@ -40,6 +41,9 @@ module XMonad.Util.XUtils
     , stringToPixel
     , pixelToString
     , fi
+#ifdef TESTING
+    , recordOverlayPosition
+#endif
     ) where
 
 import XMonad.Prelude
@@ -49,15 +53,16 @@ import XMonad.Util.River.Compat
     , createDrawableWindow, createGC, createPixmap, destroyDrawable, drawOn
     , drawableNode, fillRectangle, freeGC, freePixmap, mapDrawable
     , pixelFromString, pixelToColour, setForeground, unmapDrawable )
+import qualified XMonad.Util.River.Compat as River
 import qualified XMonad.Util.River.Draw as D
-import XMonad.River (dpyConn, submapNextKey, warnUnimplemented)
+import XMonad.River (dpyConn, postLoop, submapNextKey, warnUnimplemented)
 import XMonad.River.State (RiverState (..))
-import XMonad.River.Wire (nullObject)
+import XMonad.River.Wire (ObjectId, nullObject)
 import XMonad.Util.Font
 import XMonad.Util.Image
 import qualified XMonad.StackSet as W
 import Data.Bits ((.&.))
-import Data.IORef (atomicModifyIORef')
+import Data.IORef (IORef, atomicModifyIORef')
 import qualified Data.Map as M
 
 -- $usage
@@ -110,13 +115,33 @@ createNewWindow r _ col _ = do
       win <- io (createDrawableWindow (dpyConn d) compositor mgr r)
       -- The render sequence positions the surface; see 'raiseDrawable'.
       posRef <- asks (riverOverlayPos . riverState)
-      io $ drawableNode win >>= mapM_ (\n ->
-        atomicModifyIORef' posRef (\m -> (M.insert n (rect_x r, rect_y r) m, ())))
+      io $ drawableNode win >>= mapM_ (\n -> recordOverlayPosition posRef n r)
       -- The background colour is painted rather than set as a window
       -- attribute: there is no server-side background to set.
       io $ drawOn win $ \_ -> D.fillRect (D.parseColour col) 0 0
              (fromIntegral (rect_width r)) (fromIntegral (rect_height r))
       pure win
+
+-- | Move and resize a drawable already owned by the window manager.
+--
+-- The worker records both halves of the desired geometry: the rectangle used
+-- for the next buffer and the position consumed by the event loop's render
+-- sequence.  No Wayland rendering request is sent from this thread.
+moveResizeDrawable :: Drawable -> Rectangle -> X ()
+moveResizeDrawable w r = do
+  posRef <- asks (riverOverlayPos . riverState)
+  io $ do
+    River.moveResizeDrawable w r
+    drawableNode w >>= mapM_ (\n -> recordOverlayPosition posRef n r)
+
+recordOverlayPosition
+  :: IORef (M.Map ObjectId (Position, Position))
+  -> ObjectId
+  -> Rectangle
+  -> IO ()
+recordOverlayPosition posRef n r =
+  atomicModifyIORef' posRef
+    (\m -> (M.insert n (rect_x r, rect_y r) m, ()))
 
 -- | Map a window
 showWindow :: Window -> X ()
@@ -152,7 +177,8 @@ deleteWindow w = do
   posRef <- asks (riverOverlayPos . riverState)
   io $ drawableNode w >>= mapM_ (\n ->
     atomicModifyIORef' posRef (\m -> (M.delete n m, ())))
-  io (destroyDrawable (dpyConn d) w)
+  -- The loop drains this only after any render using the old overlay snapshot.
+  postLoop (destroyDrawable (dpyConn d) w)
 
 -- | Record this surface's node as one to stack above the windows.
 --

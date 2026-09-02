@@ -258,6 +258,9 @@ instance (DecorationStyle ds Window, Shrinker s) => LayoutModifier (Decoration d
           check_dwr dwr = case dwr of
                             (Nothing, Just dr) -> do dw <- createDecoWindow t dr
                                                      return (Just dw, Just dr)
+                            (Just dw, Just dr)  -> do
+                              moveResizeDrawable dw dr
+                              return dwr
                             _                 -> return dwr
 
           resync _         [] = return []

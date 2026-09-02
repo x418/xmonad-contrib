@@ -25,6 +25,7 @@ Navigation        GridSelect's key handling, rewritten around river bindings in 
 TSNavigation      TreeSelect's, for the same reason: no blocking read to recurse into, so a navigation action says what the loop should do next
 ungrab            replaces upstream's grabUngrab/ungrabKP; river has no grab, so releasing one is destroying a binding object
 showMessageWindow draws through XMonad.Util.River.Draw, which has no upstream counterpart
+moveResizeDrawable updates reused river decoration geometry without sending worker-thread protocol requests
 
 # Cursor glyphs.  Upstream re-exports Graphics.X11.Xlib.Cursor, whose Haskell
 # binding happens not to export these two even though X11's cursorfont.h
