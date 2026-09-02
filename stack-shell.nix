@@ -12,9 +12,25 @@ with (import <nixpkgs> { });
 let
   # cairo and pango are what the cairo and pango Haskell packages bind, for
   # the decorations and prompts contrib draws itself; libxkbcommon and zlib
-  # are the backend's, built here as a project package.  The rest is what
-  # stack always adds.
-  inputs = [ cairo pango libxkbcommon zlib pkg-config ghc git gcc gmp cacert ];
+  # are the backend's, built here as a project package.
+  #
+  # The second group is what cairo's, pango's and glib's .pc files list under
+  # Requires.private and nixpkgs does not propagate.  Cabal 3.12 asks
+  # pkg-config for `--libs --static`, which resolves those too, and the first
+  # missing one -- sysprof-capture-4, then xdmcp -- failed configuring the
+  # cairo and glib bindings on NixOS.  The set is the minimal one that
+  # resolves every module statically against the pinned nixpkgs' x86_64-linux
+  # outputs (glib-2.0, gobject-2.0, cairo, pango, pangocairo, xkbcommon,
+  # zlib); libxau is added alongside libxdmcp because xcb requires both and
+  # only one happened to be propagated.
+  #
+  # The rest is what stack always adds.
+  inputs = [
+    cairo pango libxkbcommon zlib
+    libsysprof-capture pcre2 util-linux libselinux libsepol
+    libxdmcp libxau fribidi libthai libdatrie
+    pkg-config ghc git gcc gmp cacert
+  ];
 in
 runCommand "xmonad-contrib-river-stack-shell" {
   # glibcLocales, so GHC can set a locale.
