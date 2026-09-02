@@ -6,5 +6,9 @@ resolver: lts-24.53
 
 packages:
 - ./
-- ../xmonad-river
+- ../xmonad
 
+# Stack's nix integration is on by default on NixOS; stack-shell.nix says
+# what goes in the shell, and why it is a file rather than a package list.
+nix:
+  shell-file: stack-shell.nix

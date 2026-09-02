@@ -46,7 +46,10 @@ source-repository head
 
 
 flag use_xft
-  description: Use Xft to render text
+  description: Use Xft to render text.  Off: text is drawn with pango on this
+               backend, and X11-xft would pull the X11 package into the build.
+  default:     False
+  manual:      True
 
 flag pedantic
   description: Be pedantic (-Werror and the like)
