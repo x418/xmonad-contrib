@@ -39,6 +39,7 @@ module XMonad.Util.EZConfig (
                              parseKey, -- used by XMonad.Util.Paste
                              parseKeyCombo,
                              parseKeySequence, readKeySequence,
+                             submapPrefixes,
 #ifdef TESTING
                              parseModifier,
 #endif
@@ -460,6 +461,12 @@ readKeymap :: XConfig l -> [(String, t)] -> [(NonEmpty (KeyMask, KeySym), t)]
 readKeymap c = mapMaybe (maybeKeys . first (readKeySequence c))
   where maybeKeys (Nothing,_) = Nothing
         maybeKeys (Just k, act) = Just (k, act)
+
+-- | The first key of every multi-key sequence: what 'mkKeymap' opens a
+--   submap on, for 'XMonad.River.declareSubmapPrefixes'.
+submapPrefixes :: XConfig l -> [(String, t)] -> [(KeyMask, KeySym)]
+submapPrefixes c = nub . mapMaybe prefix . readKeymap c
+  where prefix (k NE.:| rest, _) = if null rest then Nothing else Just k
 
 -- | Parse a sequence of keys, returning Nothing if there is
 --   a parse failure (no parse, or ambiguous parse).
