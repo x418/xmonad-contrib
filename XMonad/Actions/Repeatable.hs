@@ -37,10 +37,12 @@ module XMonad.Actions.Repeatable (
 
   -- * Differences under river
   -- $river
+  modifierMask,
 
 ) where
 
 -- base
+import Data.Bits ((.|.))
 import Data.IORef (newIORef, readIORef, writeIORef)
 
 -- mtl
@@ -226,7 +228,7 @@ concludableM run mods key pressHandler eventHandler onDone = do
 -- @modifiers_watch@ takes.  An unrecognised keysym contributes nothing, which
 -- degrades to "never concludes on that one" rather than to a wrong mask.
 modifierMask :: [KeySym] -> KeyMask
-modifierMask = foldr (\s acc -> acc + bitFor s) 0
+modifierMask = foldr (\s acc -> acc .|. bitFor s) 0
  where
   bitFor s = if
     | s `elem` [xK_Shift_L,   xK_Shift_R]                       -> shiftMask
