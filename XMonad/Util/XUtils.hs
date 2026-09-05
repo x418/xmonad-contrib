@@ -56,7 +56,7 @@ import XMonad.Util.River.Compat
 import qualified XMonad.Util.River.Compat as River
 import qualified XMonad.Util.River.Draw as D
 import XMonad.River (dpyConn, postLoop, submapNextKey, warnUnimplemented)
-import XMonad.River.State (RiverState (..))
+import XMonad.River.State (riverCompositor, riverManager, riverOverlayPos, riverOverlays, riverShm)
 import XMonad.River.Wire (ObjectId, nullObject)
 import XMonad.Util.Font
 import XMonad.Util.Image

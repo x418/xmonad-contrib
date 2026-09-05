@@ -76,7 +76,7 @@ import XMonad
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.River (RiverWindow (..))
-import XMonad.River.State (RiverState (..))
+import XMonad.River.State (riverWindows)
 import XMonad.Util.Minimize (Minimized (..))
 import qualified XMonad.Util.ExtensibleState as XS
 
