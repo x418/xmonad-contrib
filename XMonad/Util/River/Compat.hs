@@ -77,6 +77,7 @@ module XMonad.Util.River.Compat
     , fillRectangle
     , drawRectangle
     , copyArea
+    , pendingOps
     , drawOn
     , renderDrawableInto
     ) where
@@ -146,6 +147,9 @@ data Backing
     -- concatenation.  Allocating shared memory for something never shown would
     -- be work with no purpose.
 
+-- Two threads meet at a drawable -- the prompt's logic thread queues, its
+-- client thread drains -- so every field is written atomically and read
+-- whole.
 data DrawableState = DrawableState
   { dsBacking :: !Backing
   , dsRect    :: !(IORef Rectangle)
@@ -263,12 +267,12 @@ moveResizeDrawable d r = withDrawable d $ \st -> atomicWriteIORef (dsRect st) r
 -- | Show a drawable.  Nothing appears until the next 'commitDrawable', because
 -- a surface with no buffer attached is not mapped.
 mapDrawable :: Drawable -> IO ()
-mapDrawable d = withDrawable d $ \st -> writeIORef (dsMapped st) True
+mapDrawable d = withDrawable d $ \st -> atomicWriteIORef (dsMapped st) True
 
 -- | Hide a drawable.
 unmapDrawable :: Connection -> Drawable -> IO ()
 unmapDrawable conn d = withDrawable d $ \st -> do
-  writeIORef (dsMapped st) False
+  atomicWriteIORef (dsMapped st) False
   case dsBacking st of
     -- Attaching a null buffer is how a wl_surface is unmapped.
     OnScreen surf -> R.hideSurface conn surf
@@ -321,7 +325,15 @@ copyArea src dst dx dy =
               C.translate (fromIntegral dx) (fromIntegral dy)
               op canvas
               C.restore
-    modifyIORef' (dsOps t) (reverse (map shifted ops) ++)
+    -- One atomic append: the destination is a prompt's frame, which the
+    -- client thread drains in 'renderDrawableInto' while the prompt's own
+    -- thread draws into it.  A read-modify-write here could resurrect
+    -- operations the client had just drained, or lose the ones it queued.
+    atomicModifyIORef' (dsOps t) (\os -> (reverse (map shifted ops) ++ os, ()))
+
+-- | How many operations are queued on a drawable; for the tests.
+pendingOps :: Drawable -> IO Int
+pendingOps d = lookupDrawable d >>= maybe (pure 0) (fmap length . readIORef . dsOps)
 
 -- | Replay a drawable's queued operations into a buffer of a client's own.
 --

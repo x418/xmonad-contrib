@@ -4,12 +4,14 @@ import Data.IORef (newIORef, readIORef)
 import qualified Data.Map.Strict as M
 import Test.Hspec
 
-import XMonad (Rectangle (..), Window)
+import XMonad (KeyMask, Rectangle (..), Window, mod1Mask, shiftMask, xK_Alt_L, xK_Alt_R, xK_Shift_L)
 import XMonad.Hooks.EwmhDesktops (applyFullscreenTransition)
 import XMonad.Prompt (cleanupPromptFrame)
 import qualified XMonad.StackSet as W
 import XMonad.Util.River.Compat
-    ( createPixmap, drawableSize, freePixmap, isDrawable, moveResizeDrawable )
+    ( copyArea, createPixmap, drawOn, drawableSize, freePixmap, isDrawable
+    , moveResizeDrawable, pendingOps, pixmapIdTop )
+import XMonad.Actions.Repeatable (modifierMask)
 import XMonad.Util.XUtils (recordOverlayPosition)
 import XMonad.River.Wire (ObjectId (..))
 
@@ -52,6 +54,37 @@ spec = do
                 exited = uncurry (applyFullscreenTransition False window) refullscreened
             M.lookup window (fst refullscreened) `shouldBe` Just fullRect
             exited `shouldBe` (floats, M.empty)
+
+    describe "pixmap ids" $ do
+        it "never look like a server-allocated object" $ do
+            ps <- mapM (const (createPixmap 1 1)) [1 .. 8 :: Int]
+            mapM_ (\p -> p `shouldSatisfy` (< ObjectId 0xff000000)) ps
+            mapM_ (\p -> p `shouldSatisfy` (<= ObjectId pixmapIdTop)) ps
+            mapM_ freePixmap ps
+        it "are distinct" $ do
+            a <- createPixmap 1 1
+            b <- createPixmap 1 1
+            a `shouldNotBe` b
+            mapM_ freePixmap [a, b]
+
+    describe "modifierMask" $ do
+        it "is a union, so both Alts are one bit" $
+            modifierMask [xK_Alt_L, xK_Alt_R] `shouldBe` mod1Mask
+        it "combines distinct modifiers" $
+            modifierMask [xK_Shift_L, xK_Alt_L] `shouldBe` (shiftMask + mod1Mask :: KeyMask)
+
+    describe "drawable operation queues" $ do
+        it "copyArea appends the source's operations without disturbing them" $ do
+            src <- createPixmap 4 4
+            dst <- createPixmap 4 4
+            drawOn src (\_ -> pure ())
+            drawOn src (\_ -> pure ())
+            pendingOps src `shouldReturn` 2
+            pendingOps dst `shouldReturn` 0
+            copyArea src dst 0 0
+            pendingOps dst `shouldReturn` 2
+            pendingOps src `shouldReturn` 2
+            mapM_ freePixmap [src, dst]
 
     describe "prompt frame cleanup" $
         it "frees the frame even when earlier cleanup throws" $ do
