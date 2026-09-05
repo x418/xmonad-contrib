@@ -403,6 +403,7 @@ library
                         XMonad.Util.PureX
                         XMonad.Util.River.Compat
                         XMonad.Util.River.Draw
+                        XMonad.Util.River.Overlay
                         XMonad.Util.Rectangle
                      -- XMonad.Util.RemoteWindows
                      -- XMonad.Util.Replace
@@ -486,6 +487,7 @@ test-suite tests
                   XMonad.Util.Rectangle
                   XMonad.Util.River.Compat
                   XMonad.Util.River.Draw
+                  XMonad.Util.River.Overlay
                   XMonad.Util.Run
                   XMonad.Util.Stack
                   XMonad.Util.Timer

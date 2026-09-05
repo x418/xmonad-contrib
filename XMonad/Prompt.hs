@@ -106,14 +106,16 @@ import qualified XMonad.StackSet              as W
 import           XMonad.Util.Font
 import           XMonad.Util.Types
 import           XMonad.Util.XSelection       (getSelection)
-import           XMonad.River                 (postAction)
-import           XMonad.River.Client          (Anchor (..), ClientHandle (..),
-                                               ClientSpec (..), startClient)
+import           Data.Unique                  (Unique, newUnique)
+import           XMonad.River                 (Anchor (..), postAction)
 import           XMonad.River.Wire            (nullObject)
 import           XMonad.Util.River.Compat     (Drawable, GC, Pixel, copyArea,
                                                createGC, createPixmap, freeGC,
                                                freePixmap, fillRectangle,
-                                               renderDrawableInto, setForeground)
+                                               setForeground)
+import           XMonad.Util.River.Overlay    (Overlay (..), OverlaySpec (..),
+                                               closeOverlay, redrawOverlay,
+                                               startOverlay, startOverlayOn)
 
 import           Codec.Binary.UTF8.String     (decodeString,isUTF8Encoded)
 import           Control.Arrow                (first, (&&&), (***))
@@ -155,7 +157,13 @@ data XPState =
         , complWin              :: IORef (Maybe Window)
         -- ^ This is an 'IORef' to enable removal of the completion
         -- window if an exception occurs, since otherwise the most
-        -- recent value of 'complWin' would not be available.
+        -- recent value of 'complWin' would not be available.  One per
+        -- prompt, made in 'mkXPromptImplementationWith'.
+        , complClients          :: IORef [(Drawable, Overlay)]
+        -- ^ The completion window's own overlay, by its drawable, so the
+        -- handle that can shut it down is findable from the drawable the
+        -- rest of the code passes around.  Upstream needs no such table:
+        -- destroying an X window is one call on an id.  One per prompt.
         , showComplWin          :: Bool
         , operationMode         :: XPOperationMode
         , highlightedCompl      :: Maybe String
@@ -183,7 +191,8 @@ data XPState =
           -- is the same blocking read against a different source: the client
           -- thread pushes, the prompt's logic thread pops.  Nothing about the
           -- loops above had to change, which is why they did not.
-        , clientH               :: ClientHandle
+        , clientH               :: Overlay
+          -- ^ The prompt's own surface: frame, GC and client.
         }
 
 data XPConfig =
@@ -345,11 +354,7 @@ instance Default XPColor where
 
 instance Default XPConfig where
   def =
-#ifdef XFT
     XPC { font                  = "xft:monospace-12"
-#else
-    XPC { font                  = "-misc-fixed-*-*-*-*-12-*-*-*-*-*-*-*"
-#endif
         , bgColor               = bgNormal def
         , fgColor               = fgNormal def
         , bgHLight              = bgHighlight def
@@ -386,15 +391,17 @@ amberXPConfig = def { bgColor   = "black"
 
 initState :: Display -> Window -> Window -> Rectangle -> XPOperationMode
           -> GC -> XMonadFont -> [String] -> XPConfig -> (KeyMask -> KeyMask)
-          -> Dimension -> XPState
-initState d rw w s opMode gc fonts h c cm width =
+          -> Dimension -> IORef (Maybe Window) -> IORef [(Drawable, Overlay)]
+          -> XPState
+initState d rw w s opMode gc fonts h c cm width cwRef clientsRef =
     XPS { dpy                   = d
         , rootw                 = rw
         , win                   = w
         , screen                = s
         , winWidth              = width
         , complWinDim           = Nothing
-        , complWin              = unsafePerformIO (newIORef Nothing)
+        , complWin              = cwRef
+        , complClients          = clientsRef
         , showComplWin          = not (showCompletionOnTab c)
         , operationMode         = opMode
         , highlightedCompl      = Nothing
@@ -635,16 +642,24 @@ mkXPromptImplementationWith historyKey conf om finish = do
       hs = fromMaybe [] $ M.lookup historyKey hist
 
   chan <- io newChan
+  cwRef <- io (newIORef Nothing)
+  clientsRef <- io (newIORef [])
+  -- One prompt at a time.  A second one opened while the first is up would
+  -- be a second exclusive keyboard grab; the first is closed instead, which
+  -- its own thread notices through 'csOnClose'.
+  token <- io newUnique
+  io $ readIORef openPrompt >>= mapM_ (closeOverlay . snd)
   -- The frame is composed in an offscreen drawable, with exactly the drawing
-  -- code a decoration uses, and replayed into whatever buffer the client
-  -- presents.  Two threads meet at that drawable and nowhere else.
+  -- code a decoration uses, and presented by a client of its own
+  -- ("XMonad.Util.River.Overlay").  Two threads meet at that drawable and
+  -- nowhere else.
   frame <- io $ createPixmap width (height conf)
   gc <- io createGC
 
-  h <- io $ startClient ClientSpec
-    { csWidth  = fi width
-    , csHeight = fi (height conf)
-    , csAnchor = case position conf of
+  ov <- io $ startOverlayOn frame gc OverlaySpec
+    { osWidth  = width
+    , osHeight = height conf
+    , osAnchor = case position conf of
         Top          -> AnchorTop
         Bottom       -> AnchorBottom
         CenteredAt{} -> AnchorCentre
@@ -654,26 +669,27 @@ mkXPromptImplementationWith historyKey conf om finish = do
     -- account before this surface is placed.  Adding rect_y on top of that
     -- applies the bar's height a second time, which is what left the prompt
     -- sitting one bar-height too low.
-    , csMargin   = (0, 0, 0, 0)
-    , csKeyboard = True
-    , csDraw    = renderDrawableInto frame
-    , csOnKey   = \m sym txt -> writeChan chan (Just (m, fi sym, txt))
+    , osMargin   = (0, 0, 0, 0)
+    , osKeyboard = True
+    , osOnKey   = \m sym txt -> writeChan chan (Just (m, fi sym, txt))
       -- Waking the prompt is the whole job here.  The client can go away
       -- without the prompt asking -- the compositor closes the surface, the
       -- startup watchdog decides it was never usable, a panic binding calls
       -- closeAllClients -- and this thread is blocked reading that channel.
       -- Without a last message it stays blocked for the life of the session,
       -- holding a prompt that no longer exists on screen.
-    , csOnClose = writeChan chan Nothing
+    , osOnClose = writeChan chan Nothing
     }
 
-  let st = (initState d nullObject frame s om gc fs hs conf id width)
-             { keyChan = chan, clientH = h }
+  io $ atomicWriteIORef openPrompt (Just (token, ov))
+
+  let st = (initState d nullObject frame s om gc fs hs conf id width cwRef clientsRef)
+             { keyChan = chan, clientH = ov }
 
   -- 'finally', not a plain sequence.  runXP runs the prompt's whole
   -- interactive life -- key handling, completion functions, the XPrompt
   -- instance -- all of which is config code, none of which is total.  If any
-  -- of it throws, this thread dies; and until chClose runs, the client thread
+  -- of it throws, this thread dies; and until closeOverlay runs, the client thread
   -- is still holding an exclusive keyboard grab on behalf of a prompt that no
   -- longer exists.  Every keystroke then goes to a surface nobody is reading,
   -- which is a session with no usable keyboard.  That is the failure this
@@ -684,7 +700,12 @@ mkXPromptImplementationWith historyKey conf om finish = do
   -- keyboard with it either.
   io . void . forkIO $ do
     st' <- runXP st `E.finally`
-      cleanupPromptFrame frame (chClose h >> closeComplClients)
+      cleanupPromptFrame frame (do
+        closeOverlay ov
+        closeComplClients clientsRef
+        atomicModifyIORef' openPrompt $ \o -> case o of
+          Just (t, _) | t == token -> (Nothing, ())
+          other -> (other, ()))
     -- Back on the window manager's thread: history and the action both want
     -- the X monad, and this thread must not have one.
     postAction xconf $ do
@@ -1564,17 +1585,17 @@ redrawWindows emptyAction compls = do
     io $ copyArea pm win 0 0
     io $ freePixmap pm
     -- Presenting is a commit rather than a copy to a server-side window.
-    io . chRedraw =<< gets clientH
+    io . redrawOverlay =<< gets clientH
 
 -- | The surfaces presenting completion lists, by their drawable.
 --
--- Upstream needs no such table: destroying an X window is one call on an id.
--- A surface here is a thread and a connection as well as a drawable, so the
--- handle that can shut them down has to be findable from the drawable the rest
--- of the code passes around.
-{-# NOINLINE complClients #-}
-complClients :: IORef [(Drawable, ClientHandle)]
-complClients = unsafePerformIO (newIORef [])
+-- The prompt that is up, if one is: its handle, and a token so that only its
+-- own teardown clears the slot.  Process-wide because that is the invariant
+-- -- one exclusive keyboard grab per session -- and because 'mkXPrompt'
+-- runs in @X@ with nothing of its own to keep it in.
+{-# NOINLINE openPrompt #-}
+openPrompt :: IORef (Maybe (Unique, Overlay))
+openPrompt = unsafePerformIO (newIORef Nothing)
 
 -- | Redraw the completion window, if necessary.
 redrawComplWin ::  NonEmpty String -> XP ()
@@ -1597,30 +1618,30 @@ redrawComplWin compl = do
   createComplWin :: ComplWindowDim -> XP Window
   createComplWin wi@ComplWindowDim{ cwY, cwWidth, cwRowHeight } = do
     XPS{ config = cfg } <- get
-    -- A drawable to compose into, and a surface of its own to present it.
+    -- A frame to compose into, and a surface of its own to present it.
     -- Separate from the prompt's, as upstream has it, but without the
     -- keyboard: two surfaces asking for exclusive interactivity would fight
     -- over focus, and this one is shown rather than typed into.
-    w <- io $ createPixmap cwWidth cwRowHeight
-    h <- io $ startClient ClientSpec
-      { csWidth  = fi cwWidth
-      , csHeight = fi cwRowHeight
-      , csAnchor = case position cfg of
+    ov <- io $ startOverlay OverlaySpec
+      { osWidth  = cwWidth
+      , osHeight = cwRowHeight
+      , osAnchor = case position cfg of
           Bottom -> AnchorBottom
           _      -> AnchorTop
       -- A layer surface has no coordinates, only a distance from its anchor,
       -- so cwY becomes a margin.  It is already relative to the anchor rather
       -- than to the output -- see getComplWinDim -- which is what the layer
       -- surface wants and what keeps these rows against the prompt above.
-      , csMargin = case position cfg of
+      , osMargin = case position cfg of
           Bottom -> (0, 0, fi (height cfg), 0)
           _      -> (fi cwY, 0, 0, 0)
-      , csKeyboard = False
-      , csDraw    = renderDrawableInto w
-      , csOnKey   = \_ _ _ -> pure ()
-      , csOnClose = pure ()
+      , osKeyboard = False
+      , osOnKey   = \_ _ _ -> pure ()
+      , osOnClose = pure ()
       }
-    io $ modifyIORef' complClients ((w, h) :)
+    let w = ovFrame ov
+    clients <- gets complClients
+    io $ atomicModifyIORef' clients (\cs -> ((w, ov) : cs, ()))
     updateComplWin (Just w) (Just wi)
     return w
 
@@ -1670,28 +1691,27 @@ getCompletions = do
 
 -- | Close every completion surface, whoever created it.
 --
--- The teardown path, paired with 'chClose' on the prompt itself.
+-- The teardown path, paired with 'closeOverlay' on the prompt itself.
 -- 'destroyComplWin' is the orderly version and runs from inside the prompt; if
 -- the prompt has stopped running there is nothing left to reach its state, and
 -- a completion list would sit on screen with no way to dismiss it.  These
 -- carry no keyboard grab, so this is a cosmetic rescue rather than the
 -- keyboard one -- but a leftover surface is indistinguishable, to the person
 -- looking at it, from the prompt still being open.
-closeComplClients :: IO ()
-closeComplClients = do
-  cs <- atomicModifyIORef' complClients (\cs -> ([], cs))
-  mapM_ (chClose . snd) cs
+closeComplClients :: IORef [(Drawable, Overlay)] -> IO ()
+closeComplClients ref = do
+  cs <- atomicModifyIORef' ref (\cs -> ([], cs))
+  mapM_ (closeOverlay . snd) cs
 
 -- | Destroy the currently drawn completion window, if there is one.
 destroyComplWin :: XP ()
 destroyComplWin = do
-  XPS{ dpy, complWin } <- get
+  XPS{ dpy, complWin, complClients } <- get
   io (readIORef complWin) >>= \case
     Just w -> do io $ do
-                   cs <- readIORef complClients
-                   mapM_ (chClose . snd) (filter ((== w) . fst) cs)
-                   writeIORef complClients (filter ((/= w) . fst) cs)
-                   freePixmap w
+                   cs <- atomicModifyIORef' complClients $ \cs ->
+                     (filter ((/= w) . fst) cs, filter ((== w) . fst) cs)
+                   mapM_ (closeOverlay . snd) cs
                  updateComplWin Nothing Nothing
     Nothing -> return ()
 
@@ -1771,9 +1791,10 @@ drawComplWin w entries = do
   io $ copyArea p w 0 0
   io $ freePixmap p
   -- Present it: this surface has its own client, found by its drawable.
+  clients <- gets complClients
   io $ do
-    cs <- readIORef complClients
-    mapM_ (chRedraw . snd) (filter ((== w) . fst) cs)
+    cs <- readIORef clients
+    mapM_ (redrawOverlay . snd) (filter ((== w) . fst) cs)
 
 -- | Print all of the completion entries.
 printComplEntries

@@ -89,13 +89,12 @@ import Data.IORef
 import XMonad hiding (liftX)
 import XMonad.Prelude
 import XMonad.Util.Font
-import XMonad.River (postAction)
-import XMonad.River.Client (Anchor (AnchorCentre), ClientHandle (..),
-                            ClientSpec (..), startClient)
+import XMonad.River (Anchor (AnchorCentre), postAction)
 import XMonad.Util.River.Compat (Drawable, GC, createGC, createPixmap,
                                  drawRectangle, fillRectangle, freeGC,
-                                 freePixmap, renderDrawableInto, setBackground,
-                                 setForeground)
+                                 setBackground, setForeground)
+import XMonad.Util.River.Overlay (OverlaySpec (..), closeOverlay,
+                                  redrawOverlay, startOverlayOn)
 import XMonad.StackSet as W
 import XMonad.Layout.Decoration
 import XMonad.Util.NamedWindows
@@ -232,11 +231,11 @@ data GSConfig a = GSConfig {
       gs_originFractY :: Double,
       gs_bordercolor :: String
       -- Upstream also has gs_cancelOnEmptyClick, for a click that lands on no
-      -- cell.  There are no clicks: the grid is a layer surface the window
-      -- manager drew, and river reports button presses against windows it
-      -- manages, so it attributes a click on the grid to nothing.  The field
-      -- is gone rather than ignored -- see XMonad.Layout.Decoration's
-      -- handleMouseFocusDrag, which is the same wall.
+      -- cell.  The grid is a layer surface on a client of its own, which
+      -- receives pointer events that never reach the window manager
+      -- ('SurfaceClicked' is for the window manager's own shell surfaces,
+      -- decorations and the like); the client reports keys only, so there
+      -- is no click to act on and the field is gone rather than ignored.
 }
 
 -- | What a key handler says should happen next.
@@ -453,10 +452,11 @@ updateElementsWithColorizer colorizer elementmap = do
 --   owns damage and repaint; the frame is presented when it is drawn and
 --   nobody asks for it back.
 --
--- * @ButtonEvent@ selected a cell by clicking it. River reports button
---   presses against windows it manages, and the grid is a surface the window
---   manager drew, so it has no window to attribute a click to. Same wall as
---   'XMonad.Layout.Decoration.handleMouseFocusDrag'.
+-- * @ButtonEvent@ selected a cell by clicking it. The grid is a layer
+--   surface on a client of its own, and pointer input to a layer surface
+--   goes to that client, not to the window manager; the client reports keys
+--   only.  (A press on one of the window manager's own shell surfaces -- a
+--   decoration -- does arrive, as 'SurfaceClicked'; this is not one.)
 --
 -- * @makeXEventhandler@ was the loop. It cannot block here -- this is the
 --   thread that would have to deliver the keys -- so 'gs_navigate' is called
@@ -723,9 +723,11 @@ gridselect gsconfig elements cont = do
     let screenWidth = toInteger $ rect_width scr
         screenHeight = toInteger $ rect_height scr
 
-    -- The grid is composed in an offscreen drawable and replayed into whatever
-    -- buffer the client presents, exactly as a prompt does it.  Drawing and
-    -- presenting are on different threads and this drawable is where they meet.
+    -- The grid is composed in an offscreen frame and presented by a client of
+    -- its own ("XMonad.Util.River.Overlay"), exactly as a prompt does it.
+    -- Started once the callbacks below exist; they need the overlay's handle,
+    -- so it is handed over through a ref.
+    ovRef <- io $ newIORef Nothing
     frame <- io $ createPixmap (rect_width scr) (rect_height scr)
     gc <- io createGC
 
@@ -755,10 +757,9 @@ gridselect gsconfig elements cont = do
     -- the only thing that ever touches this ref, so no locking is needed --
     -- 'postAction' serialises everything onto one thread by construction.
     ref <- io $ newIORef s { td_elementmap = m }
-    handleRef <- io $ newIORef Nothing
     done <- io $ newIORef False
 
-    let redraw = readIORef handleRef >>= mapM_ chRedraw
+    let redraw = readIORef ovRef >>= mapM_ redrawOverlay
 
         -- Tear down once and once only.  The client's own close callback fires
         -- when the compositor takes the surface away, and a selection closes
@@ -766,9 +767,7 @@ gridselect gsconfig elements cont = do
         finish result = do
             alreadyDone <- io $ atomicModifyIORef' done (True,)
             unless alreadyDone $ do
-                io $ readIORef handleRef >>= mapM_ chClose
-                io $ freeGC gc
-                io $ freePixmap frame
+                io $ readIORef ovRef >>= mapM_ closeOverlay
                 releaseXMF font
                 cont result
 
@@ -782,17 +781,16 @@ gridselect gsconfig elements cont = do
                 Cancel   -> finish Nothing
                 Select a -> finish (Just a)
 
-    h <- io $ startClient ClientSpec
-        { csWidth  = fi (rect_width scr)
-        , csHeight = fi (rect_height scr)
-        , csAnchor = AnchorCentre
-        , csMargin = (0, 0, 0, 0)
-        , csKeyboard = True
-        , csDraw   = renderDrawableInto frame
-        , csOnKey  = onKey
-        , csOnClose = postAction xconf (finish Nothing)
+    ov <- io $ startOverlayOn frame gc OverlaySpec
+        { osWidth  = rect_width scr
+        , osHeight = rect_height scr
+        , osAnchor = AnchorCentre
+        , osMargin = (0, 0, 0, 0)
+        , osKeyboard = True
+        , osOnKey  = onKey
+        , osOnClose = postAction xconf (finish Nothing)
         }
-    io $ writeIORef handleRef (Just h)
+    io $ writeIORef ovRef (Just ov)
 
     -- Paint the first frame.  Upstream does this inside evalTwoD just before
     -- entering the loop; here there is no loop to enter, so it is simply the
