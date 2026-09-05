@@ -54,6 +54,7 @@ module XMonad.Util.XSelection (  -- * Usage
 
 import Control.Exception as E (SomeException (..), try)
 import System.Process (readProcess)
+import System.Timeout (timeout)
 import XMonad
 import XMonad.River (warnUnimplemented)
 import XMonad.Util.Run (safeSpawn, unsafeSpawn)
@@ -82,15 +83,27 @@ import XMonad.Util.Run (safeSpawn, unsafeSpawn)
 -- would otherwise end up in every URL handed to a browser.
 wlPaste :: [String] -> IO String
 wlPaste args = do
-  r <- E.try (readProcess "wl-paste" ("--no-newline" : args) "")
+  -- Bounded: the caller is usually a prompt holding an exclusive keyboard
+  -- grab, and wl-paste blocks for as long as the selection's owner takes to
+  -- answer -- forever, for an owner that has hung.
+  r <- E.try (timeout pasteMicros (readProcess "wl-paste" ("--no-newline" : args) ""))
   case r of
-    Right s -> pure s
+    Right (Just s) -> pure s
+    Right Nothing -> do
+      warnUnimplemented "XMonad.Util.XSelection"
+        "wl-paste did not answer within two seconds, so the selection is \
+        \empty.  The client that owns the selection is not responding."
+      pure ""
     Left (SomeException _) -> do
       warnUnimplemented "XMonad.Util.XSelection"
         "wl-paste could not be run, so the selection is empty.  Install \
         \wl-clipboard; a window manager cannot read the selection itself, \
         \because Wayland only offers it to the client holding keyboard focus."
       pure ""
+
+-- | How long a selection owner gets to answer.
+pasteMicros :: Int
+pasteMicros = 2 * 1000 * 1000
 
 -- | The primary selection -- what a middle-click pastes.
 getSelection :: MonadIO m => m String
