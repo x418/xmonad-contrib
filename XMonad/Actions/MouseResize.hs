@@ -86,10 +86,12 @@ instance LayoutModifier MouseResize Window where
         where releaseResources = mapM_ (deleteInputWin . snd) s
     handleMess _ _ = return Nothing
 
+-- | A press on a handle -- 'SurfaceClicked', since the handle is a surface
+-- the window manager drew -- starts the drag exactly as the X11 button press
+-- did.  No button number: river does not say what pressed.
 handleResize :: [((Window,Rectangle),Maybe Window)] -> Event -> X ()
-handleResize st ButtonEvent { ev_window = ew, ev_event_type = et }
-    | et == buttonPress
-    , Just (w,Rectangle wx wy _ _) <- getWin ew st = do
+handleResize st SurfaceClicked { ev_window = ew }
+    | Just (w,Rectangle wx wy _ _) <- getWin ew st = do
                                         focus w
                                         mouseDrag (\x y -> do
                                                      let rect = Rectangle wx wy
@@ -105,31 +107,24 @@ handleResize st ButtonEvent { ev_window = ew, ev_event_type = et }
         getWin _ []     = Nothing
 handleResize _ _ = return ()
 
+-- | The handle: a window-manager surface where X11 had an input-only
+-- window.  Wayland has no invisible clickable region, so the surface has a
+-- buffer -- fully transparent, which receives input all the same -- and
+-- no cursor of its own: there is no per-surface cursor shape to set, so
+-- nothing shows the handle is there until it is dragged.
 createInputWindow :: ((Window,Rectangle), Maybe Rectangle) -> X ((Window,Rectangle),Maybe Window)
 createInputWindow ((w,r),mr) =
   case mr of
-    Just tr  -> withDisplay $ \d -> do
-                  tw <- mkInputWindow d tr
-                  io $ selectInput d tw (exposureMask .|. buttonPressMask)
-
-                  cursor <- io $ createFontCursor d xC_bottom_right_corner
-                  io $ defineCursor d tw cursor
-                  io $ freeCursor d cursor
-
+    Just tr  -> do
+                  tw <- createNewWindow tr Nothing handleColour True
                   showWindow tw
                   return ((w,r), Just tw)
     Nothing ->    return ((w,r), Nothing)
 
+-- | Invisible, as the input-only window was.
+handleColour :: String
+handleColour = "#00000000"
+
 deleteInputWin :: Maybe Window -> X ()
 deleteInputWin = maybe (return ()) deleteWindow
 
-mkInputWindow :: Display -> Rectangle -> X Window
-mkInputWindow d (Rectangle x y w h) = do
-  rw <- asks theRoot
-  let screen   = defaultScreenOfDisplay d
-      visual   = defaultVisualOfScreen screen
-      attrmask = cWOverrideRedirect
-  io $ allocaSetWindowAttributes $
-         \attributes -> do
-           set_override_redirect attributes True
-           createWindow d rw x y w h 0 0 inputOnly visual attrmask attributes

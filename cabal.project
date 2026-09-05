@@ -1,7 +1,6 @@
+-- This fork builds against the river backend checked out beside it, not
+-- against upstream xmonad: XMonad.River.* is what half of these modules
+-- import.  stack.yaml says the same (packages: ./ and ../xmonad).
 packages:
-  xmonad-contrib.cabal
-
-source-repository-package
-  type: git
-  location: https://github.com/xmonad/xmonad
-  branch: master
+  .
+  ../xmonad

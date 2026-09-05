@@ -56,8 +56,7 @@ import XMonad.Util.River.Compat
     , pixelFromString, pixelToColour, setForeground, unmapDrawable )
 import qualified XMonad.Util.River.Compat as River
 import qualified XMonad.Util.River.Draw as D
-import XMonad.River (dpyConn, postLoop, submapNextKey, warnUnimplemented)
-import XMonad.River.State (riverCompositor, riverManager, riverOverlayPos, riverOverlays, riverShm)
+import XMonad.River (dpyConn, postLoop, riverCompositor, riverManager, riverOverlayPos, riverOverlays, riverShm, submapNextKey, warnUnimplemented)
 import XMonad.River.Wire (ObjectId, nullObject)
 import XMonad.Util.Font
 import XMonad.Util.Image
@@ -295,11 +294,7 @@ data WindowConfig = WindowConfig
 instance Default WindowConfig where
   def = WindowConfig
     {
-#ifdef XFT
       winFont = "xft:monospace-20"
-#else
-      winFont = "-misc-fixed-*-*-*-*-20-*-*-*-*-*-*-*"
-#endif
     , winBg   = "black"
     , winFg   = "white"
     , winRect = CenterWindow

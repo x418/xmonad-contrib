@@ -1,0 +1,63 @@
+name: River
+
+# The river fork of contrib, built against the river backend checked out
+# beside it -- which is what stack.yaml names -- and its checks: the test
+# suite, and the API subset assertion that says nothing here imitates X11.
+#
+# Upstream's Hackage matrix, Nix flake and packdeps workflows are gone: they
+# built against upstream xmonad, which this tree does not compile against.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  river:
+    name: contrib on river
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone contrib
+        uses: actions/checkout@v7
+        with:
+          path: xmonad-contrib
+
+      - name: Clone the backend beside it
+        uses: actions/checkout@v7
+        with:
+          repository: x418/xmonad
+          ref: river
+          path: xmonad
+
+      - name: Install C dependencies
+        run: |
+          set -ex
+          sudo apt update -y
+          sudo apt install -y libxkbcommon-dev libcairo2-dev libpango1.0-dev
+
+      - name: Refresh caches once a month
+        id: cache-date
+        run: echo "date=$(date +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Stack
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.stack
+            xmonad-contrib/.stack-work
+            !~/.stack/pantry
+          key: contrib-river-${{ runner.os }}-${{ steps.cache-date.outputs.date }}-${{ hashFiles('xmonad-contrib/stack.yaml') }}-${{ hashFiles('xmonad-contrib/*.cabal') }}
+          restore-keys: |
+            contrib-river-${{ runner.os }}-${{ steps.cache-date.outputs.date }}-
+
+      - name: Update hackage index
+        working-directory: xmonad-contrib
+        run: stack update
+
+      - name: Build and test
+        working-directory: xmonad-contrib
+        run: stack build --test --flag xmonad-contrib:pedantic
+
+      - name: API subset assertion
+        working-directory: xmonad-contrib
+        run: tests/api/check-subset.sh

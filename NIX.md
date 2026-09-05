@@ -1,3 +1,8 @@
+> This is the river fork of xmonad-contrib.  The flake follows
+> `github:x418/xmonad/river`, the backend it is written against; `cabal.project`
+> and `stack.yaml` build that backend from `../xmonad`.  The notes below are
+> upstream's and describe the flake's options, which are unchanged.
+
 # `nix` integration for XMonad
 
 ## Customizing the `nix-shell`

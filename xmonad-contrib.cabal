@@ -45,12 +45,6 @@ source-repository head
   location: https://github.com/xmonad/xmonad-contrib
 
 
-flag use_xft
-  description: Use Xft to render text.  Off: text is drawn with pango on this
-               backend, and X11-xft would pull the X11 package into the build.
-  default:     False
-  manual:      True
-
 flag pedantic
   description: Be pedantic (-Werror and the like)
   default:     False
@@ -89,10 +83,6 @@ library
        -- for compatibility with older versions of base (or other deps)
        ghc-options: -Wwarn=unused-imports
 
-    if flag(use_xft)
-        build-depends: X11-xft >= 0.2
-        cpp-options: -DXFT
-
     build-depends:      cairo, pango
     exposed-modules:    XMonad.Actions.AfterDrag
                         XMonad.Actions.BluetileCommands
@@ -126,7 +116,7 @@ library
                         XMonad.Actions.Minimize
                         XMonad.Actions.MostRecentlyUsed
                         XMonad.Actions.MouseGestures
-                     -- XMonad.Actions.MouseResize
+                        XMonad.Actions.MouseResize
                         XMonad.Actions.Navigation2D
                         XMonad.Actions.NoBorders
                         XMonad.Actions.OnScreen
@@ -235,7 +225,7 @@ library
                         XMonad.Layout.AvoidFloats
                         XMonad.Layout.BinaryColumn
                         XMonad.Layout.BinarySpacePartition
-                     -- XMonad.Layout.BorderResize
+                        XMonad.Layout.BorderResize
                         XMonad.Layout.BoringWindows
                         XMonad.Layout.ButtonDecoration
                         XMonad.Layout.CenterMainFluid
@@ -259,7 +249,7 @@ library
                         XMonad.Layout.DecorationEx.DwmGeometry
                         XMonad.Layout.DecorationEx.TabbedGeometry
                         XMonad.Layout.DecorationAddons
-                     -- XMonad.Layout.DecorationMadness
+                        XMonad.Layout.DecorationMadness
                         XMonad.Layout.Dishes
                         XMonad.Layout.DragPane
                         XMonad.Layout.DraggingVisualizer
@@ -299,7 +289,7 @@ library
                         XMonad.Layout.Monitor
                         XMonad.Layout.Mosaic
                         XMonad.Layout.MosaicAlt
-                     -- XMonad.Layout.MouseResizableTile
+                        XMonad.Layout.MouseResizableTile
                         XMonad.Layout.MultiColumns
                         XMonad.Layout.MultiDishes
                         XMonad.Layout.MultiToggle
@@ -322,7 +312,7 @@ library
                         XMonad.Layout.ShowWName
                         XMonad.Layout.SideBorderDecoration
                         XMonad.Layout.SimpleDecoration
-                     -- XMonad.Layout.SimpleFloat
+                        XMonad.Layout.SimpleFloat
                         XMonad.Layout.Simplest
                         XMonad.Layout.SimplestFloat
                         XMonad.Layout.SortedLayout

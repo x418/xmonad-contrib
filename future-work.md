@@ -162,7 +162,17 @@ override.
 - `XMonad.Config.Monad` — needs the `data-accessor` package, which is not in
   the resolver. It does not build against upstream xmonad here either.
 
-## 4. Resize handles need an input-only window, and Wayland has none
+## 4. Resize handles need an input-only window, and Wayland has none -- closed
+
+**Done, as sketched below.**  `MouseResize`, `BorderResize` and
+`MouseResizableTile` build their handles with `createNewWindow`, painted
+fully transparent (a mapped surface with an alpha-zero buffer receives
+input, which is the invisible clickable region Wayland was said not to
+have), and take the press as `SurfaceClicked`.  Point 2 stands: no cursor
+changes over a handle, since there is no per-surface cursor shape.
+`SimpleFloat` and `DecorationMadness` build with them.  The original
+analysis follows.
+
 
 **Repo:** here — `XMonad/Actions/MouseResize.hs`,
 `XMonad/Layout/BorderResize.hs`, `XMonad/Layout/MouseResizableTile.hs`

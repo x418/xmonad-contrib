@@ -33,7 +33,7 @@ import XMonad
 import XMonad.Layout.Decoration
 import XMonad.Layout.WindowArranger
 import XMonad.Util.XUtils
-import XMonad.Prelude(when)
+import XMonad.Prelude(forM_, when)
 import qualified Data.Map as M
 
 -- $usage
@@ -45,7 +45,7 @@ import qualified Data.Map as M
 -- > main = xmonad def { layoutHook = myLayout }
 --
 
-type BorderBlueprint = (Rectangle, Glyph, BorderType)
+type BorderBlueprint = (Rectangle, BorderType)
 
 data BorderType = RightSideBorder
                     | LeftSideBorder
@@ -86,13 +86,14 @@ instance LayoutModifier BorderResize Window where
             wrsCreated <- handleAppeared borderSize wrsAppeared
             let wrsChanged = handleStillThere borderSize wrsStillThere
                 wrsThisTime = M.union wrsChanged wrsCreated
+            -- Upstream returned the border windows in the layout result and
+            -- the core placed them.  A surface is not a window river lays
+            -- out, so a border that moved with its window is moved here,
+            -- and the result names the windows alone; the render sequence
+            -- stacks the window manager's surfaces above them anyway.
+            forM_ (M.elems wrsChanged) $ \(_, borderInfos) ->
+                forM_ borderInfos $ \bi -> moveResizeDrawable (bWin bi) (bRect bi)
             return (compileWrs wrsThisTime correctOrder, Just $ BR borderSize wrsThisTime)
-            -- What we return is the original wrs with the new border
-            -- windows inserted at the correct positions - this way, the core
-            -- will restack the borders correctly.
-            -- We also return information about our borders, so that we
-            -- can handle events that they receive and destroy them when
-            -- they are no longer needed.
         where
             testIfUnchanged entry@(rLastTime, _) rCurrent =
                 if rLastTime == rCurrent
@@ -111,9 +112,7 @@ compileWrs wrsThisTime correctOrder = let wrs = reorder (M.toList wrsThisTime) c
                                       in concatMap compileWr wrs
 
 compileWr :: (Window, RectWithBorders) -> [(Window, Rectangle)]
-compileWr (w, (r, borderInfos)) =
-    let borderWrs = for borderInfos $ \bi -> (bWin bi, bRect bi)
-    in borderWrs ++ [(w, r)]
+compileWr (w, (r, _)) = [(w, r)]
 
 handleGone :: M.Map Window RectWithBorders -> X ()
 handleGone wrsGone = mapM_ deleteWindow borderWins
@@ -144,7 +143,7 @@ handleSingleStillThere borderSize (Just rCurrent, (_, borderInfos)) = (rCurrent,
           -- assuming that the four borders are always in the same order
 
 updateBorderInfo :: (BorderInfo, BorderBlueprint) -> BorderInfo
-updateBorderInfo (borderInfo, (r, _, _)) = borderInfo { bRect = r }
+updateBorderInfo (borderInfo, (r, _)) = borderInfo { bRect = r }
 
 createBorderLookupTable :: M.Map Window RectWithBorders -> [(Window, (BorderType, Window, Rectangle))]
 createBorderLookupTable wrsLastTime = concatMap processSingleEntry (M.toList wrsLastTime)
@@ -154,15 +153,18 @@ createBorderLookupTable wrsLastTime = concatMap processSingleEntry (M.toList wrs
 
 prepareBorders :: Dimension -> Rectangle -> [BorderBlueprint]
 prepareBorders borderSize (Rectangle x y wh ht) =
-    [(Rectangle (x + fi wh - fi borderSize) y borderSize ht, xC_right_side , RightSideBorder),
-     (Rectangle x y borderSize ht                          , xC_left_side  , LeftSideBorder),
-     (Rectangle x y wh borderSize                          , xC_top_side   , TopSideBorder),
-     (Rectangle x (y + fi ht - fi borderSize) wh borderSize, xC_bottom_side, BottomSideBorder)
+    [(Rectangle (x + fi wh - fi borderSize) y borderSize ht, RightSideBorder),
+     (Rectangle x y borderSize ht                          , LeftSideBorder),
+     (Rectangle x y wh borderSize                          , TopSideBorder),
+     (Rectangle x (y + fi ht - fi borderSize) wh borderSize, BottomSideBorder)
     ]
 
+-- | A press on a border -- 'SurfaceClicked', since the border is a surface
+-- the window manager drew -- starts the drag exactly as the X11 button press
+-- did.  No button number: river does not say what pressed.
 handleResize :: [(Window, (BorderType, Window, Rectangle))] -> Event -> X ()
-handleResize borders ButtonEvent { ev_window = ew, ev_event_type = et }
-    | et == buttonPress, Just edge <- lookup ew borders =
+handleResize borders SurfaceClicked { ev_window = ew }
+    | Just edge <- lookup ew borders =
     case edge of
         (RightSideBorder, hostWin, Rectangle hx hy _ hht) ->
             mouseDrag (\x _ -> do
@@ -193,30 +195,20 @@ handleResize borders ButtonEvent { ev_window = ew, ev_event_type = et }
 handleResize _ _ = return ()
 
 createBorder :: BorderBlueprint -> X BorderInfo
-createBorder (borderRect, borderCursor, borderType) = do
-    borderWin <- createInputWindow borderCursor borderRect
+createBorder (borderRect, borderType) = do
+    borderWin <- createInputWindow borderRect
     return BI { bWin = borderWin, bRect = borderRect, bType = borderType }
 
-createInputWindow :: Glyph -> Rectangle -> X Window
-createInputWindow cursorGlyph r = withDisplay $ \d -> do
-    win <- mkInputWindow d r
-    io $ selectInput d win (exposureMask .|. buttonPressMask)
-    cursor <- io $ createFontCursor d cursorGlyph
-    io $ defineCursor d win cursor
-    io $ freeCursor d cursor
+-- | The border: a window-manager surface where X11 had an input-only window.
+-- Wayland has no invisible clickable region, so the surface has a buffer --
+-- fully transparent, which receives input all the same -- and no cursor of
+-- its own: there is no per-surface cursor shape to set, so nothing shows the
+-- border is draggable until it is dragged.
+createInputWindow :: Rectangle -> X Window
+createInputWindow r = do
+    win <- createNewWindow r Nothing "#00000000" True
     showWindow win
     return win
-
-mkInputWindow :: Display -> Rectangle -> X Window
-mkInputWindow d (Rectangle x y w h) = do
-  rw <- asks theRoot
-  let screen   = defaultScreenOfDisplay d
-      visual   = defaultVisualOfScreen screen
-      attrmask = cWOverrideRedirect
-  io $ allocaSetWindowAttributes $
-         \attributes -> do
-           set_override_redirect attributes True
-           createWindow d rw x y w h 0 0 inputOnly visual attrmask attributes
 
 for :: [a] -> (a -> b) -> [b]
 for = flip map

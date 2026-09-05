@@ -38,7 +38,6 @@ import XMonad hiding (tile, splitVertically, splitHorizontallyBy)
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.Util.XUtils
-import Graphics.X11 as X
 
 -- $usage
 -- You can use this module with the following in your @xmonad.hs@:
@@ -88,7 +87,7 @@ data DraggerInfo = MasterDragger Position Rational
                     | LeftSlaveDragger Position Rational Int
                     | RightSlaveDragger Position Rational Int
                     deriving (Show, Read)
-type DraggerWithRect = (Rectangle, Glyph, DraggerInfo)
+type DraggerWithRect = (Rectangle, DraggerInfo)
 type DraggerWithWin = (Window, DraggerInfo)
 
 -- | Specifies the size of the clickable area between windows.
@@ -147,10 +146,12 @@ instance LayoutClass MouseResizableTile Window where
                                             (rightFracs st ++ repeat (slaveFrac st)) sr' num drg
             rects' = map (mirrorAdjust id mirrorRect . sanitizeRectangle sr') rects
         mapM_ deleteDragger $ draggers st
-        (draggerWrs, newDraggers) <- mapAndUnzipM
-                                        (createDragger sr . adjustForMirror (isMirrored st))
-                                        preparedDraggers
-        return (draggerWrs ++ zip wins rects', Just $ st { draggers = newDraggers,
+        -- The draggers are surfaces the window manager drew, placed where
+        -- they are created; river lays out windows, not these, so the result
+        -- names the windows alone.
+        newDraggers <- mapM (createDragger sr . adjustForMirror (isMirrored st))
+                            preparedDraggers
+        return (zip wins rects', Just $ st { draggers = newDraggers,
                                                               focusPos = length l,
                                                               numWindows = length wins })
         where
@@ -200,17 +201,12 @@ draggerGeometry BordersDragger = do
 getBorderWidth :: Window -> X Dimension
 getBorderWidth win = do
     d <- asks display
-    (_,_,_,_,_,w,_) <- io $ X.getGeometry d win
+    (_,_,_,_,_,w,_) <- io $ getGeometry d win
     return w
 
 adjustForMirror :: Bool -> DraggerWithRect -> DraggerWithRect
 adjustForMirror False dragger = dragger
-adjustForMirror True (draggerRect, draggerCursor, draggerInfo) =
-        (mirrorRect draggerRect, draggerCursor', draggerInfo)
-    where
-        draggerCursor' = if draggerCursor == xC_sb_h_double_arrow
-                            then xC_sb_v_double_arrow
-                            else xC_sb_h_double_arrow
+adjustForMirror True (draggerRect, draggerInfo) = (mirrorRect draggerRect, draggerInfo)
 
 modifySlave :: MouseResizableTile a -> Rational -> MouseResizableTile a
 modifySlave st delta =
@@ -271,13 +267,13 @@ splitVertically (f:fx) (Rectangle sx sy sw sh) isLeft num drg@(drOff, drSz, drOf
         draggerInfo = if isLeft
                         then LeftSlaveDragger sy (fromIntegral sh) num
                         else RightSlaveDragger sy (fromIntegral sh) num
-        nextDragger = (draggerRect, xC_sb_v_double_arrow, draggerInfo)
+        nextDragger = (draggerRect, draggerInfo)
     in (nextRect : otherRects, nextDragger : otherDragger)
   where smallh = floor $ fromIntegral sh * f
 
 splitHorizontallyBy :: RealFrac r => r -> Rectangle -> DraggerGeometry -> ((Rectangle, Rectangle), DraggerWithRect)
 splitHorizontallyBy f (Rectangle sx sy sw sh) (drOff, drSz, drOff2, drSz2) =
-    ((leftHalf, rightHalf), (draggerRect, xC_sb_h_double_arrow, draggerInfo))
+    ((leftHalf, rightHalf), (draggerRect, draggerInfo))
   where leftw = floor $ fromIntegral sw * f
         leftHalf = Rectangle sx sy (leftw - drSz `div` 2) sh
         rightHalf = Rectangle (sx + fromIntegral leftw + drOff) sy
@@ -285,18 +281,21 @@ splitHorizontallyBy f (Rectangle sx sy sw sh) (drOff, drSz, drOff2, drSz2) =
         draggerRect = Rectangle (sx + fromIntegral leftw - drOff2) sy drSz2 sh
         draggerInfo = MasterDragger sx (fromIntegral sw)
 
-createDragger :: Rectangle -> DraggerWithRect -> X ((Window, Rectangle), DraggerWithWin)
-createDragger sr (draggerRect, draggerCursor, draggerInfo) = do
+createDragger :: Rectangle -> DraggerWithRect -> X DraggerWithWin
+createDragger sr (draggerRect, draggerInfo) = do
         let draggerRect' = sanitizeRectangle sr draggerRect
-        draggerWin <- createInputWindow draggerCursor draggerRect'
-        return ((draggerWin, draggerRect'), (draggerWin, draggerInfo))
+        draggerWin <- createInputWindow draggerRect'
+        return (draggerWin, draggerInfo)
 
 deleteDragger :: DraggerWithWin -> X ()
 deleteDragger (draggerWin, _) = deleteWindow draggerWin
 
+-- | A press on a dragger -- 'SurfaceClicked', since the dragger is a
+-- surface the window manager drew -- starts the drag exactly as the X11
+-- button press did.  No button number: river does not say what pressed.
 handleResize :: [DraggerWithWin] -> Bool -> Event -> X ()
-handleResize draggers' isM ButtonEvent { ev_window = ew, ev_event_type = et }
-    | et == buttonPress, Just x <- lookup ew draggers' = case x of
+handleResize draggers' isM SurfaceClicked { ev_window = ew }
+    | Just x <- lookup ew draggers' = case x of
         MasterDragger     lb r     -> mouseDrag' id   lb r  SetMasterFraction
         LeftSlaveDragger  lb r num -> mouseDrag' flip lb r (SetLeftSlaveFraction num)
         RightSlaveDragger lb r num -> mouseDrag' flip lb r (SetRightSlaveFraction num)
@@ -309,23 +308,14 @@ handleResize draggers' isM ButtonEvent { ev_window = ew, ev_event_type = et }
 
 handleResize _ _ _ = return ()
 
-createInputWindow :: Glyph -> Rectangle -> X Window
-createInputWindow cursorGlyph r = withDisplay $ \d -> do
-    win <- mkInputWindow d r
-    io $ selectInput d win (exposureMask .|. buttonPressMask)
-    cursor <- io $ createFontCursor d cursorGlyph
-    io $ defineCursor d win cursor
-    io $ freeCursor d cursor
+-- | The dragger: a window-manager surface where X11 had an input-only
+-- window.  Wayland has no invisible clickable region, so the surface has a
+-- buffer -- fully transparent, which receives input all the same -- and no
+-- cursor of its own: there is no per-surface cursor shape to set, so
+-- nothing shows the dragger is there until it is dragged.
+createInputWindow :: Rectangle -> X Window
+createInputWindow r = do
+    win <- createNewWindow r Nothing "#00000000" True
     showWindow win
     return win
 
-mkInputWindow :: Display -> Rectangle -> X Window
-mkInputWindow d (Rectangle x y w h) = do
-  rw <- asks theRoot
-  let screen   = defaultScreenOfDisplay d
-      visual   = defaultVisualOfScreen screen
-      attrmask = cWOverrideRedirect
-  io $ allocaSetWindowAttributes $
-         \attributes -> do
-           set_override_redirect attributes True
-           createWindow d rw x y w h 0 0 inputOnly visual attrmask attributes

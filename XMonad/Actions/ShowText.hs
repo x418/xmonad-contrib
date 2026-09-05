@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE MultiWayIf #-}
 -----------------------------------------------------------------------------
 -- |
@@ -79,11 +78,7 @@ data ShowTextConfig =
 
 instance Default ShowTextConfig where
   def =
-#ifdef XFT
     STC { st_font = "xft:monospace-20"
-#else
-    STC { st_font = "-misc-fixed-*-*-*-*-20-*-*-*-*-*-*-*"
-#endif
         , st_bg   = "black"
         , st_fg   = "white"
     }

@@ -4,7 +4,8 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     git-ignore-nix.url = "github:hercules-ci/gitignore.nix/master";
-    xmonad.url = "github:xmonad/xmonad";
+    # The river backend, not upstream: XMonad.River.* is what this tree imports.
+    xmonad.url = "github:x418/xmonad/river";
   };
   outputs = { self, flake-utils, nixpkgs, git-ignore-nix, xmonad }:
   with xmonad.lib;
