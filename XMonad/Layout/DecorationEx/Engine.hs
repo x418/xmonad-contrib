@@ -43,8 +43,7 @@ import XMonad
 import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import XMonad.Layout.Decoration (Shrinker (..), shrinkWhile, shrinkText)
-import XMonad.River (dpyConn, windowUnderPointer)
-import XMonad.River.State (riverShm)
+import XMonad.River (dpyConn, riverShm, windowUnderPointer)
 import XMonad.Util.River.Compat (EventMask, commitDrawable, copyArea,
                                  createGC, createPixmap, fillRectangle,
                                  freeGC, freePixmap, setForeground)
