@@ -51,6 +51,7 @@ module XMonad.Util.River.Compat
     , EventMask
     , createDrawableWindow
     , createPixmap
+    , pixmapIdTop
     , freePixmap
     , destroyDrawable
     , mapDrawable
@@ -165,10 +166,11 @@ drawables = unsafePerformIO (newIORef M.empty)
 
 -- | Is this id one of ours, rather than a window some client owns?
 --
--- The one question the type cannot answer.  Anything that would send a river
--- window request -- closing, focusing, laying out -- must ask first: a
--- decoration id reaching @river_window_v1.close@ is a protocol error, not a
--- no-op.
+-- The one question the type cannot answer.  The backend checks every window
+-- request against the windows river has, so a decoration id reaching
+-- @river_window_v1.close@ is dropped rather than a protocol error; this is
+-- for contrib code that wants to know which world an id is from before it
+-- decides what to do with it, and for the tests.
 isDrawable :: Drawable -> IO Bool
 isDrawable d = M.member d <$> readIORef drawables
 
@@ -213,16 +215,25 @@ createPixmap w h = do
   rref <- newIORef (Rectangle 0 0 w h)
   ops  <- newIORef []
   mref <- newIORef False
-  -- Ids for offscreen drawables come from a counter well above anything the
-  -- compositor will allocate, so they cannot collide with a real object.
-  oid <- atomicModifyIORef' pixmapCounter $ \(ObjectId n) -> (ObjectId (n + 1), ObjectId n)
+  -- Ids for offscreen drawables count down from the top of the client
+  -- range.  A river window is a server-allocated object and lives at
+  -- 0xff000000 and above, so a pixmap can never share an id with one; the
+  -- connection allocates client ids upward from 2 and would need sixteen
+  -- million live objects to meet this counter.
+  oid <- atomicModifyIORef' pixmapCounter $ \(ObjectId n) -> (ObjectId (n - 1), ObjectId n)
   atomicModifyIORef' drawables
     (\states -> (M.insert oid (DrawableState Offscreen rref ops mref) states, ()))
   pure oid
 
 {-# NOINLINE pixmapCounter #-}
 pixmapCounter :: IORef ObjectId
-pixmapCounter = unsafePerformIO (newIORef (ObjectId 0xff000000))
+pixmapCounter = unsafePerformIO (newIORef (ObjectId pixmapIdTop))
+
+-- | The first pixmap id: the top of the client-allocated range, below which
+-- @wl_display@ hands out client ids and above which the server hands out
+-- its own.  A test checks that a pixmap id never looks like a server one.
+pixmapIdTop :: Word32
+pixmapIdTop = 0xfeffffff
 
 freePixmap :: Pixmap -> IO ()
 freePixmap = forget
