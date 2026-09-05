@@ -12,6 +12,7 @@ import XMonad.Util.River.Compat
     ( copyArea, createPixmap, drawOn, drawableSize, freePixmap, isDrawable
     , moveResizeDrawable, pendingOps, pixmapIdTop )
 import XMonad.Actions.Repeatable (modifierMask)
+import XMonad.Util.River.Draw (normaliseFontName, parseColour)
 import XMonad.Util.XUtils (recordOverlayPosition)
 import XMonad.River.Wire (ObjectId (..))
 
@@ -85,6 +86,32 @@ spec = do
             pendingOps dst `shouldReturn` 2
             pendingOps src `shouldReturn` 2
             mapM_ freePixmap [src, dst]
+
+    describe "font names" $ do
+        it "pass pango's own syntax through" $
+            normaliseFontName "DejaVu Sans Mono 11" `shouldBe` "DejaVu Sans Mono 11"
+        it "translate the xft spelling" $ do
+            normaliseFontName "xft:Hack-12" `shouldBe` "Hack 12"
+            normaliseFontName "xft:Hack-12:bold" `shouldBe` "Hack bold 12"
+            normaliseFontName "xft:Sans:pixelsize=14" `shouldBe` "Sans"
+        it "reduce an XLFD to a default family at its size" $
+            normaliseFontName "-misc-fixed-*-*-*-*-20-*-*-*-*-*-*-*" `shouldBe` "Sans 20"
+        it "fall back for nothing at all" $
+            normaliseFontName "   " `shouldBe` "Sans 10"
+
+    describe "colours" $ do
+        it "read #rrggbb, #rrggbbaa and #rgb" $ do
+            parseColour "#ff0000" `shouldBe` (1, 0, 0, 1)
+            parseColour "#00ff0080" `shouldBe` (0, 1, 0, 128 / 255)
+            parseColour "#0f0" `shouldBe` (0, 1, 0, 1)
+        it "know the handful of names configs use" $ do
+            parseColour "white" `shouldBe` (1, 1, 1, 1)
+            parseColour "grey" `shouldBe` (0.5, 0.5, 0.5, 1)
+        it "answer opaque black for anything else" $ do
+            parseColour "#12" `shouldBe` (0, 0, 0, 1)
+            parseColour "chartreuse" `shouldBe` (0, 0, 0, 1)
+        it "keep a transparent handle transparent" $
+            parseColour "#00000000" `shouldBe` (0, 0, 0, 0)
 
     describe "prompt frame cleanup" $
         it "frees the frame even when earlier cleanup throws" $ do
