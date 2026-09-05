@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -110,11 +109,7 @@ instance Default Theme where
           , activeTextColor     = "#FFFFFF"
           , inactiveTextColor   = "#BFBFBF"
           , urgentTextColor     = "#FF0000"
-#ifdef XFT
           , fontName            = "xft:monospace"
-#else
-          , fontName            = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
-#endif
           , decoWidth           = 200
           , decoHeight          = 20
           , windowTitleAddons   = []

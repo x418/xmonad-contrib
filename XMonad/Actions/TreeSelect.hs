@@ -408,7 +408,9 @@ treeselectAt conf@TSConfig{..} zipper hist k = do
     -- compositor rather than from a visual; see $river.
     Rectangle{..} <- gets $ screenRect . W.screenDetail . W.current . windowset
     let r = Rectangle rect_x rect_y rect_width rect_height
-    win <- createNewWindow r Nothing (pixelToHex ts_background) True
+    dpy <- asks display
+    bgName <- pixelToString dpy ts_background
+    win <- createNewWindow r Nothing bgName True
     showWindow win
 
     gc <- liftIO createGC
@@ -692,26 +694,19 @@ drawNode ix iy TSNode{..} col = do
 drawWinBox :: Display -> Window -> GC -> XMonadFont -> (Pixel, Pixel) -> String -> Pixel -> String
            -> Int -> Int -> Int -> Int -> IO ()
 drawWinBox dpy win gc font (fg, bg) text fg2 text2 x y w h = do
+    [fgS, bgS, fg2S] <- mapM (pixelToString dpy) [fg, bg, fg2]
     -- draw box
     setForeground gc bg
     fillRectangle win gc (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
 
     -- draw text
-    printStringXMF dpy win font gc (pixelToHex fg) (pixelToHex bg)
+    printStringXMF dpy win font gc fgS bgS
         (fromIntegral $ x + 8)
         (fromIntegral $ y + h - 8)
         text
 
     -- draw extra text
-    printStringXMF dpy win font gc (pixelToHex fg2) (pixelToHex bg)
+    printStringXMF dpy win font gc fg2S bgS
         (fromIntegral $ x + w + 8)
         (fromIntegral $ y + h - 8)
         text2
-
--- | A 'Pixel' as the @\"#rrggbb\"@ string the drawing layer takes.
---
--- The one adapter this port needs: TreeSelect's config is entirely in 'Pixel'
--- -- see $pixel -- and nothing below 'XMonad.Util.Font' speaks that.
-pixelToHex :: Pixel -> String
-pixelToHex p = printf "#%02x%02x%02x"
-    ((p `shiftR` 16) .&. 0xff) ((p `shiftR` 8) .&. 0xff) (p .&. 0xff)

@@ -89,14 +89,24 @@ handleMess _ _ = return Nothing
 -- | Drag the divider with the mouse.
 --
 -- Upstream matches a button press on the divider's own window and starts a
--- 'mouseDrag' from it.  The divider here is a surface the window manager drew,
--- and river reports button presses against windows it manages rather than
--- against those -- the same wall
--- 'XMonad.Layout.Decoration.handleMouseFocusDrag' runs into, and for the same
--- reason.  The divider still draws and the 'Shrink' \/ 'Expand' messages still
--- move it; only dragging it is missing.
+-- 'mouseDrag' from it.  The divider here is a surface the window manager
+-- drew, and river reports a press on such a surface as 'SurfaceClicked' with
+-- the surface's id -- the same id 'newDragWin' returned -- so the match is
+-- as it was, and the drag runs as it did.  No button number: river does not
+-- say what pressed, since it may have been touch, and upstream only asked
+-- for a press.
 handleEvent :: DragPane a -> Event -> X ()
-handleEvent _ _  = return ()
+handleEvent (DragPane (I (Just (win, r, ident))) ty _ _) SurfaceClicked { ev_window = ew }
+    | ew == win =
+        mouseDrag (\ex ey -> do
+                    let frac = case ty of
+                          Vertical   -> (fromIntegral ex - fromIntegral (rect_x r))
+                                        / fromIntegral (rect_width r)
+                          Horizontal -> (fromIntegral ey - fromIntegral (rect_x r))
+                                        / fromIntegral (rect_width r)
+                    sendMessage (SetFrac ident frac))
+                  (return ())
+handleEvent _ _ = return ()
 
 doLay :: (Rectangle -> Rectangle) -> DragPane a -> Rectangle -> W.Stack a -> X ([(a, Rectangle)], Maybe (DragPane a))
 doLay mirror (DragPane mw ty delta split) r s = do
