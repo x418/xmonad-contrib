@@ -124,7 +124,7 @@ import Data.IORef (newIORef, readIORef, writeIORef)
 import Text.Printf (printf)
 import XMonad.River (submapNextKey)
 import XMonad.Util.River.Compat (GC, createGC, freeGC, fillRectangle, setForeground)
-import XMonad.Util.XUtils (createNewWindow, deleteWindow, showWindow)
+import XMonad.Util.XUtils (createNewWindow, deleteWindow, presentWindow, showWindow)
 
 -- $usage
 --
@@ -624,7 +624,10 @@ redraw = do
 
     t <- gets tss_tree
     _ <- drawLayers 0 0 (reverse $ (tz_before t, cursor t, tz_after t) : tz_parents t)
-    return ()
+    -- Queued is not shown: the frame is presented here, once, after the
+    -- whole tree is drawn.  Without this the surface stayed at whatever
+    -- 'showWindow' committed -- the background -- for the life of the prompt.
+    liftX (presentWindow win)
 
 drawLayers :: Int -- ^ indentation level
            -> Int -- ^ height

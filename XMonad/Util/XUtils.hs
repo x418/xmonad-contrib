@@ -31,6 +31,7 @@ module XMonad.Util.XUtils
     , moveResizeDrawable
     , showWindow
     , showWindows
+    , presentWindow
     , hideWindow
     , hideWindows
     , deleteWindow
@@ -157,6 +158,18 @@ showWindow w = do
 -- | the list version
 showWindows :: [Window] -> X ()
 showWindows = mapM_ showWindow
+
+-- | Present what has been queued on a mapped window.
+--
+-- Drawing is deferred (see "XMonad.Util.River.Compat"): a module that paints
+-- a window with the Xlib vocabulary and never commits it has drawn nothing
+-- anyone can see.  'paintWindow' and friends commit for themselves; a module
+-- that draws with the primitives directly calls this when its frame is done.
+presentWindow :: Window -> X ()
+presentWindow w = do
+  d <- asks display
+  shm <- asks (riverShm . riverState)
+  mapM_ (\s -> io (commitDrawable (dpyConn d) s w)) shm
 
 -- | unmap a window
 hideWindow :: Window -> X ()
