@@ -28,6 +28,7 @@ module XMonad.Util.River.Draw
     ( -- * Fonts
       Font(..)
     , parseFont
+    , normaliseFontName
     , measureText
     , fontMetrics
       -- * Drawing
@@ -41,9 +42,11 @@ module XMonad.Util.River.Draw
     , parseColour
     ) where
 
-import Control.Monad.IO.Class (MonadIO)
+import Control.Concurrent.MVar (MVar, newMVar, withMVar)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Char (isDigit, isSpace)
 import Foreign.Ptr (castPtr)
+import System.IO.Unsafe (unsafePerformIO)
 import Graphics.Rendering.Cairo
 import qualified Graphics.Rendering.Pango as P
 
@@ -52,12 +55,18 @@ import XMonad.River.Connection (Connection)
 import qualified XMonad.River.Surface as R
 import XMonad.River.Wire (ObjectId)
 
--- | A resolved font.
+-- | A resolved font, with its ascent and descent measured once.
 --
 -- Pango descriptions are cheap to build and immutable, so unlike an X11
 -- @FontStruct@ there is nothing to open and nothing to release.  That is why
--- @releaseXMF@ has nothing to do under river.
-newtype Font = Font P.FontDescription
+-- @releaseXMF@ has nothing to do under river.  The metrics are of the font
+-- as a whole and never change, and every decoration asked for them on every
+-- repaint.
+data Font = Font
+  { fontDesc    :: !P.FontDescription
+  , fontAscent  :: !Int
+  , fontDescent :: !Int
+  }
 
 -- | Parse a font description.
 --
@@ -74,15 +83,24 @@ newtype Font = Font P.FontDescription
 --   silent fallback is right here: the alternative is a window manager that
 --   refuses to start because a decoration asked for a font from 1987.
 parseFont :: MonadIO m => String -> m Font
-parseFont s = liftIO (Font <$> P.fontDescriptionFromString (normalise s))
-  where
-    normalise str
+parseFont s = liftIO $ do
+  fd <- P.fontDescriptionFromString (normaliseFontName s)
+  (a, d) <- withMeasuring $ \ctx -> do
+    metrics <- P.contextGetMetrics ctx fd P.emptyLanguage
+    pure (ceiling (P.ascent metrics), ceiling (P.descent metrics))
+  pure (Font fd a d)
+
+-- | The pango description a font name means: pango's own syntax as it is,
+-- the @xft:@ spelling most configs contain translated, an XLFD reduced to a
+-- default family at its pixel size, and nothing at all as @Sans 10@.
+normaliseFontName :: String -> String
+normaliseFontName str
       | "xft:" `isPrefix` str = xftToPango (drop 4 str)
       | take 1 str == "-"     = "Sans " ++ xlfdSize str
       | null (trim str)       = "Sans 10"
       | otherwise             = str
-
-    isPrefix p str = take (length p) str == p
+  where
+    isPrefix p s = take (length p) s == p
     trim = dropWhile isSpace . reverse . dropWhile isSpace . reverse
 
     -- "Sans-12:bold" -> "Sans bold 12".  Xft separates family from size with a
@@ -111,35 +129,39 @@ parseFont s = liftIO (Font <$> P.fontDescriptionFromString (normalise s))
       (_, [])       -> Nothing
       (rs, _:rrest) -> Just (reverse rrest, reverse rs)
 
--- | Width and height of a string, in pixels.
+-- | One pango context for measuring, for the process.
 --
--- Measuring needs a pango context, and creating one needs a cairo surface, so
--- this renders onto a 1x1 scratch surface.  Cheap: nothing is rasterised,
--- because pango lays the text out and reports its extents without ever being
--- asked to draw it.
-measureText :: MonadIO m => Font -> String -> m (Int, Int)
-measureText (Font fd) str = liftIO $
-  withImageSurface FormatARGB32 1 1 $ \surf ->
-    renderWith surf $ do
-      lay <- P.createLayout str
-      liftIO $ do
-        P.layoutSetFontDescription lay (Just fd)
-        (_, P.PangoRectangle _ _ w h) <- P.layoutGetExtents lay
-        pure (ceiling w, ceiling h)
+-- Measuring needs a context; creating one per string, over a fresh cairo
+-- surface each time, was the cost of every title shrink and every prompt
+-- keystroke.  Pango contexts are not thread-safe and the worker and the
+-- prompt threads all measure, hence the lock.  Nothing is rasterised: pango
+-- lays the text out and reports its extents without being asked to draw.
+{-# NOINLINE measuringContext #-}
+measuringContext :: MVar P.PangoContext
+measuringContext = unsafePerformIO $ do
+  surf <- createImageSurface FormatARGB32 1 1
+  ctx <- renderWith surf (liftIO (P.cairoCreateContext Nothing))
+  newMVar ctx
 
--- | Ascent and descent of a font, in pixels.
+withMeasuring :: (P.PangoContext -> IO a) -> IO a
+withMeasuring = withMVar measuringContext
+
+-- | Width and height of a string, in pixels.
+measureText :: MonadIO m => Font -> String -> m (Int, Int)
+measureText (Font fd _ _) str = liftIO $ withMeasuring $ \ctx -> do
+  lay <- P.layoutText ctx str
+  P.layoutSetFontDescription lay (Just fd)
+  (_, P.PangoRectangle _ _ w h) <- P.layoutGetExtents lay
+  pure (ceiling w, ceiling h)
+
+-- | Ascent and descent of a font, in pixels; measured once, at 'parseFont'.
 --
 -- Of the font as a whole rather than of any particular string, which is what
 -- callers laying out a row of decorations want: every tab in a bar has to
 -- share a baseline regardless of whether its title happens to contain a
 -- descender.
 fontMetrics :: MonadIO m => Font -> m (Int, Int)
-fontMetrics (Font fd) = liftIO $
-  withImageSurface FormatARGB32 1 1 $ \surf ->
-    renderWith surf $ liftIO $ do
-      ctx <- P.cairoCreateContext Nothing
-      metrics <- P.contextGetMetrics ctx fd P.emptyLanguage
-      pure ( ceiling (P.ascent metrics), ceiling (P.descent metrics) )
+fontMetrics f = pure (fontAscent f, fontDescent f)
 
 -- | An RGBA colour, each channel in @[0,1]@ as cairo takes it.
 type Colour = (Double, Double, Double, Double)
@@ -225,7 +247,7 @@ fillRect (r, g, b, a) x y w h = do
 
 -- | Draw a string with its top-left corner at the given position.
 drawText :: Font -> Colour -> Int -> Int -> String -> Render ()
-drawText (Font fd) (r, g, b, a) x y str = do
+drawText (Font fd _ _) (r, g, b, a) x y str = do
   setSourceRGBA r g b a
   lay <- P.createLayout str
   liftIO $ P.layoutSetFontDescription lay (Just fd)

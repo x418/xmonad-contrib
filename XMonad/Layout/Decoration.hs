@@ -40,6 +40,8 @@ import Foreign.C.Types(CInt)
 
 import XMonad
 import XMonad.Prelude
+import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
+import qualified Data.Map as M
 import qualified XMonad.StackSet as W
 import XMonad.Hooks.UrgencyHook
 import XMonad.Layout.LayoutModifier
@@ -132,7 +134,17 @@ instance Message DecorationMsg
 data DecorationState =
     DS { decos :: [(OrigWin,DecoWin)]
        , font  :: XMonadFont
+       , painted :: IORef (M.Map Window Painted)
+         -- ^ What each decoration window was last painted with, so a layout
+         -- pass that changed nothing about it does not repaint it.  X11
+         -- repainted every decoration on every pass and the server absorbed
+         -- it; here every repaint is a cairo frame on the worker and a
+         -- buffer commit.
        }
+
+-- | Everything 'updateDeco' paints from: the shrunk title, the colours and
+-- border width chosen by focus and urgency, and the decoration's size.
+type Painted = (String, (String, String, Dimension, String), Rectangle)
 type DecoWin = (Maybe Window, Maybe Rectangle)
 type OrigWin = (Window,Rectangle)
 
@@ -242,6 +254,8 @@ instance (DecorationStyle ds Window, Shrinker s) => LayoutModifier (Decoration d
                                     toDel = todel d dwrs
                                     toAdd = toadd a wrs
                                 deleteDecos (map snd toDel)
+                                io $ modifyIORef' (painted s) $ \m ->
+                                  foldr M.delete m [ dw | (_, (Just dw, _)) <- toDel ]
                                 let ndwrs = map (, (Nothing,Nothing)) toAdd
                                 ndecos <- resync (ndwrs ++ del_dwrs d dwrs) wrs
                                 processState (s {decos = ndecos })
@@ -285,7 +299,7 @@ instance (DecorationStyle ds Window, Shrinker s) => LayoutModifier (Decoration d
 
           processState s = do let ndwrs = decos s
                               showDecos (map snd ndwrs)
-                              updateDecos sh t (font s) ndwrs
+                              updateDecos sh t (font s) (painted s) ndwrs
                               return (dwrs_to_wrs ndwrs, Just (Decoration (I (Just (s {decos = ndwrs}))) sh t ds))
 
     handleMess (Decoration (I (Just s@DS{decos = dwrs})) sh t ds) m
@@ -317,9 +331,9 @@ instance (DecorationStyle ds Window, Shrinker s) => LayoutModifier (Decoration d
 -- whenever it likes and never asks for a repaint.  So there is nothing to
 -- handle and nothing lost.
 handleEvent :: Shrinker s => s -> Theme -> DecorationState -> Event -> X ()
-handleEvent sh t (DS dwrs fs) e
+handleEvent sh t (DS dwrs fs p) e
     | WindowTitleChanged {ev_window = w} <- e
-    , Just i <- w `elemIndex` map (fst . fst) dwrs      = updateDeco sh t fs (dwrs !! i)
+    , Just i <- w `elemIndex` map (fst . fst) dwrs      = updateDeco sh t fs p (dwrs !! i)
 handleEvent _ _ _ _ = return ()
 
 -- | Mouse focus and mouse drag are handled by the same function, this
@@ -343,7 +357,7 @@ handleEvent _ _ _ _ = return ()
 -- * the position is river\'s global coordinate space, which is what
 --   @ev_x_root@ was, so the arithmetic below is unchanged.
 handleMouseFocusDrag :: (DecorationStyle ds a) => ds a -> DecorationState -> Event -> X ()
-handleMouseFocusDrag ds (DS dwrs _) SurfaceClicked { ev_window = ew
+handleMouseFocusDrag ds (DS dwrs _ _) SurfaceClicked { ev_window = ew
                                                    , ev_x      = ex
                                                    , ev_y      = ey }
     | Just ((mainw,r), (_, decoRectM)) <- lookFor ew dwrs = do
@@ -386,7 +400,7 @@ initState :: DecorationStyle ds Window => Theme -> ds Window -> Rectangle
 initState t ds sc s wrs = do
   fs   <- initXMF (fontName t)
   dwrs <- createDecos t ds sc s wrs wrs
-  return $ DS dwrs fs
+  DS dwrs fs <$> io (newIORef M.empty)
 
 -- | Delete windows stored in the state and release the font structure.
 releaseResources :: DecorationState -> X ()
@@ -414,9 +428,9 @@ createDecoWindow t r =
   -- No event mask and no class hint, and neither is a loss.
   --
   -- The mask asked the X server to deliver Expose and ButtonPress on this
-  -- window.  Wayland delivers neither: a surface is never asked to repaint
-  -- (see 'handleEvent'), and a click on a surface the window manager drew is
-  -- not reported to it at all (see 'handleMouseFocusDrag').
+  -- window.  Neither is needed: a surface is never asked to repaint (see
+  -- 'handleEvent'), and a press on a surface the window manager drew arrives
+  -- as 'SurfaceClicked' without being asked for (see 'handleMouseFocusDrag').
   --
   -- The class hint set WM_CLASS to @xmonad-decoration@, so that a pager or a
   -- rule could tell a decoration apart from a real window.  A decoration is
@@ -433,13 +447,13 @@ hideDecos = hideWindows . mapMaybe fst
 deleteDecos :: [DecoWin] -> X ()
 deleteDecos = deleteWindows . mapMaybe fst
 
-updateDecos :: Shrinker s => s -> Theme -> XMonadFont -> [(OrigWin,DecoWin)] -> X ()
-updateDecos s t f = mapM_ $ updateDeco s t f
+updateDecos :: Shrinker s => s -> Theme -> XMonadFont -> IORef (M.Map Window Painted) -> [(OrigWin,DecoWin)] -> X ()
+updateDecos s t f p = mapM_ $ updateDeco s t f p
 
 -- | Update a decoration window given a shrinker, a theme, the font
 -- structure and the needed 'Rectangle's
-updateDeco :: Shrinker s => s -> Theme -> XMonadFont -> (OrigWin,DecoWin) -> X ()
-updateDeco sh t fs ((w,_),(Just dw,Just (Rectangle _ _ wh ht))) = do
+updateDeco :: Shrinker s => s -> Theme -> XMonadFont -> IORef (M.Map Window Painted) -> (OrigWin,DecoWin) -> X ()
+updateDeco sh t fs paintedRef ((w,_),(Just dw,Just dr@(Rectangle _ _ wh ht))) = do
   -- xmonad-contrib #809
   -- qutebrowser will happily shovel a 389K multiline string into @_NET_WM_NAME@
   -- and the 'defaultShrinker' (a) doesn't handle multiline strings well (b) is
@@ -463,9 +477,16 @@ updateDeco sh t fs ((w,_),(Just dw,Just (Rectangle _ _ wh ht))) = do
       strs = name : map fst (windowTitleAddons t)
       i_als = map snd (windowTitleIcons t)
       icons = map fst (windowTitleIcons t)
-  paintTextAndIcons dw fs wh ht borderw bc borderc tc bc als strs i_als icons
-updateDeco _ _ _ (_,(Just w,Nothing)) = hideWindow w
-updateDeco _ _ _ _ = return ()
+      look = (name, (bc, borderc, borderw, tc), dr)
+  before <- io (M.lookup dw <$> readIORef paintedRef)
+  unless (before == Just look) $ do
+    io (modifyIORef' paintedRef (M.insert dw look))
+    paintTextAndIcons dw fs wh ht borderw bc borderc tc bc als strs i_als icons
+updateDeco _ _ _ paintedRef (_,(Just w,Nothing)) = do
+  -- Hidden: whatever it showed is stale once it is shown again.
+  io (modifyIORef' paintedRef (M.delete w))
+  hideWindow w
+updateDeco _ _ _ _ _ = return ()
 
 -- | True if the window is in the 'Stack'. The 'Window' comes second
 -- to facilitate list processing, even though @w \`isInStack\` s@ won't

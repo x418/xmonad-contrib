@@ -90,7 +90,21 @@ drawIcon _ drw _ fc bc x y icon = io $ do
   let (i_w, i_h) = imageDims icon
       fg = D.parseColour fc
       bg = D.parseColour bc
+  -- One rectangle per run of set pixels in a row, not one per pixel: a
+  -- 16x16 icon was up to 256 cairo fills per decoration per repaint.
   drawOn drw $ \_ -> do
     D.fillRect bg (fi x) (fi y) (fi i_w) (fi i_h)
-    sequence_ [ D.fillRect fg (fi px) (fi py) 1 1
-              | Point px py <- movePoints x y (iconToPoints icon) ]
+    sequence_ [ D.fillRect fg (fi x + x0) (fi y + row) len 1
+              | (row, bits) <- zip [0 ..] icon
+              , (x0, len) <- runs bits ]
+  where
+    runs :: [Bool] -> [(Int, Int)]
+    runs = go 0
+      where
+        go _ [] = []
+        go i bs = case span not bs of
+          (offs, rest) -> case span id rest of
+            ([], _) -> []
+            (on, rest') -> let start = i + length offs
+                               len = length on
+                           in (start, len) : go (start + len) rest'
