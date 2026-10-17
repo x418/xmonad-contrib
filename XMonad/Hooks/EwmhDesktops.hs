@@ -252,13 +252,15 @@ ewmhDesktopsEventHookCustom _ _ = ewmhWarning >> mempty
 fullscreenStartup :: X ()
 fullscreenStartup = pure ()
 
+-- | Not persistent: river drops fullscreen with the window manager, and a
+-- restart restores extensible state under the predecessor's window ids,
+-- which river may since have given to other windows.
 newtype FullscreenFloats =
     FullscreenFloats (M.Map Window (Maybe W.RationalRect))
     deriving (Read, Show)
 
 instance ExtensionClass FullscreenFloats where
     initialValue = FullscreenFloats M.empty
-    extensionType = PersistentExtension
 
 applyFullscreenTransition
     :: Bool
