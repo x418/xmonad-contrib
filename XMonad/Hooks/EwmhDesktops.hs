@@ -58,7 +58,7 @@ module XMonad.Hooks.EwmhDesktops (
 import XMonad
 import XMonad.Prelude
 import XMonad.Hooks.ManageHelpers (MaybeManageHook)
-import XMonad.River (informFullscreen, warnUnimplemented)
+import XMonad.River (setFullscreen, warnUnimplemented)
 import qualified XMonad.Util.ExtensibleState as XS
 import qualified Data.Map.Strict as M
 import qualified XMonad.StackSet as W
@@ -115,11 +115,13 @@ import XMonad.Util.WorkspaceCompare (WorkspaceSort)
 -- [@ewmhFullscreen@] __works.__  River sends @fullscreen_requested@ and
 -- @exit_fullscreen_requested@, the backend reports them as
 -- @WindowFullscreenChanged@, and 'fullscreenEventHook' does what upstream's
--- does: floats the window over the whole screen and sinks it again, and --
--- through 'XMonad.River.informFullscreen' -- tells the client, so it drops
--- its toolbars.  For fullscreen inside a tiled layout use
--- "XMonad.Layout.Fullscreen" instead, as under X11.  'setEwmhFullscreenHooks'
--- alone is inert: the hooks it would install are the ones above.
+-- does: floats the window over the whole screen and sinks it again.  It also
+-- hands the window to river through 'XMonad.River.setFullscreen', which
+-- draws it over the whole output, bar included, without borders, and tells
+-- the client, so it drops its toolbars.  The float is what leaving restores
+-- from.  For fullscreen inside a tiled layout use "XMonad.Layout.Fullscreen"
+-- instead, as under X11.  'setEwmhFullscreenHooks' alone is inert: the hooks
+-- it would install are the ones above.
 --
 -- [@setEwmhActivateHook@] __a gap, not a fact about Wayland.__  River
 -- implements @xdg-activation-v1@, but its @handleRequestActivate@ does nothing
@@ -156,8 +158,8 @@ ewmh :: XConfig a -> XConfig a
 ewmh = atStartup ewmhWarning
 
 -- | Add fullscreen support to the given config: a client asking for
--- fullscreen floats over the whole screen and is told it is fullscreen; one
--- asking to leave is sunk.  See $river.
+-- fullscreen floats over the whole screen and river draws it over its
+-- output; one asking to leave goes back where it was.  See $river.
 ewmhFullscreen :: XConfig a -> XConfig a
 ewmhFullscreen c = c { handleEventHook = handleEventHook c <> fullscreenEventHook }
 
@@ -290,7 +292,7 @@ fullscreenEventHook WindowFullscreenChanged{ev_window = w, ev_fullscreen = full}
     when (floats' /= floats || saved' /= saved) $ do
         XS.put (FullscreenFloats saved')
         windows (\ws -> ws { W.floating = floats' })
-    informFullscreen w full
+    setFullscreen w full
     pure (All True)
 fullscreenEventHook DestroyWindowEvent{ev_window = w} = do
     XS.modify' $ \(FullscreenFloats saved) ->
