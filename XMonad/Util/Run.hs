@@ -93,12 +93,12 @@ import XMonad.Prelude
 import qualified XMonad.Util.ExtensibleConf as XC
 
 import Codec.Binary.UTF8.String (encodeString)
-import Control.Concurrent (threadDelay)
+import Control.Concurrent (forkIO, threadDelay)
 import System.Directory (getDirectoryContents)
 import System.IO
 import System.Posix.IO
 import System.Posix.Process (createSession, executeFile, forkProcess)
-import System.Process (runInteractiveProcess)
+import System.Process (runInteractiveProcess, waitForProcess)
 
 {- $usage
 
@@ -123,7 +123,7 @@ It then all depends on what you want to do:
 -- | Returns the output.
 runProcessWithInput :: MonadIO m => FilePath -> [String] -> String -> m String
 runProcessWithInput cmd args input = io $ do
-    (pin, pout, perr, _) <- runInteractiveProcess (encodeString cmd)
+    (pin, pout, perr, ph) <- runInteractiveProcess (encodeString cmd)
                                             (map encodeString args) Nothing Nothing
     hPutStr pin input
     hClose pin
@@ -131,7 +131,9 @@ runProcessWithInput cmd args input = io $ do
     when (output == output) $ return ()
     hClose pout
     hClose perr
-    -- no need to waitForProcess, we ignore SIGCHLD
+    -- Reaped, since SIGCHLD is not ignored here (see 'XMonad.Core.xfork'),
+    -- and off this thread: a child that has closed its output may linger.
+    void . forkIO . void $ waitForProcess ph
     return output
 
 -- | Wait is in &#956; (microseconds)
