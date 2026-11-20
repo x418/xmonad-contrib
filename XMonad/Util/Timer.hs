@@ -40,7 +40,7 @@ import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (void)
 import Data.Unique
 import XMonad
-import XMonad.River (postAction)
+import XMonad.River (dispatchEvent, postAction)
 
 -- $usage
 -- See "XMonad.Layout.ShowWName" or "XMonad.Actions.ShowText" for usage examples.
@@ -61,7 +61,7 @@ startTimer s = do
     u <- hashUnique <$> newUnique
     void . forkIO $ do
       threadDelay (fromEnum $ s * 1000000)
-      postAction c (broadcastMessage (TimerFired u))
+      postAction c (dispatchEvent (TimerFired u))
     pure u
 
 -- | Run an action if the event is this timer expiring.
