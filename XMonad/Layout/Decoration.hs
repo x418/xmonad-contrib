@@ -55,6 +55,7 @@ import XMonad.Util.Invisible
 import XMonad.Util.XUtils
 import XMonad.Util.Font
 import XMonad.Util.Image
+import XMonad.Util.River.Compat (drawableScale)
 
 -- $usage
 -- This module is intended for layout developers, who want to decorate
@@ -144,8 +145,9 @@ data DecorationState =
        }
 
 -- | Everything 'updateDeco' paints from: the shrunk title, the colours and
--- border width chosen by focus and urgency, and the decoration's size.
-type Painted = (String, (String, String, Dimension, String), Rectangle)
+-- border width chosen by focus and urgency, the decoration's size, and the
+-- scale its surface is drawn at.
+type Painted = (String, (String, String, Dimension, String), Rectangle, Int)
 type DecoWin = (Maybe Window, Maybe Rectangle)
 type OrigWin = (Window,Rectangle)
 
@@ -480,7 +482,8 @@ updateDeco sh t fs paintedRef ((w,_),(Just dw,Just dr@(Rectangle _ _ wh ht))) = 
       strs = name : map fst (windowTitleAddons t)
       i_als = map snd (windowTitleIcons t)
       icons = map fst (windowTitleIcons t)
-      look = (name, (bc, borderc, borderw, tc), dr)
+  scale <- io (drawableScale dw)
+  let look = (name, (bc, borderc, borderw, tc), dr, scale)
   unless (fmap snd before == Just look) $ do
     io (modifyIORef' paintedRef (M.insert dw (nw, look)))
     paintTextAndIcons dw fs wh ht borderw bc borderc tc bc als strs i_als icons
@@ -494,7 +497,7 @@ updateDeco _ _ _ _ _ = return ()
 -- title for a decoration this size.
 reuseShrunk :: String -> Rectangle -> Maybe (String, Painted) -> Maybe String
 reuseShrunk raw (Rectangle _ _ wh ht) = \case
-  Just (raw', (shrunk, _, Rectangle _ _ wh' ht'))
+  Just (raw', (shrunk, _, Rectangle _ _ wh' ht', _))
     | raw' == raw, wh' == wh, ht' == ht -> Just shrunk
   _ -> Nothing
 

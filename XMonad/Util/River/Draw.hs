@@ -34,6 +34,7 @@ module XMonad.Util.River.Draw
       -- * Drawing
     , Canvas(..)
     , withCanvas
+    , renderScaled
     , fillCanvas
     , fillRect
     , drawText
@@ -214,21 +215,29 @@ data Canvas = Canvas
   , canvasHeight :: !Int
   }
 
--- | Draw onto a window-manager surface at the given size, then present it.
+-- | Draw onto a window-manager surface at the given logical size, then
+-- present it.
 --
 -- Cairo is pointed straight at the buffer's mapped pixels, so what the
 -- 'Render' action writes is what the compositor reads -- no copy, no
--- conversion.
+-- conversion.  The drawing is in logical pixels, scaled to the buffer's.
 withCanvas
   :: Connection -> R.Surface -> ObjectId -> Int -> Int
   -> (Canvas -> Render a) -> IO a
 withCanvas conn surface shm width height draw =
-  R.withSurfaceBuffer conn surface shm width height $ \buf ->
-    -- Word8 and CUChar are the same byte; cairo's PixelData just spells it
-    -- the C way.
-    withImageSurfaceForData (castPtr (bufPixels buf)) FormatARGB32
-        (bufWidth buf) (bufHeight buf) (bufStride buf) $ \img ->
-      renderWith img (draw (Canvas (bufWidth buf) (bufHeight buf)))
+  R.withSurfaceBuffer conn surface shm width height (`renderScaled` draw)
+
+-- | Run a drawing in logical pixels on a buffer, at the buffer's scale.
+renderScaled :: Buffer -> (Canvas -> Render a) -> IO a
+renderScaled buf draw =
+  -- Word8 and CUChar are the same byte; cairo's PixelData just spells it
+  -- the C way.
+  withImageSurfaceForData (castPtr (bufPixels buf)) FormatARGB32
+      (bufWidth buf) (bufHeight buf) (bufStride buf) $ \img ->
+    renderWith img $ do
+      let k = fromIntegral (bufScale buf) / 120
+      scale k k
+      draw (uncurry Canvas (bufLogical buf))
 
 -- | Fill the whole canvas with one colour.
 fillCanvas :: Colour -> Canvas -> Render ()

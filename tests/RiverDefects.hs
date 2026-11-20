@@ -31,7 +31,7 @@ spec = do
             freePixmap drawable
 
     describe "decoration titles" $ do
-        let painted raw r = Just (raw, ("shrunk", ("", "", 0, ""), r))
+        let painted raw r = Just (raw, ("shrunk", ("", "", 0, ""), r, 120))
             tab = Rectangle 0 0 200 20
         it "reuse the shrunk title while the title and size hold" $ do
             reuseShrunk "title" tab (painted "title" tab) `shouldBe` Just "shrunk"

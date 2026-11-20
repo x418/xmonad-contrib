@@ -80,6 +80,7 @@ module XMonad.Util.River.Compat
     , pendingOps
     , drawOn
     , renderDrawableInto
+    , drawableScale
     ) where
 
 import Control.Monad (forM_, unless, when)
@@ -99,7 +100,7 @@ import XMonad.River.Wire (ObjectId (..))
 import qualified XMonad.River.Surface as R
 
 import XMonad.River.Buffer (Buffer (..))
-import XMonad.Util.River.Draw (Canvas (..), Colour, withCanvas)
+import XMonad.Util.River.Draw (Canvas (..), Colour, renderScaled, withCanvas)
 
 -- | An event mask.
 --
@@ -157,9 +158,9 @@ data DrawableState = DrawableState
     -- ^ Reversed: newest first, so appending is cheap and 'commitDrawable'
     -- pays the one reversal.
   , dsMapped  :: !(IORef Bool)
-  , dsPresented :: !(IORef (Maybe (Dimension, Dimension)))
-    -- ^ The size last presented, while shown.  Showing again what is already
-    -- shown, with nothing new drawn, presents nothing.
+  , dsPresented :: !(IORef (Maybe (Dimension, Dimension, Int)))
+    -- ^ The size and scale last presented, while shown.  Showing again what
+    -- is already shown, with nothing new drawn, presents nothing.
   }
 
 -- | Every drawable the window manager owns, by id.
@@ -313,10 +314,11 @@ commitDrawable conn shm d = withDrawable d $ \st -> case dsBacking st of
       ops <- atomicModifyIORef' (dsOps st) $ \os -> ([], reverse os)
       Rectangle _ _ w h <- readIORef (dsRect st)
       presented <- readIORef (dsPresented st)
-      unless (null ops && presented == Just (w, h)) $ do
+      scale <- R.surfaceScale surf
+      unless (null ops && presented == Just (w, h, scale)) $ do
         withCanvas conn surf shm (fromIntegral w) (fromIntegral h) $ \canvas ->
           forM_ ops ($ canvas)
-        atomicWriteIORef (dsPresented st) (Just (w, h))
+        atomicWriteIORef (dsPresented st) (Just (w, h, scale))
 
 -- | Copy one drawable onto another.
 --
@@ -356,10 +358,13 @@ pendingOps d = lookupDrawable d >>= maybe (pure 0) (fmap length . readIORef . ds
 renderDrawableInto :: Drawable -> Buffer -> IO ()
 renderDrawableInto d buf = withDrawable d $ \st -> do
   ops <- atomicModifyIORef' (dsOps st) $ \os -> ([], reverse os)
-  withImageSurfaceForData (castPtr (bufPixels buf)) C.FormatARGB32
-      (bufWidth buf) (bufHeight buf) (bufStride buf) $ \img ->
-    C.renderWith img $
-      forM_ ops ($ Canvas (bufWidth buf) (bufHeight buf))
+  renderScaled buf $ \canvas -> forM_ ops ($ canvas)
+
+-- | The scale a drawable is drawn at, in 120ths: its surface's, or 120.
+drawableScale :: Drawable -> IO Int
+drawableScale d = lookupDrawable d >>= \case
+  Just DrawableState { dsBacking = OnScreen surf } -> R.surfaceScale surf
+  _ -> pure 120
 
 --------------------------------------------------------------------------------
 -- Graphics contexts
