@@ -82,7 +82,7 @@ module XMonad.Util.River.Compat
     , renderDrawableInto
     ) where
 
-import Control.Monad (forM_, when)
+import Control.Monad (forM_, unless, when)
 import Data.Bits (shiftL, shiftR, (.&.), (.|.))
 import Data.IORef
 import Data.Word (Word32, Word64)
@@ -157,6 +157,9 @@ data DrawableState = DrawableState
     -- ^ Reversed: newest first, so appending is cheap and 'commitDrawable'
     -- pays the one reversal.
   , dsMapped  :: !(IORef Bool)
+  , dsPresented :: !(IORef (Maybe (Dimension, Dimension)))
+    -- ^ The size last presented, while shown.  Showing again what is already
+    -- shown, with nothing new drawn, presents nothing.
   }
 
 -- | Every drawable the window manager owns, by id.
@@ -198,13 +201,14 @@ drawableNode d = do
 -- The caller records the position in 'XMonad.River.State.riverOverlayPos' and
 -- the render sequence applies it.
 createDrawableWindow
-  :: Connection -> ObjectId -> ObjectId -> Rectangle -> IO Drawable
-createDrawableWindow conn compositor manager r = do
-  surf <- R.newSurface conn compositor manager
+  :: Connection -> ObjectId -> ObjectId -> R.Presents -> Rectangle -> IO Drawable
+createDrawableWindow conn compositor manager presents r = do
+  surf <- R.newSurface conn compositor manager presents
   rref <- newIORef r
   ops  <- newIORef []
   mref <- newIORef False
-  let st = DrawableState (OnScreen surf) rref ops mref
+  pref <- newIORef Nothing
+  let st = DrawableState (OnScreen surf) rref ops mref pref
       -- The shell surface's id is the drawable's id, so callers get something
       -- indistinguishable from a Window and every signature keeps working.
       oid = R.surfShell surf
@@ -219,6 +223,7 @@ createPixmap w h = do
   rref <- newIORef (Rectangle 0 0 w h)
   ops  <- newIORef []
   mref <- newIORef False
+  pref <- newIORef Nothing
   -- Ids for offscreen drawables count down from the top of the client
   -- range.  A river window is a server-allocated object and lives at
   -- 0xff000000 and above, so a pixmap can never share an id with one; the
@@ -226,7 +231,7 @@ createPixmap w h = do
   -- million live objects to meet this counter.
   oid <- atomicModifyIORef' pixmapCounter $ \(ObjectId n) -> (ObjectId (n - 1), ObjectId n)
   atomicModifyIORef' drawables
-    (\states -> (M.insert oid (DrawableState Offscreen rref ops mref) states, ()))
+    (\states -> (M.insert oid (DrawableState Offscreen rref ops mref pref) states, ()))
   pure oid
 
 {-# NOINLINE pixmapCounter #-}
@@ -270,12 +275,13 @@ mapDrawable :: Drawable -> IO ()
 mapDrawable d = withDrawable d $ \st -> atomicWriteIORef (dsMapped st) True
 
 -- | Hide a drawable.
-unmapDrawable :: Connection -> Drawable -> IO ()
-unmapDrawable conn d = withDrawable d $ \st -> do
+unmapDrawable :: Drawable -> IO ()
+unmapDrawable d = withDrawable d $ \st -> do
   atomicWriteIORef (dsMapped st) False
+  atomicWriteIORef (dsPresented st) Nothing
   case dsBacking st of
     -- Attaching a null buffer is how a wl_surface is unmapped.
-    OnScreen surf -> R.hideSurface conn surf
+    OnScreen surf -> R.hideSurface surf
     Offscreen -> pure ()
 
 withDrawable :: Drawable -> (DrawableState -> IO ()) -> IO ()
@@ -296,7 +302,8 @@ drawOn d op = withDrawable d $ \st ->
 -- | Replay everything queued and present the result.
 --
 -- The operation list is cleared, so a drawable that is painted every frame
--- does not accumulate.
+-- does not accumulate.  A shown drawable with nothing queued, at the size it
+-- was presented at, is left alone: every layout pass shows every decoration.
 commitDrawable :: Connection -> ObjectId -> Drawable -> IO ()
 commitDrawable conn shm d = withDrawable d $ \st -> case dsBacking st of
   Offscreen -> pure ()   -- nothing to show; it exists to be copied
@@ -305,8 +312,11 @@ commitDrawable conn shm d = withDrawable d $ \st -> case dsBacking st of
     when shown $ do
       ops <- atomicModifyIORef' (dsOps st) $ \os -> ([], reverse os)
       Rectangle _ _ w h <- readIORef (dsRect st)
-      withCanvas conn surf shm (fromIntegral w) (fromIntegral h) $ \canvas ->
-        forM_ ops ($ canvas)
+      presented <- readIORef (dsPresented st)
+      unless (null ops && presented == Just (w, h)) $ do
+        withCanvas conn surf shm (fromIntegral w) (fromIntegral h) $ \canvas ->
+          forM_ ops ($ canvas)
+        atomicWriteIORef (dsPresented st) (Just (w, h))
 
 -- | Copy one drawable onto another.
 --

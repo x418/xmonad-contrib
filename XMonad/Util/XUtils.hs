@@ -56,7 +56,7 @@ import XMonad.Util.River.Compat
     , pixelFromString, pixelToColour, setForeground, unmapDrawable )
 import qualified XMonad.Util.River.Compat as River
 import qualified XMonad.Util.River.Draw as D
-import XMonad.River (dpyConn, postLoop, riverCompositor, riverManager, riverOverlayPos, riverOverlays, riverShm, submapNextKey, warnUnimplemented)
+import XMonad.River (dpyConn, postLoop, riverCompositor, riverManager, riverOverlayPos, riverOverlays, riverPresents, riverShm, submapNextKey, warnUnimplemented)
 import XMonad.River.Wire (ObjectId, nullObject)
 import XMonad.Util.Font
 import XMonad.Util.Image
@@ -112,7 +112,8 @@ createNewWindow r _ col _ = do
         "wl_compositor is unavailable, so window manager surfaces (prompts, decorations) cannot be created and this returns a null id."
       pure nullObject
     Just compositor -> do
-      win <- io (createDrawableWindow (dpyConn d) compositor mgr r)
+      presents <- asks (riverPresents . riverState)
+      win <- io (createDrawableWindow (dpyConn d) compositor mgr presents r)
       -- The render sequence positions the surface; see 'raiseDrawable'.
       posRef <- asks (riverOverlayPos . riverState)
       io $ drawableNode win >>= mapM_ (\n -> recordOverlayPosition posRef n r)
@@ -173,8 +174,7 @@ presentWindow w = do
 -- | unmap a window
 hideWindow :: Window -> X ()
 hideWindow w = do
-  d <- asks display
-  io (unmapDrawable (dpyConn d) w)
+  io (unmapDrawable w)
   dropDrawable w
 
 -- | the list version
