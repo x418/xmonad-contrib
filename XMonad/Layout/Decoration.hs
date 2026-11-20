@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternGuards         #-}
@@ -33,6 +35,9 @@ module XMonad.Layout.Decoration
     , findWindowByDecoration
     , module XMonad.Layout.LayoutModifier
     , DecorationState, OrigWin
+#ifdef TESTING
+    , reuseShrunk
+#endif
     ) where
 
 import Foreign.C.Types(CInt)
@@ -129,12 +134,13 @@ instance Message DecorationMsg
 data DecorationState =
     DS { decos :: [(OrigWin,DecoWin)]
        , font  :: XMonadFont
-       , painted :: IORef (M.Map Window Painted)
-         -- ^ What each decoration window was last painted with, so a layout
-         -- pass that changed nothing about it does not repaint it.  X11
-         -- repainted every decoration on every pass and the server absorbed
-         -- it; here every repaint is a cairo frame on the worker and a
-         -- buffer commit.
+       , painted :: IORef (M.Map Window (String, Painted))
+         -- ^ What each decoration window was last painted with, and the title
+         -- it was shrunk from, so a layout pass that changed nothing about it
+         -- neither measures nor repaints it.  X11 repainted every decoration
+         -- on every pass and the server absorbed it; here shrinking is a pango
+         -- layout per dropped character and a repaint is a cairo frame and a
+         -- buffer commit, all on the worker.
        }
 
 -- | Everything 'updateDeco' paints from: the shrunk title, the colours and
@@ -442,12 +448,12 @@ hideDecos = hideWindows . mapMaybe fst
 deleteDecos :: [DecoWin] -> X ()
 deleteDecos = deleteWindows . mapMaybe fst
 
-updateDecos :: Shrinker s => s -> Theme -> XMonadFont -> IORef (M.Map Window Painted) -> [(OrigWin,DecoWin)] -> X ()
+updateDecos :: Shrinker s => s -> Theme -> XMonadFont -> IORef (M.Map Window (String, Painted)) -> [(OrigWin,DecoWin)] -> X ()
 updateDecos s t f p = mapM_ $ updateDeco s t f p
 
 -- | Update a decoration window given a shrinker, a theme, the font
 -- structure and the needed 'Rectangle's
-updateDeco :: Shrinker s => s -> Theme -> XMonadFont -> IORef (M.Map Window Painted) -> (OrigWin,DecoWin) -> X ()
+updateDeco :: Shrinker s => s -> Theme -> XMonadFont -> IORef (M.Map Window (String, Painted)) -> (OrigWin,DecoWin) -> X ()
 updateDeco sh t fs paintedRef ((w,_),(Just dw,Just dr@(Rectangle _ _ wh ht))) = do
   -- xmonad-contrib #809
   -- qutebrowser will happily shovel a 389K multiline string into @_NET_WM_NAME@
@@ -465,23 +471,32 @@ updateDeco sh t fs paintedRef ((w,_),(Just dw,Just dr@(Rectangle _ _ wh ht))) = 
     focusColor w (inactiveColor t, inactiveBorderColor t, inactiveBorderWidth t, inactiveTextColor t)
                  (activeColor   t, activeBorderColor   t, activeBorderWidth   t, activeTextColor   t)
                  (urgentColor   t, urgentBorderColor   t, urgentBorderWidth   t, urgentTextColor   t)
+  before <- io (M.lookup dw <$> readIORef paintedRef)
   let s = shrinkIt sh
-  name <- shrinkWhile s (\n -> do size <- io $ textWidthXMF dpy fs n
-                                  return $ size > fromIntegral wh - fromIntegral (ht `div` 2)) nw
+      tooWide n = do size <- io $ textWidthXMF dpy fs n
+                     return $ size > fromIntegral wh - fromIntegral (ht `div` 2)
+  name <- maybe (shrinkWhile s tooWide nw) pure (reuseShrunk nw dr before)
   let als = AlignCenter : map snd (windowTitleAddons t)
       strs = name : map fst (windowTitleAddons t)
       i_als = map snd (windowTitleIcons t)
       icons = map fst (windowTitleIcons t)
       look = (name, (bc, borderc, borderw, tc), dr)
-  before <- io (M.lookup dw <$> readIORef paintedRef)
-  unless (before == Just look) $ do
-    io (modifyIORef' paintedRef (M.insert dw look))
+  unless (fmap snd before == Just look) $ do
+    io (modifyIORef' paintedRef (M.insert dw (nw, look)))
     paintTextAndIcons dw fs wh ht borderw bc borderc tc bc als strs i_als icons
 updateDeco _ _ _ paintedRef (_,(Just w,Nothing)) = do
   -- Hidden: whatever it showed is stale once it is shown again.
   io (modifyIORef' paintedRef (M.delete w))
   hideWindow w
 updateDeco _ _ _ _ _ = return ()
+
+-- | The title a decoration was last shrunk to, if it was shrunk from this
+-- title for a decoration this size.
+reuseShrunk :: String -> Rectangle -> Maybe (String, Painted) -> Maybe String
+reuseShrunk raw (Rectangle _ _ wh ht) = \case
+  Just (raw', (shrunk, _, Rectangle _ _ wh' ht'))
+    | raw' == raw, wh' == wh, ht' == ht -> Just shrunk
+  _ -> Nothing
 
 -- | True if the window is in the 'Stack'. The 'Window' comes second
 -- to facilitate list processing, even though @w \`isInStack\` s@ won't

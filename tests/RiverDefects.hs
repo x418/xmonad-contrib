@@ -6,6 +6,7 @@ import Test.Hspec
 
 import XMonad (KeyMask, Rectangle (..), Window, mod1Mask, shiftMask, xK_Alt_L, xK_Alt_R, xK_Shift_L)
 import XMonad.Hooks.EwmhDesktops (applyFullscreenTransition)
+import XMonad.Layout.Decoration (reuseShrunk)
 import XMonad.Prompt (cleanupPromptFrame)
 import qualified XMonad.StackSet as W
 import XMonad.Util.River.Compat
@@ -28,6 +29,17 @@ spec = do
             recordOverlayPosition positions node resized
             readIORef positions `shouldReturn` M.singleton node (30, 40)
             freePixmap drawable
+
+    describe "decoration titles" $ do
+        let painted raw r = Just (raw, ("shrunk", ("", "", 0, ""), r))
+            tab = Rectangle 0 0 200 20
+        it "reuse the shrunk title while the title and size hold" $ do
+            reuseShrunk "title" tab (painted "title" tab) `shouldBe` Just "shrunk"
+            reuseShrunk "title" tab { rect_x = 300 } (painted "title" tab) `shouldBe` Just "shrunk"
+        it "shrink again for a new title, a new size, or a first paint" $ do
+            reuseShrunk "other" tab (painted "title" tab) `shouldBe` Nothing
+            reuseShrunk "title" tab { rect_width = 150 } (painted "title" tab) `shouldBe` Nothing
+            reuseShrunk "title" tab Nothing `shouldBe` Nothing
 
     describe "fullscreen transitions" $ do
         it "restores a tiled window and ignores repeated requests" $ do
